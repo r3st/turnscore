@@ -4,6 +4,7 @@ package server
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -51,8 +52,9 @@ func initConfig() {
 		viper.SetConfigType("yaml")
 	}
 
-	// ENV overrides: APP_SERVER_PORT, APP_DATABASE_HOST, etc.
+	// ENV overrides: APP_SERVER_PORT maps to server.port, APP_DATABASE_HOST to database.host, etc.
 	viper.SetEnvPrefix("APP")
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
 
 	if err := viper.ReadInConfig(); err != nil {
