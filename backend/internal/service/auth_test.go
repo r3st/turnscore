@@ -15,6 +15,8 @@ import (
 	"github.com/r3st/turnscore/pkg/mocks"
 )
 
+const testTournamentSlug = "essen-open-2025"
+
 func newTestAuthService(
 	t *testing.T,
 	userRepo domain.UserRepository,
@@ -35,7 +37,7 @@ func newTestAuthService(
 	)
 }
 
-func TestRaterLogin_Success(t *testing.T) {
+func TestRaterLoginSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -48,10 +50,10 @@ func TestRaterLogin_Success(t *testing.T) {
 	mockUserRepo := mocks.NewMockUserRepository(ctrl)
 
 	mockTourneyRepo.EXPECT().
-		FindBySlug(gomock.Any(), "essen-open-2025").
+		FindBySlug(gomock.Any(), testTournamentSlug).
 		Return(&domain.Tournament{
 			ID:        tournamentID,
-			Slug:      "essen-open-2025",
+			Slug:      testTournamentSlug,
 			VotingEnd: &votingEnd,
 		}, nil)
 
@@ -66,7 +68,7 @@ func TestRaterLogin_Success(t *testing.T) {
 	svc := newTestAuthService(t, mockUserRepo, mockRaterRepo, mockTourneyRepo)
 
 	pair, err := svc.RaterLogin(context.Background(), domain.RaterLoginInput{
-		TournamentSlug: "essen-open-2025",
+		TournamentSlug: testTournamentSlug,
 		Nickname:       "Alice",
 		Code:           "1234",
 	})
@@ -74,7 +76,7 @@ func TestRaterLogin_Success(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotEmpty(t, pair.AccessToken)
 
-	// Validate the issued token
+	// Validate the issued token claims
 	jwtSvc := newTestJWTService(t)
 	claims, err := jwtSvc.ValidateClaims(pair.AccessToken)
 	require.NoError(t, err)
@@ -83,7 +85,7 @@ func TestRaterLogin_Success(t *testing.T) {
 	assert.Equal(t, tournamentID.String(), claims.TournamentID)
 }
 
-func TestRaterLogin_TournamentNotFound(t *testing.T) {
+func TestRaterLoginTournamentNotFound(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -107,7 +109,7 @@ func TestRaterLogin_TournamentNotFound(t *testing.T) {
 	assert.ErrorIs(t, err, domain.ErrNotFound)
 }
 
-func TestRaterLogin_InvalidCode(t *testing.T) {
+func TestRaterLoginInvalidCode(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -115,8 +117,8 @@ func TestRaterLogin_InvalidCode(t *testing.T) {
 
 	mockTourneyRepo := mocks.NewMockTournamentRepository(ctrl)
 	mockTourneyRepo.EXPECT().
-		FindBySlug(gomock.Any(), "essen-open-2025").
-		Return(&domain.Tournament{ID: tournamentID, Slug: "essen-open-2025"}, nil)
+		FindBySlug(gomock.Any(), testTournamentSlug).
+		Return(&domain.Tournament{ID: tournamentID, Slug: testTournamentSlug}, nil)
 
 	mockRaterRepo := mocks.NewMockRaterRepository(ctrl)
 	mockRaterRepo.EXPECT().
@@ -130,7 +132,7 @@ func TestRaterLogin_InvalidCode(t *testing.T) {
 	)
 
 	_, err := svc.RaterLogin(context.Background(), domain.RaterLoginInput{
-		TournamentSlug: "essen-open-2025",
+		TournamentSlug: testTournamentSlug,
 		Nickname:       "Alice",
 		Code:           "9999",
 	})
@@ -138,7 +140,7 @@ func TestRaterLogin_InvalidCode(t *testing.T) {
 	assert.ErrorIs(t, err, domain.ErrInvalidCode)
 }
 
-func TestRaterLogin_TokenExpiryWithoutVotingEnd(t *testing.T) {
+func TestRaterLoginTokenExpiryWithoutVotingEnd(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -147,11 +149,11 @@ func TestRaterLogin_TokenExpiryWithoutVotingEnd(t *testing.T) {
 
 	mockTourneyRepo := mocks.NewMockTournamentRepository(ctrl)
 	mockTourneyRepo.EXPECT().
-		FindBySlug(gomock.Any(), "essen-open-2025").
+		FindBySlug(gomock.Any(), testTournamentSlug).
 		Return(&domain.Tournament{
 			ID:        tournamentID,
-			Slug:      "essen-open-2025",
-			VotingEnd: nil, // no voting end set
+			Slug:      testTournamentSlug,
+			VotingEnd: nil,
 		}, nil)
 
 	mockRaterRepo := mocks.NewMockRaterRepository(ctrl)
@@ -166,24 +168,90 @@ func TestRaterLogin_TokenExpiryWithoutVotingEnd(t *testing.T) {
 	)
 
 	pair, err := svc.RaterLogin(context.Background(), domain.RaterLoginInput{
-		TournamentSlug: "essen-open-2025",
+		TournamentSlug: testTournamentSlug,
 		Nickname:       "Bob",
 		Code:           "5678",
 	})
 
 	require.NoError(t, err)
-	// ExpiresIn should be ~24h
 	assert.InDelta(t, (24 * time.Hour).Seconds(), float64(pair.ExpiresIn), 5)
 }
 
-func TestHashToken_IsDeterministic(t *testing.T) {
+func TestOAuthRedirectURLContainsState(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	svc := newTestAuthService(t,
+		mocks.NewMockUserRepository(ctrl),
+		mocks.NewMockRaterRepository(ctrl),
+		mocks.NewMockTournamentRepository(ctrl),
+	)
+
+	url := svc.OAuthRedirectURL("my-state-value")
+	assert.Contains(t, url, "state=my-state-value")
+	assert.Contains(t, url, "accounts.google.com")
+}
+
+func TestRefreshTokensSuccess(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	userID := uuid.New()
+	rawToken := "some-raw-refresh-token-value-here"
+	hashed := hashToken(rawToken)
+
+	mockUserRepo := mocks.NewMockUserRepository(ctrl)
+	mockUserRepo.EXPECT().
+		FindByRefreshToken(gomock.Any(), hashed).
+		Return(&domain.User{ID: userID}, nil)
+	mockUserRepo.EXPECT().
+		DeleteRefreshToken(gomock.Any(), hashed).
+		Return(nil)
+	mockUserRepo.EXPECT().
+		SaveRefreshToken(gomock.Any(), userID, gomock.Any(), gomock.Any()).
+		Return(nil)
+
+	svc := newTestAuthService(t,
+		mockUserRepo,
+		mocks.NewMockRaterRepository(ctrl),
+		mocks.NewMockTournamentRepository(ctrl),
+	)
+
+	pair, err := svc.RefreshTokens(context.Background(), rawToken)
+
+	require.NoError(t, err)
+	assert.NotEmpty(t, pair.AccessToken)
+	assert.NotEmpty(t, pair.RefreshToken)
+	assert.NotEqual(t, rawToken, pair.RefreshToken, "refresh token must be rotated")
+}
+
+func TestRefreshTokensInvalidToken(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockUserRepo := mocks.NewMockUserRepository(ctrl)
+	mockUserRepo.EXPECT().
+		FindByRefreshToken(gomock.Any(), gomock.Any()).
+		Return(nil, domain.ErrNotFound)
+
+	svc := newTestAuthService(t,
+		mockUserRepo,
+		mocks.NewMockRaterRepository(ctrl),
+		mocks.NewMockTournamentRepository(ctrl),
+	)
+
+	_, err := svc.RefreshTokens(context.Background(), "unknown-token")
+	assert.ErrorIs(t, err, domain.ErrUnauthorized)
+}
+
+func TestHashTokenIsDeterministic(t *testing.T) {
 	h1 := hashToken("my-raw-token")
 	h2 := hashToken("my-raw-token")
 	assert.Equal(t, h1, h2)
 	assert.Len(t, h1, 64) // SHA-256 hex = 64 chars
 }
 
-func TestHashToken_DiffersForDiffInputs(t *testing.T) {
+func TestHashTokenDiffersForDiffInputs(t *testing.T) {
 	h1 := hashToken("token-a")
 	h2 := hashToken("token-b")
 	assert.NotEqual(t, h1, h2)

@@ -20,13 +20,13 @@ func newTestJWTService(t *testing.T) *JWTService {
 	})
 }
 
-func TestNewJWTService_PanicsOnShortSecret(t *testing.T) {
+func TestNewJWTServicePanicsOnShortSecret(t *testing.T) {
 	assert.Panics(t, func() {
 		NewJWTService(domain.JWTConfig{Secret: "tooshort"})
 	})
 }
 
-func TestIssueUserTokenPair_ValidToken(t *testing.T) {
+func TestIssueUserTokenPairValidToken(t *testing.T) {
 	svc := newTestJWTService(t)
 	userID := uuid.New()
 
@@ -39,7 +39,7 @@ func TestIssueUserTokenPair_ValidToken(t *testing.T) {
 	assert.Equal(t, int((15 * time.Minute).Seconds()), pair.ExpiresIn)
 }
 
-func TestIssueUserTokenPair_ClaimsAreCorrect(t *testing.T) {
+func TestIssueUserTokenPairClaimsAreCorrect(t *testing.T) {
 	svc := newTestJWTService(t)
 	userID := uuid.New()
 
@@ -54,7 +54,7 @@ func TestIssueUserTokenPair_ClaimsAreCorrect(t *testing.T) {
 	assert.Empty(t, claims.TournamentID, "user tokens must not contain a tournament ID")
 }
 
-func TestIssueRaterToken_ClaimsAreCorrect(t *testing.T) {
+func TestIssueRaterTokenClaimsAreCorrect(t *testing.T) {
 	svc := newTestJWTService(t)
 	raterID := uuid.New()
 	tournamentID := uuid.New()
@@ -71,12 +71,11 @@ func TestIssueRaterToken_ClaimsAreCorrect(t *testing.T) {
 	assert.Equal(t, tournamentID.String(), claims.TournamentID)
 }
 
-func TestValidateClaims_RejectsExpiredToken(t *testing.T) {
+func TestValidateClaimsRejectsExpiredToken(t *testing.T) {
 	svc := newTestJWTService(t)
 	raterID := uuid.New()
 	tournamentID := uuid.New()
 
-	// Issue token that already expired
 	token, err := svc.IssueRaterToken(raterID, tournamentID, time.Now().Add(-1*time.Minute))
 	require.NoError(t, err)
 
@@ -84,19 +83,18 @@ func TestValidateClaims_RejectsExpiredToken(t *testing.T) {
 	assert.ErrorIs(t, err, domain.ErrUnauthorized)
 }
 
-func TestValidateClaims_RejectsTamperedToken(t *testing.T) {
+func TestValidateClaimsRejectsTamperedToken(t *testing.T) {
 	svc := newTestJWTService(t)
 	userID := uuid.New()
 
 	pair, _, err := svc.IssueUserTokenPair(userID)
 	require.NoError(t, err)
 
-	tampered := pair.AccessToken + "x"
-	_, err = svc.ValidateClaims(tampered)
+	_, err = svc.ValidateClaims(pair.AccessToken + "x")
 	assert.ErrorIs(t, err, domain.ErrUnauthorized)
 }
 
-func TestValidateClaims_RejectsTokenSignedWithDifferentSecret(t *testing.T) {
+func TestValidateClaimsRejectsTokenSignedWithDifferentSecret(t *testing.T) {
 	svc1 := NewJWTService(domain.JWTConfig{
 		Secret:       "secret-one-that-is-at-least-32-chars!!",
 		AccessExpiry: 15 * time.Minute,
@@ -113,7 +111,7 @@ func TestValidateClaims_RejectsTokenSignedWithDifferentSecret(t *testing.T) {
 	assert.ErrorIs(t, err, domain.ErrUnauthorized)
 }
 
-func TestGenerateOpaqueToken_IsUnique(t *testing.T) {
+func TestGenerateOpaqueTokenIsUnique(t *testing.T) {
 	t1, err := generateOpaqueToken()
 	require.NoError(t, err)
 	t2, err := generateOpaqueToken()
