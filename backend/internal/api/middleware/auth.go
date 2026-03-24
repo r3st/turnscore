@@ -76,6 +76,24 @@ func RequireRater() gin.HandlerFunc {
 	}
 }
 
+// OptionalAuth parses the Bearer token if present but does not reject missing or invalid tokens.
+// It sets userID, role (and optionally tournamentID) in the Gin context when a valid token is found.
+func OptionalAuth(jwtSvc *service.JWTService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		raw := extractBearerToken(c.GetHeader("Authorization"))
+		if raw != "" {
+			if claims, err := jwtSvc.ValidateClaims(raw); err == nil {
+				c.Set(ContextKeyUserID, claims.Subject)
+				c.Set(ContextKeyRole, claims.Role)
+				if claims.TournamentID != "" {
+					c.Set(ContextKeyTournamentID, claims.TournamentID)
+				}
+			}
+		}
+		c.Next()
+	}
+}
+
 // extractBearerToken strips the "Bearer " prefix from the Authorization header.
 func extractBearerToken(header string) string {
 	if !strings.HasPrefix(header, "Bearer ") {

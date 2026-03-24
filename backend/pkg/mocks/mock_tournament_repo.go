@@ -10,6 +10,7 @@
 package mocks
 
 import (
+	context "context"
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
@@ -41,8 +42,51 @@ func (m *MockTournamentRepository) EXPECT() *MockTournamentRepositoryMockRecorde
 	return m.recorder
 }
 
+// Create mocks base method.
+func (m *MockTournamentRepository) Create(ctx context.Context, t *domain.Tournament) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Create", ctx, t)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Create indicates an expected call of Create.
+func (mr *MockTournamentRepositoryMockRecorder) Create(ctx, t any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockTournamentRepository)(nil).Create), ctx, t)
+}
+
+// Delete mocks base method.
+func (m *MockTournamentRepository) Delete(ctx context.Context, id uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Delete", ctx, id)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Delete indicates an expected call of Delete.
+func (mr *MockTournamentRepositoryMockRecorder) Delete(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockTournamentRepository)(nil).Delete), ctx, id)
+}
+
+// ExistsBySlug mocks base method.
+func (m *MockTournamentRepository) ExistsBySlug(ctx context.Context, slug string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ExistsBySlug", ctx, slug)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ExistsBySlug indicates an expected call of ExistsBySlug.
+func (mr *MockTournamentRepositoryMockRecorder) ExistsBySlug(ctx, slug any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExistsBySlug", reflect.TypeOf((*MockTournamentRepository)(nil).ExistsBySlug), ctx, slug)
+}
+
 // FindByID mocks base method.
-func (m *MockTournamentRepository) FindByID(ctx any, id uuid.UUID) (*domain.Tournament, error) {
+func (m *MockTournamentRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.Tournament, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "FindByID", ctx, id)
 	ret0, _ := ret[0].(*domain.Tournament)
@@ -57,7 +101,7 @@ func (mr *MockTournamentRepositoryMockRecorder) FindByID(ctx, id any) *gomock.Ca
 }
 
 // FindBySlug mocks base method.
-func (m *MockTournamentRepository) FindBySlug(ctx any, slug string) (*domain.Tournament, error) {
+func (m *MockTournamentRepository) FindBySlug(ctx context.Context, slug string) (*domain.Tournament, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "FindBySlug", ctx, slug)
 	ret0, _ := ret[0].(*domain.Tournament)
@@ -69,4 +113,48 @@ func (m *MockTournamentRepository) FindBySlug(ctx any, slug string) (*domain.Tou
 func (mr *MockTournamentRepositoryMockRecorder) FindBySlug(ctx, slug any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindBySlug", reflect.TypeOf((*MockTournamentRepository)(nil).FindBySlug), ctx, slug)
+}
+
+// ListPast mocks base method.
+func (m *MockTournamentRepository) ListPast(ctx context.Context, limit int) ([]domain.Tournament, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListPast", ctx, limit)
+	ret0, _ := ret[0].([]domain.Tournament)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListPast indicates an expected call of ListPast.
+func (mr *MockTournamentRepositoryMockRecorder) ListPast(ctx, limit any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListPast", reflect.TypeOf((*MockTournamentRepository)(nil).ListPast), ctx, limit)
+}
+
+// ListUpcoming mocks base method.
+func (m *MockTournamentRepository) ListUpcoming(ctx context.Context, limit int) ([]domain.Tournament, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListUpcoming", ctx, limit)
+	ret0, _ := ret[0].([]domain.Tournament)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListUpcoming indicates an expected call of ListUpcoming.
+func (mr *MockTournamentRepositoryMockRecorder) ListUpcoming(ctx, limit any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUpcoming", reflect.TypeOf((*MockTournamentRepository)(nil).ListUpcoming), ctx, limit)
+}
+
+// Update mocks base method.
+func (m *MockTournamentRepository) Update(ctx context.Context, t *domain.Tournament) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Update", ctx, t)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Update indicates an expected call of Update.
+func (mr *MockTournamentRepositoryMockRecorder) Update(ctx, t any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockTournamentRepository)(nil).Update), ctx, t)
 }
