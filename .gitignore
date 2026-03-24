@@ -1,0 +1,30 @@
+# Environment
+.env
+.env.local
+*.secret
+
+# Uploads (user-generated content)
+uploads/
+
+# Claude Code user-specific settings
+.claude/settings.json
+.claude/settings.local.json
+
+# Backend
+backend/bin/
+backend/tmp/
+*.out
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+*.swp
+*.swo
