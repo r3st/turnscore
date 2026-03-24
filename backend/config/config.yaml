@@ -1,0 +1,36 @@
+server:
+  host: "0.0.0.0"
+  port: 8080
+  mode: "release"               # debug | release
+  frontend_url: "http://localhost:3000"
+
+database:
+  host: "localhost"
+  port: 5432
+  name: "turnscore"
+  user: "app"
+  password: ""                  # Set via APP_DATABASE_PASSWORD or .env
+  sslmode: "disable"
+
+auth:
+  google_client_id: ""          # Set via APP_AUTH_GOOGLE_CLIENT_ID
+  google_client_secret: ""      # Set via APP_AUTH_GOOGLE_CLIENT_SECRET
+  jwt_secret: ""                # Set via APP_AUTH_JWT_SECRET
+  jwt_expiry: "15m"
+  refresh_expiry: "168h"        # 7 days
+
+storage:
+  backend: "local"              # local | s3
+  local:
+    path: "./uploads"
+    base_url: "http://localhost:8080"
+  s3:
+    endpoint: ""
+    bucket: ""
+    region: "eu-central-1"
+    access_key: ""              # Set via APP_STORAGE_S3_ACCESS_KEY
+    secret_key: ""              # Set via APP_STORAGE_S3_SECRET_KEY
+
+logging:
+  level: "info"                 # debug | info | warn | error
+  format: "json"                # json | pretty (use pretty for local dev only)

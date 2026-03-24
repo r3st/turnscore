@@ -1,0 +1,8 @@
+package: generated
+generate:
+  gin-server: true
+  models: true
+  strict-server: true   # Forces compile-time implementation of all handlers
+output: internal/api/generated/api.gen.go
+output-options:
+  skip-fmt: false

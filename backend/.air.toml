@@ -1,0 +1,13 @@
+[build]
+  cmd = "go build -o ./tmp/turnscore ."
+  bin = "./tmp/turnscore"
+  include_ext = ["go", "yaml"]
+  exclude_dir = ["tmp", "internal/api/generated"]
+  delay = 1000
+
+[log]
+  time = true
+
+[color]
+  build = "yellow"
+  runner = "green"
