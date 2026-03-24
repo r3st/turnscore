@@ -221,14 +221,16 @@ Schema managed via golang-migrate SQL files — never via `gorm.AutoMigrate` in 
 ```sql
 -- 000001_create_users.up.sql
 CREATE TABLE users (
-    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    google_sub  VARCHAR(255) UNIQUE NOT NULL,  -- Google OAuth subject ID
-    email       VARCHAR(255) UNIQUE NOT NULL,
-    name        VARCHAR(200) NOT NULL,
-    avatar_url  VARCHAR(500),
-    created_at  TIMESTAMPTZ DEFAULT NOW(),
-    updated_at  TIMESTAMPTZ DEFAULT NOW()
+    id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    google_sub         VARCHAR(255) UNIQUE NOT NULL,  -- Google OAuth subject ID
+    email              VARCHAR(255) UNIQUE NOT NULL,
+    name               VARCHAR(200) NOT NULL,
+    avatar_url         VARCHAR(500),
+    helper_invite_code VARCHAR(20) UNIQUE NOT NULL,   -- permanent, shareable; organizers use this to add helpers
+    created_at         TIMESTAMPTZ DEFAULT NOW(),
+    updated_at         TIMESTAMPTZ DEFAULT NOW()
     -- NO password_hash — login via Google only
+    -- NO global role — role is per tournament in tournament_members
 );
 
 -- 000002_create_tournaments.up.sql
@@ -259,7 +261,10 @@ CREATE TABLE tournaments (
 CREATE TABLE tournament_members (
     tournament_id UUID REFERENCES tournaments(id) ON DELETE CASCADE,
     user_id       UUID REFERENCES users(id) ON DELETE CASCADE,
+    role          VARCHAR(20) NOT NULL CHECK (role IN ('organizer', 'helper')),
+    joined_at     TIMESTAMPTZ DEFAULT NOW(),
     PRIMARY KEY (tournament_id, user_id)
+    -- organizer_id in tournaments table is the creator; this table tracks all members incl. helpers
 );
 
 -- 000004_create_tables.up.sql
@@ -323,9 +328,11 @@ CREATE TABLE ratings (
 2. Google: callback with authorization code → /api/v1/auth/google/callback
 3. Backend: exchange code for access token → fetch Google UserInfo
 4. Backend: upsert user in DB (google_sub as identifier)
+   → if new user: generate unique helper_invite_code and store it
 5. Backend: issue JWT (15min) + refresh token (7d)
-6. JWT payload: { sub: userId, role: "organizer"|"helper", exp: ... }
+6. JWT payload: { sub: userId, role: "user", exp: ... }
    ⚠️ No name, no email in JWT — IDs only
+   ⚠️ No tournament role in JWT — role is per-tournament, checked in middleware against DB
 ```
 
 ### Rater Login (Nickname + Code)
@@ -369,15 +376,18 @@ func NewStorage(cfg config.StorageConfig) (Storage, error) {
 GET  /api/v1/auth/google             # OAuth redirect
 GET  /api/v1/auth/google/callback    # OAuth callback → JWT
 POST /api/v1/auth/refresh            # Refresh JWT
-POST /api/v1/auth/rater              # Rater login
+POST /api/v1/auth/rater              # Rater login (nickname + code)
+
+# Current user profile (JWT: user)
+GET /api/v1/me                       # Get own profile incl. helper_invite_code + tournament memberships
 
 # Public
 GET  /api/v1/tournaments             # Home page: 5 upcoming + 5 past
 GET  /api/v1/tournaments/:slug       # Tournament details (public)
 GET  /api/v1/tournaments/:slug/tables/:num   # Table detail (public, for QR)
 
-# Organizer + Helper (JWT: organizer|helper)
-POST   /api/v1/tournaments                          # Create tournament
+# Organizer + Helper (JWT: user, membership role checked per tournament)
+POST   /api/v1/tournaments                          # Create tournament (creator becomes organizer)
 PUT    /api/v1/tournaments/:slug                    # Update tournament
 POST   /api/v1/tournaments/:slug/tables             # Create table
 PUT    /api/v1/tournaments/:slug/tables/:num        # Update table
@@ -387,12 +397,15 @@ POST   /api/v1/tournaments/:slug/raters             # Create rater
 GET    /api/v1/tournaments/:slug/raters             # List raters
 POST   /api/v1/tournaments/:slug/qrcodes            # Export QR PDF
 
-# Organizer only (JWT: organizer)
+# Organizer only (JWT: user, membership role = organizer required)
 DELETE /api/v1/tournaments/:slug                    # Delete tournament
-POST   /api/v1/tournaments/:slug/members            # Add helper
-DELETE /api/v1/tournaments/:slug/members/:userId    # Remove helper
+POST   /api/v1/tournaments/:slug/members            # Add helper by invite_code { invite_code: "X7K392" }
+DELETE /api/v1/tournaments/:slug/members/:userId    # Remove a helper (organizer removes others)
 GET    /api/v1/tournaments/:slug/results            # View results
 PUT    /api/v1/tournaments/:slug/result-config      # Update result config
+
+# Helper self-removal (JWT: user, must be member with role=helper)
+DELETE /api/v1/tournaments/:slug/members/me         # Leave tournament as helper
 
 # Rater (JWT: rater)
 POST /api/v1/tournaments/:slug/tables/:num/ratings  # Submit rating
@@ -571,3 +584,12 @@ Always in this order:
 ### ADR-007: Gin instead of Chi or stdlib
 **Decision:** Gin as HTTP framework.
 **Reason:** Well-supported by oapi-codegen (gin-server generator); proven middleware ecosystem; good performance.
+
+### ADR-008: Helper role per-tournament, not global
+**Decision:** No global `role` field on `User`. Roles (`organizer`/`helper`) live in `tournament_members`. JWT for authenticated users contains only `role: "user"` — tournament-specific permissions checked in middleware against DB.
+**Reason:** A user can be organizer of one tournament and helper of another simultaneously. A global role would be incorrect and would require re-issuing JWTs on every membership change.
+**Consequence:** Every protected endpoint that checks organizer/helper permission needs one DB lookup against `tournament_members`.
+
+### ADR-009: Helper invite via permanent personal code
+**Decision:** Each user has a permanent, unique `helper_invite_code` generated on first login. Organizers enter this code to add a helper to their tournament. No email-based invitation, no time-limited tokens.
+**Reason:** Simple, no email infrastructure required, helper can share the code verbally or in a chat. Code is permanent so the user only needs to share it once with recurring collaborators.
