@@ -67,7 +67,7 @@ func (h *Handlers) CreateTournament(ctx context.Context, req generated.CreateTou
 		return nil, err
 	}
 
-	detail, err := mapTournamentDetail(t)
+	detail, err := h.mapTournamentDetail(ctx, t)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +86,7 @@ func (h *Handlers) GetTournament(ctx context.Context, req generated.GetTournamen
 		return nil, err
 	}
 
-	detail, err := mapTournamentDetail(t)
+	detail, err := h.mapTournamentDetail(ctx, t)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +114,7 @@ func (h *Handlers) UpdateTournament(ctx context.Context, req generated.UpdateTou
 		return mapUpdateError(err)
 	}
 
-	detail, err := mapTournamentDetail(t)
+	detail, err := h.mapTournamentDetail(ctx, t)
 	if err != nil {
 		return nil, err
 	}
@@ -315,8 +315,9 @@ func mapUpdateError(err error) (generated.UpdateTournamentResponseObject, error)
 
 // --- Mapping helpers ---
 
-// mapTournamentDetail converts a domain.Tournament to generated.TournamentDetail.
-func mapTournamentDetail(t *domain.Tournament) (generated.TournamentDetail, error) {
+// mapTournamentDetail converts a domain.Tournament to generated.TournamentDetail,
+// fetching live table data from tableSvc.
+func (h *Handlers) mapTournamentDetail(ctx context.Context, t *domain.Tournament) (generated.TournamentDetail, error) {
 	links, err := parseLinks(t.Links)
 	if err != nil {
 		return generated.TournamentDetail{}, fmt.Errorf("parsing links: %w", err)
@@ -325,6 +326,11 @@ func mapTournamentDetail(t *domain.Tournament) (generated.TournamentDetail, erro
 	criteria, err := parseCriteria(t.ActiveCriteria)
 	if err != nil {
 		return generated.TournamentDetail{}, fmt.Errorf("parsing active_criteria: %w", err)
+	}
+
+	tables, err := h.tableSvc.ListBySlug(ctx, t.Slug)
+	if err != nil {
+		return generated.TournamentDetail{}, fmt.Errorf("fetching tables: %w", err)
 	}
 
 	detail := generated.TournamentDetail{
@@ -340,7 +346,7 @@ func mapTournamentDetail(t *domain.Tournament) (generated.TournamentDetail, erro
 		ActiveCriteria: criteria,
 		VotingStart:    t.VotingStart,
 		VotingEnd:      t.VotingEnd,
-		Tables:         []generated.TableSummary{},
+		Tables:         mapTableSummaries(tables, h.tableSvc.Storage()),
 	}
 
 	if t.EventDate != nil {
