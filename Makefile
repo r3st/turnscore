@@ -15,8 +15,7 @@ dev-down:
 # ---------------------------------------------------------------------------
 
 generate:
-	cd backend && go generate ./...
-	cd backend && oapi-codegen -config oapi-codegen.yaml ../api/openapi.yaml
+	cd backend && go tool oapi-codegen -config oapi-codegen.yaml ../api/openapi.yaml
 	cd frontend && npx openapi-typescript ../api/openapi.yaml -o src/api/generated/api.ts
 
 # ---------------------------------------------------------------------------
