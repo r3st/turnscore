@@ -24,7 +24,7 @@ description: >
 | Auth | **Google OAuth 2.0** + **JWT** | No custom password flow needed |
 | File Storage | **Local storage** (default) / **S3-compatible** (optional) | Interface-based, switchable via config |
 | QR Codes | **go-qrcode** + **gofpdf** | PNG + PDF export |
-| API Spec | **OpenAPI 3.1** → **oapi-codegen** | Contract-first, type-safe handler interfaces |
+| API Spec | **OpenAPI 3.0.3** → **oapi-codegen** | Contract-first, type-safe handler interfaces; 3.0.x for best oapi-codegen compatibility |
 | Frontend | **React 18** + **TypeScript** + **Vite** | |
 | UI Library | **shadcn/ui** + **Tailwind CSS** | Accessibility built-in (Radix UI primitives) |
 | API Client | **TanStack Query** + **openapi-typescript** | Types generated directly from OpenAPI spec |

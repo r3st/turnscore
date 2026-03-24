@@ -1,0 +1,1379 @@
+openapi: "3.0.3"
+
+info:
+  title: TurnScore API
+  version: "1.0.0"
+  description: |
+    Tabletop Tournament Table Rating API.
+    Organizers manage tournaments and tables; participants rate them via QR code.
+
+servers:
+  - url: /api/v1
+
+# ---------------------------------------------------------------------------
+# Security Schemes
+# ---------------------------------------------------------------------------
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  # -------------------------------------------------------------------------
+  # Reusable Schemas
+  # -------------------------------------------------------------------------
+  schemas:
+
+    # --- Common ---
+
+    UUID:
+      type: string
+      format: uuid
+      example: "550e8400-e29b-41d4-a716-446655440000"
+
+    ErrorResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          example: "not_found"
+        message:
+          type: string
+          example: "Tournament not found"
+
+    # --- User / Auth ---
+
+    UserProfile:
+      type: object
+      required: [id, name, avatar_url, helper_invite_code, memberships]
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        name:
+          type: string
+          example: "Max Mustermann"
+        avatar_url:
+          type: string
+          format: uri
+          nullable: true
+        helper_invite_code:
+          type: string
+          example: "X7K-392"
+          description: Permanent personal code. Share with organizers to be added as helper.
+        memberships:
+          type: array
+          items:
+            $ref: "#/components/schemas/TournamentMembership"
+
+    TournamentMembership:
+      type: object
+      required: [tournament_id, tournament_name, tournament_slug, role]
+      properties:
+        tournament_id:
+          $ref: "#/components/schemas/UUID"
+        tournament_name:
+          type: string
+        tournament_slug:
+          type: string
+        role:
+          type: string
+          enum: [organizer, helper]
+
+    AuthTokens:
+      type: object
+      required: [access_token, refresh_token, expires_in]
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        expires_in:
+          type: integer
+          description: Access token lifetime in seconds
+          example: 900
+
+    RaterAuthRequest:
+      type: object
+      required: [tournament_slug, nickname, code]
+      properties:
+        tournament_slug:
+          type: string
+          example: "essen-open-2025"
+        nickname:
+          type: string
+          example: "Thorin"
+        code:
+          type: string
+          example: "4821"
+
+    RefreshRequest:
+      type: object
+      required: [refresh_token]
+      properties:
+        refresh_token:
+          type: string
+
+    # --- Tournament ---
+
+    TournamentType:
+      type: string
+      enum: [fantasy, scifi]
+
+    TournamentStatus:
+      type: string
+      enum: [draft, active, voting, archived]
+
+    TournamentLink:
+      type: object
+      required: [url, label]
+      properties:
+        url:
+          type: string
+          format: uri
+        label:
+          type: string
+          example: "Official Event Page"
+
+    CriteriaKey:
+      type: string
+      enum:
+        - balance
+        - aesthetics
+        - terrain_density
+        - labeling
+        - overall
+        - zone_a
+        - zone_b
+        - catering
+        - venue
+        - organization
+
+    ResultConfig:
+      type: object
+      required: [show_comments, visible_comment_criteria]
+      properties:
+        show_comments:
+          type: boolean
+        visible_comment_criteria:
+          type: array
+          items:
+            $ref: "#/components/schemas/CriteriaKey"
+
+    TournamentSummary:
+      type: object
+      required: [id, slug, name, type, status, event_date, location, table_count]
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        slug:
+          type: string
+          example: "essen-open-2025"
+        name:
+          type: string
+          example: "Essen Open 2025"
+        type:
+          $ref: "#/components/schemas/TournamentType"
+        status:
+          $ref: "#/components/schemas/TournamentStatus"
+        event_date:
+          type: string
+          format: date
+          nullable: true
+        location:
+          type: string
+          nullable: true
+        table_count:
+          type: integer
+
+    TournamentDetail:
+      allOf:
+        - $ref: "#/components/schemas/TournamentSummary"
+        - type: object
+          required: [description, links, voting_start, voting_end, active_criteria, tables]
+          properties:
+            description:
+              type: string
+              nullable: true
+            links:
+              type: array
+              items:
+                $ref: "#/components/schemas/TournamentLink"
+              description: |
+                Always displayed with disclaimer: "We are not responsible for the content of external links."
+            voting_start:
+              type: string
+              format: date-time
+              nullable: true
+            voting_end:
+              type: string
+              format: date-time
+              nullable: true
+            active_criteria:
+              type: array
+              items:
+                $ref: "#/components/schemas/CriteriaKey"
+            tables:
+              type: array
+              items:
+                $ref: "#/components/schemas/TableSummary"
+
+    CreateTournamentRequest:
+      type: object
+      required: [name, type, table_count]
+      properties:
+        name:
+          type: string
+          maxLength: 200
+        type:
+          $ref: "#/components/schemas/TournamentType"
+        description:
+          type: string
+          nullable: true
+        links:
+          type: array
+          items:
+            $ref: "#/components/schemas/TournamentLink"
+          default: []
+        location:
+          type: string
+          maxLength: 200
+          nullable: true
+        event_date:
+          type: string
+          format: date
+          nullable: true
+        table_count:
+          type: integer
+          minimum: 1
+          maximum: 100
+        voting_start:
+          type: string
+          format: date-time
+          nullable: true
+        voting_end:
+          type: string
+          format: date-time
+          nullable: true
+        active_criteria:
+          type: array
+          items:
+            $ref: "#/components/schemas/CriteriaKey"
+          default:
+            - balance
+            - aesthetics
+            - terrain_density
+            - labeling
+            - overall
+            - zone_a
+            - zone_b
+
+    UpdateTournamentRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          nullable: true
+        links:
+          type: array
+          items:
+            $ref: "#/components/schemas/TournamentLink"
+        location:
+          type: string
+          maxLength: 200
+          nullable: true
+        event_date:
+          type: string
+          format: date
+          nullable: true
+        status:
+          $ref: "#/components/schemas/TournamentStatus"
+        voting_start:
+          type: string
+          format: date-time
+          nullable: true
+        voting_end:
+          type: string
+          format: date-time
+          nullable: true
+        active_criteria:
+          type: array
+          items:
+            $ref: "#/components/schemas/CriteriaKey"
+
+    # --- Table ---
+
+    PhotoCategory:
+      type: string
+      enum: [general, zone_a, zone_b]
+
+    Photo:
+      type: object
+      required: [id, url, thumbnail_url, category]
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        url:
+          type: string
+          format: uri
+        thumbnail_url:
+          type: string
+          format: uri
+          nullable: true
+        category:
+          $ref: "#/components/schemas/PhotoCategory"
+
+    TableSummary:
+      type: object
+      required: [id, number, name, description, photos, qr_code_url]
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        number:
+          type: integer
+          minimum: 1
+        name:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        photos:
+          type: array
+          items:
+            $ref: "#/components/schemas/Photo"
+        qr_code_url:
+          type: string
+          format: uri
+          nullable: true
+
+    TableDetail:
+      allOf:
+        - $ref: "#/components/schemas/TableSummary"
+        - type: object
+          required: [tournament_slug, tournament_type, tournament_name, active_criteria]
+          properties:
+            tournament_slug:
+              type: string
+            tournament_type:
+              $ref: "#/components/schemas/TournamentType"
+            tournament_name:
+              type: string
+            active_criteria:
+              type: array
+              items:
+                $ref: "#/components/schemas/CriteriaKey"
+
+    UpdateTableRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 200
+          nullable: true
+        description:
+          type: string
+          nullable: true
+
+    # --- Rater ---
+
+    Rater:
+      type: object
+      required: [id, nickname]
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        nickname:
+          type: string
+
+    CreateRaterRequest:
+      type: object
+      required: [nickname]
+      properties:
+        nickname:
+          type: string
+          maxLength: 100
+        code:
+          type: string
+          minLength: 4
+          maxLength: 6
+          pattern: '^\d{4,6}$'
+          description: 4–6 digit numeric code. Auto-generated if omitted.
+          nullable: true
+
+    # --- Rating ---
+
+    PlayedZone:
+      type: string
+      enum: [none, zone_a, zone_b]
+
+    CriteriaScores:
+      type: object
+      description: |
+        Map of active criteria to scores (1–6, school grade scale: 1=best, 6=worst).
+        Only include keys for criteria that are active for this tournament.
+      additionalProperties:
+        type: integer
+        minimum: 1
+        maximum: 6
+      example:
+        balance: 2
+        aesthetics: 1
+        terrain_density: 3
+        labeling: 2
+        overall: 1
+        zone_a: 2
+        zone_b: 3
+
+    CreateRatingRequest:
+      type: object
+      required: [criteria_scores, played_zone]
+      properties:
+        criteria_scores:
+          $ref: "#/components/schemas/CriteriaScores"
+        played_zone:
+          $ref: "#/components/schemas/PlayedZone"
+        comment:
+          type: string
+          maxLength: 1000
+          nullable: true
+
+    # --- Results ---
+
+    TableResult:
+      type: object
+      required: [table_number, table_name, rating_count, average_scores, zone_distribution]
+      properties:
+        table_number:
+          type: integer
+        table_name:
+          type: string
+          nullable: true
+        rating_count:
+          type: integer
+        average_scores:
+          type: object
+          description: Average score per criterion (1–6, lower is better)
+          additionalProperties:
+            type: number
+            format: float
+        zone_distribution:
+          type: object
+          required: [none, zone_a, zone_b]
+          properties:
+            none:
+              type: integer
+            zone_a:
+              type: integer
+            zone_b:
+              type: integer
+        comments:
+          type: array
+          nullable: true
+          description: |
+            Only present if result_config.show_comments = true.
+            Comments are fully anonymized — no rater identity included.
+          items:
+            type: object
+            required: [comment]
+            properties:
+              comment:
+                type: string
+
+    TournamentResults:
+      type: object
+      required: [tournament_name, ranking]
+      properties:
+        tournament_name:
+          type: string
+        ranking:
+          type: array
+          description: Sorted ascending by overall average score (1 = best grade)
+          items:
+            $ref: "#/components/schemas/TableResult"
+
+    # --- Members ---
+
+    AddMemberRequest:
+      type: object
+      required: [invite_code]
+      properties:
+        invite_code:
+          type: string
+          example: "X7K-392"
+          description: The helper's personal permanent invite code from their profile.
+
+    MemberPreview:
+      type: object
+      required: [id, name, avatar_url]
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        name:
+          type: string
+        avatar_url:
+          type: string
+          format: uri
+          nullable: true
+
+  # -------------------------------------------------------------------------
+  # Reusable Responses
+  # -------------------------------------------------------------------------
+  responses:
+    BadRequest:
+      description: Invalid request body or parameters
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    Unauthorized:
+      description: Missing or invalid JWT
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    Forbidden:
+      description: Authenticated but not permitted (wrong role or not a member)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    Conflict:
+      description: Resource already exists or state conflict
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    InternalError:
+      description: Unexpected server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+# ---------------------------------------------------------------------------
+# Paths
+# ---------------------------------------------------------------------------
+paths:
+
+  # =========================================================================
+  # Auth
+  # =========================================================================
+
+  /auth/google:
+    get:
+      summary: Initiate Google OAuth flow
+      operationId: googleOAuthRedirect
+      tags: [Auth]
+      responses:
+        "302":
+          description: Redirect to Google OAuth consent screen
+
+  /auth/google/callback:
+    get:
+      summary: Google OAuth callback
+      operationId: googleOAuthCallback
+      tags: [Auth]
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: JWT tokens issued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthTokens"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /auth/refresh:
+    post:
+      summary: Refresh access token
+      operationId: refreshToken
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshRequest"
+      responses:
+        "200":
+          description: New access token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthTokens"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /auth/rater:
+    post:
+      summary: Rater login via nickname + code
+      operationId: raterLogin
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RaterAuthRequest"
+      responses:
+        "200":
+          description: JWT issued for rater session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthTokens"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # =========================================================================
+  # Current User
+  # =========================================================================
+
+  /me:
+    get:
+      summary: Get own profile including helper invite code and tournament memberships
+      operationId: getMe
+      tags: [User]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  # =========================================================================
+  # Tournaments — Public
+  # =========================================================================
+
+  /tournaments:
+    get:
+      summary: List tournaments (home page — 5 upcoming + 5 past)
+      operationId: listTournaments
+      tags: [Tournaments]
+      responses:
+        "200":
+          description: Tournament lists for home page
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [upcoming, past]
+                properties:
+                  upcoming:
+                    type: array
+                    maxItems: 5
+                    items:
+                      $ref: "#/components/schemas/TournamentSummary"
+                  past:
+                    type: array
+                    maxItems: 5
+                    items:
+                      $ref: "#/components/schemas/TournamentSummary"
+
+    post:
+      summary: Create tournament (caller becomes organizer)
+      operationId: createTournament
+      tags: [Tournaments]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTournamentRequest"
+      responses:
+        "201":
+          description: Tournament created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TournamentDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /tournaments/{slug}:
+    parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+        example: "essen-open-2025"
+
+    get:
+      summary: Get tournament details (public)
+      operationId: getTournament
+      tags: [Tournaments]
+      responses:
+        "200":
+          description: Tournament detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TournamentDetail"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    put:
+      summary: Update tournament (organizer or helper)
+      operationId: updateTournament
+      tags: [Tournaments]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTournamentRequest"
+      responses:
+        "200":
+          description: Updated tournament
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TournamentDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    delete:
+      summary: Delete tournament (organizer only)
+      operationId: deleteTournament
+      tags: [Tournaments]
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Tournament deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # =========================================================================
+  # Tournament Members
+  # =========================================================================
+
+  /tournaments/{slug}/members:
+    parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+
+    post:
+      summary: Add helper by invite code (organizer only)
+      operationId: addTournamentMember
+      tags: [Members]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddMemberRequest"
+      responses:
+        "200":
+          description: Helper found — returns preview for confirmation before adding
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MemberPreview"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: No user found with this invite code
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /tournaments/{slug}/members/{userId}:
+    parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: userId
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+
+    delete:
+      summary: Remove helper from tournament (organizer only)
+      operationId: removeTournamentMember
+      tags: [Members]
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Helper removed
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /tournaments/{slug}/members/me:
+    parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+
+    delete:
+      summary: Leave tournament as helper (self-removal)
+      operationId: leaveTournament
+      tags: [Members]
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Left tournament
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: Not a helper of this tournament (organizers cannot leave)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # =========================================================================
+  # Tables
+  # =========================================================================
+
+  /tournaments/{slug}/tables:
+    parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+
+    get:
+      summary: List all tables of a tournament
+      operationId: listTables
+      tags: [Tables]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of tables
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TableSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    post:
+      summary: Create tables for tournament (organizer or helper)
+      description: |
+        Creates all tables up to table_count. Can be called once after tournament creation.
+        Returns conflict if tables already exist.
+      operationId: createTables
+      tags: [Tables]
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Tables created
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TableSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /tournaments/{slug}/tables/{number}:
+    parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: number
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+
+    get:
+      summary: Get table detail (public — used by QR code scan)
+      operationId: getTable
+      tags: [Tables]
+      responses:
+        "200":
+          description: Table detail including tournament context and photos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TableDetail"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    put:
+      summary: Update table name/description (organizer or helper)
+      operationId: updateTable
+      tags: [Tables]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTableRequest"
+      responses:
+        "200":
+          description: Updated table
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TableSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # =========================================================================
+  # Photos
+  # =========================================================================
+
+  /tournaments/{slug}/tables/{number}/photos:
+    parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: number
+        in: path
+        required: true
+        schema:
+          type: integer
+
+    post:
+      summary: Upload photo for a table (organizer or helper)
+      operationId: uploadPhoto
+      tags: [Photos]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [photo, category]
+              properties:
+                photo:
+                  type: string
+                  format: binary
+                category:
+                  $ref: "#/components/schemas/PhotoCategory"
+      responses:
+        "201":
+          description: Photo uploaded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Photo"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /photos/{photoId}:
+    parameters:
+      - name: photoId
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+
+    delete:
+      summary: Delete photo (organizer or helper)
+      operationId: deletePhoto
+      tags: [Photos]
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Photo deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # =========================================================================
+  # QR Codes
+  # =========================================================================
+
+  /tournaments/{slug}/tables/{number}/qrcode:
+    parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: number
+        in: path
+        required: true
+        schema:
+          type: integer
+
+    post:
+      summary: Generate QR code for a single table (organizer or helper)
+      operationId: generateQRCode
+      tags: [QR Codes]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: QR code PNG
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /tournaments/{slug}/qrcodes:
+    parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+
+    post:
+      summary: Export all QR codes as print-ready PDF (organizer or helper)
+      operationId: exportQRCodesPDF
+      tags: [QR Codes]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: PDF with all table QR codes
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # =========================================================================
+  # Raters
+  # =========================================================================
+
+  /tournaments/{slug}/raters:
+    parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+
+    get:
+      summary: List raters of tournament (organizer or helper)
+      operationId: listRaters
+      tags: [Raters]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of raters (nickname only — no internal IDs exposed)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Rater"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    post:
+      summary: Register rater (organizer or helper)
+      operationId: createRater
+      tags: [Raters]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRaterRequest"
+      responses:
+        "201":
+          description: Rater created — returns nickname and assigned code
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id, nickname, code]
+                properties:
+                  id:
+                    $ref: "#/components/schemas/UUID"
+                  nickname:
+                    type: string
+                  code:
+                    type: string
+                    description: Only returned at creation — not retrievable later
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  # =========================================================================
+  # Ratings
+  # =========================================================================
+
+  /tournaments/{slug}/tables/{number}/ratings:
+    parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: number
+        in: path
+        required: true
+        schema:
+          type: integer
+
+    post:
+      summary: Submit rating for a table (rater only)
+      operationId: submitRating
+      tags: [Ratings]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRatingRequest"
+      responses:
+        "201":
+          description: Rating submitted
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: |
+            Voting period not active, or rater does not belong to this tournament.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Rater has already rated this table
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # =========================================================================
+  # Results
+  # =========================================================================
+
+  /tournaments/{slug}/results:
+    parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+
+    get:
+      summary: Get tournament results — ranking sorted ascending (organizer or helper)
+      operationId: getTournamentResults
+      tags: [Results]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Tournament results with table ranking
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TournamentResults"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /tournaments/{slug}/result-config:
+    parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+
+    put:
+      summary: Update result visibility config (organizer only)
+      operationId: updateResultConfig
+      tags: [Results]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResultConfig"
+      responses:
+        "200":
+          description: Updated config
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResultConfig"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+# ---------------------------------------------------------------------------
+# Tags
+# ---------------------------------------------------------------------------
+tags:
+  - name: Auth
+    description: Authentication — Google OAuth and rater login
+  - name: User
+    description: Current user profile and helper invite code
+  - name: Tournaments
+    description: Tournament management
+  - name: Members
+    description: Tournament member management (helpers)
+  - name: Tables
+    description: Table management
+  - name: Photos
+    description: Photo upload and deletion
+  - name: QR Codes
+    description: QR code generation and PDF export
+  - name: Raters
+    description: Rater registration
+  - name: Ratings
+    description: Rating submission
+  - name: Results
+    description: Tournament results and ranking
