@@ -94,13 +94,16 @@ When rating a zone, the rater automatically sees the corresponding zone photos.
 - Can invite and remove helpers
 
 ### Role: Helper
-- Added to a tournament by the organizer
-- **Almost identical permissions to organizer**, including:
+- Logs in exactly like an organizer (Google OAuth) — there is no separate "helper account type"
+- Is added to a specific tournament by the organizer via the helper's personal invite code
+- **Almost identical permissions to organizer** for that tournament, including:
   - Create, edit, describe tables
   - Upload, categorize, and delete photos
   - **Register raters and assign codes**
   - Generate QR codes and export as PDF
 - ❌ No access to: results, tournament deletion/archiving, helper management
+- ✅ Can remove themselves from a tournament (leave as helper)
+- The "helper" role is **per-tournament**, not a global account role — the same user can be organizer of one tournament and helper of another
 
 ### Role: Rater — NO classic login
 - Authentication via: **nickname + 4–6 digit numeric code**
@@ -172,8 +175,13 @@ Rating
 
 User (system user)
   ├── id, google_sub (OAuth ID), email, name, avatar_url
-  ├── role: organizer | helper
+  ├── helper_invite_code (permanent, unique — used by organizers to add this user as helper)
   └── tournament_memberships []TournamentMembership
+
+TournamentMembership
+  ├── user_id → User
+  ├── tournament_id → Tournament
+  └── role: organizer | helper       ← role lives here, not on User
 ```
 
 ---
@@ -185,8 +193,12 @@ User (system user)
 - **US-02:** As an organizer I want to add any number of links to the tournament (with label), always displayed with a liability disclaimer.
 - **US-03:** As an organizer I want to choose which optional rating criteria are active.
 - **US-04:** As an organizer I want to set a voting period (start/end).
-- **US-05:** As an organizer I want to invite helpers via Google account / email.
+- **US-05:** As an organizer I want to add a helper to my tournament by entering their personal helper invite code, so that I can share management tasks without needing their email address.
 - **US-06:** As an organizer I want to configure before showing results: whether comments are visible, and if so, which criteria comments to show.
+- **US-06a:** As a user I want to see my personal helper invite code in my profile, so that I can share it with organizers who want to add me as a helper.
+- **US-06b:** As a user I want to see on my dashboard both my own tournaments (as organizer) and tournaments I have been invited to (as helper), clearly separated.
+- **US-06c:** As a helper I want to be able to leave a tournament I was added to, so that I can manage my own involvement.
+- **US-06d:** As an organizer I want to remove a helper from my tournament at any time.
 
 ### Epic 2: Table Management
 - **US-10:** As an organizer/helper I want to create tables (count taken from tournament config).
@@ -301,7 +313,7 @@ User (system user)
 - Dark mode (per theme)
 - Email + password login (Phase 2, with 2FA)
 - Additional themes (e.g. Historical, Cyberpunk)
-- Notifications (e.g. voting period starts)
+- Notifications (e.g. voting period starts, helper was added to a tournament)
 
 ---
 
