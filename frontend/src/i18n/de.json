@@ -1,0 +1,117 @@
+{
+  "app": {
+    "name": "TurnScore",
+    "tagline": "Spieltisch-Bewertung für Tabletop-Turniere"
+  },
+  "nav": {
+    "home": "Startseite",
+    "dashboard": "Dashboard",
+    "login": "Anmelden",
+    "logout": "Abmelden",
+    "imprint": "Impressum",
+    "privacy": "Datenschutz"
+  },
+  "auth": {
+    "login_title": "Anmelden",
+    "login_with_google": "Mit Google anmelden",
+    "rater_login_link": "Als Teilnehmer bewerten (kein Konto nötig)",
+    "rater_login_title": "Teilnehmer-Login",
+    "nickname_label": "Spitzname",
+    "nickname_placeholder": "Dein Spitzname",
+    "code_label": "Code",
+    "code_placeholder": "Dein Zugangscode",
+    "login_button": "Bewertung starten",
+    "logout_confirm": "Abmelden?",
+    "error_invalid_credentials": "Ungültiger Spitzname oder Code."
+  },
+  "home": {
+    "upcoming_tournaments": "Kommende Turniere",
+    "past_tournaments": "Vergangene Turniere",
+    "no_tournaments": "Noch keine Turniere vorhanden."
+  },
+  "tournament": {
+    "type_fantasy": "Fantasy",
+    "type_scifi": "Sci-Fi",
+    "status_draft": "Entwurf",
+    "status_active": "Aktiv",
+    "status_voting": "Abstimmung",
+    "status_archived": "Archiviert",
+    "tables_count": "{{count}} Tische",
+    "view_tables": "Tische ansehen"
+  },
+  "table": {
+    "number": "Tisch {{number}}",
+    "zone_a": "Aufstellungszone A",
+    "zone_b": "Aufstellungszone B",
+    "photos": "Fotos",
+    "no_photos": "Noch keine Fotos."
+  },
+  "rating": {
+    "title": "Tisch bewerten",
+    "submit": "Bewertung abgeben",
+    "submitting": "Wird gespeichert...",
+    "already_rated": "Du hast diesen Tisch bereits bewertet.",
+    "grade_1": "1 – Sehr gut",
+    "grade_2": "2 – Gut",
+    "grade_3": "3 – Befriedigend",
+    "grade_4": "4 – Ausreichend",
+    "grade_5": "5 – Mangelhaft",
+    "grade_6": "6 – Ungenügend",
+    "grade_1_short": "Sehr gut",
+    "grade_6_short": "Ungenügend",
+    "played_zone": "Hast du an diesem Tisch gespielt?",
+    "played_none": "Nein",
+    "played_zone_a": "Ja – Zone A",
+    "played_zone_b": "Ja – Zone B",
+    "comment_placeholder": "Optionaler Kommentar (max. 1000 Zeichen)...",
+    "success": "Bewertung erfolgreich gespeichert!"
+  },
+  "criteria": {
+    "balance": "Balance",
+    "aesthetics": "Ästhetik",
+    "terrain_density": "Geländedichte",
+    "labeling": "Beschriftung",
+    "overall": "Gesamteindruck",
+    "zone_a": "Aufstellungszone A",
+    "zone_b": "Aufstellungszone B",
+    "catering": "Verpflegung",
+    "venue": "Veranstaltungsort",
+    "organization": "Organisation"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "my_tournaments": "Meine Turniere",
+    "create_tournament": "Turnier erstellen",
+    "no_tournaments": "Du hast noch keine Turniere."
+  },
+  "photo": {
+    "category_general": "Allgemeine Fotos",
+    "category_zone_a": "Zone-A-Fotos",
+    "category_zone_b": "Zone-B-Fotos",
+    "tap_to_upload": "Tippen oder klicken zum Hochladen",
+    "uploading": "Wird hochgeladen...",
+    "delete_confirm": "Dieses Foto löschen?"
+  },
+  "results": {
+    "title": "Ergebnisse",
+    "rank": "Rang",
+    "table": "Tisch",
+    "average": "Durchschnitt",
+    "ratings_count": "{{count}} Bewertungen",
+    "no_results": "Noch keine Bewertungen abgegeben."
+  },
+  "errors": {
+    "generic": "Ein Fehler ist aufgetreten. Bitte versuche es erneut.",
+    "not_found": "Nicht gefunden.",
+    "forbidden": "Zugriff verweigert."
+  },
+  "common": {
+    "loading": "Lädt...",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "back": "Zurück",
+    "close": "Schließen"
+  }
+}
