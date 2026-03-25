@@ -48,9 +48,20 @@ type TournamentRepository interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
+// MembershipWithTournament is a read-model joining membership with tournament info.
+type MembershipWithTournament struct {
+	TournamentID   uuid.UUID
+	TournamentName string
+	TournamentSlug string
+	Role           string
+}
+
 // TournamentMemberRepository defines data access for tournament membership.
 type TournamentMemberRepository interface {
 	GetRole(ctx context.Context, tournamentID, userID uuid.UUID) (string, error)
 	AddMember(ctx context.Context, tournamentID, userID uuid.UUID, role string) error
 	RemoveMember(ctx context.Context, tournamentID, userID uuid.UUID) error
+
+	// ListWithTournamentsByUserID returns memberships with tournament info for a user.
+	ListWithTournamentsByUserID(ctx context.Context, userID uuid.UUID) ([]MembershipWithTournament, error)
 }

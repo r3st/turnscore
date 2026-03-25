@@ -14,6 +14,7 @@ import (
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
+	domain "github.com/r3st/turnscore/internal/domain"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -68,6 +69,21 @@ func (m *MockTournamentMemberRepository) GetRole(ctx context.Context, tournament
 func (mr *MockTournamentMemberRepositoryMockRecorder) GetRole(ctx, tournamentID, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRole", reflect.TypeOf((*MockTournamentMemberRepository)(nil).GetRole), ctx, tournamentID, userID)
+}
+
+// ListWithTournamentsByUserID mocks base method.
+func (m *MockTournamentMemberRepository) ListWithTournamentsByUserID(ctx context.Context, userID uuid.UUID) ([]domain.MembershipWithTournament, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListWithTournamentsByUserID", ctx, userID)
+	ret0, _ := ret[0].([]domain.MembershipWithTournament)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListWithTournamentsByUserID indicates an expected call of ListWithTournamentsByUserID.
+func (mr *MockTournamentMemberRepositoryMockRecorder) ListWithTournamentsByUserID(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListWithTournamentsByUserID", reflect.TypeOf((*MockTournamentMemberRepository)(nil).ListWithTournamentsByUserID), ctx, userID)
 }
 
 // RemoveMember mocks base method.

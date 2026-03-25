@@ -10,6 +10,7 @@
 package mocks
 
 import (
+	context "context"
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
@@ -41,8 +42,67 @@ func (m *MockRaterRepository) EXPECT() *MockRaterRepositoryMockRecorder {
 	return m.recorder
 }
 
+// Create mocks base method.
+func (m *MockRaterRepository) Create(ctx context.Context, r *domain.Rater) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Create", ctx, r)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Create indicates an expected call of Create.
+func (mr *MockRaterRepositoryMockRecorder) Create(ctx, r any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockRaterRepository)(nil).Create), ctx, r)
+}
+
+// ExistsByCode mocks base method.
+func (m *MockRaterRepository) ExistsByCode(ctx context.Context, tournamentID uuid.UUID, code string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ExistsByCode", ctx, tournamentID, code)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ExistsByCode indicates an expected call of ExistsByCode.
+func (mr *MockRaterRepositoryMockRecorder) ExistsByCode(ctx, tournamentID, code any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExistsByCode", reflect.TypeOf((*MockRaterRepository)(nil).ExistsByCode), ctx, tournamentID, code)
+}
+
+// ExistsByNickname mocks base method.
+func (m *MockRaterRepository) ExistsByNickname(ctx context.Context, tournamentID uuid.UUID, nickname string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ExistsByNickname", ctx, tournamentID, nickname)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ExistsByNickname indicates an expected call of ExistsByNickname.
+func (mr *MockRaterRepositoryMockRecorder) ExistsByNickname(ctx, tournamentID, nickname any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExistsByNickname", reflect.TypeOf((*MockRaterRepository)(nil).ExistsByNickname), ctx, tournamentID, nickname)
+}
+
+// FindByID mocks base method.
+func (m *MockRaterRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.Rater, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindByID", ctx, id)
+	ret0, _ := ret[0].(*domain.Rater)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindByID indicates an expected call of FindByID.
+func (mr *MockRaterRepositoryMockRecorder) FindByID(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByID", reflect.TypeOf((*MockRaterRepository)(nil).FindByID), ctx, id)
+}
+
 // FindByNicknameAndCode mocks base method.
-func (m *MockRaterRepository) FindByNicknameAndCode(ctx any, tournamentID uuid.UUID, nickname, code string) (*domain.Rater, error) {
+func (m *MockRaterRepository) FindByNicknameAndCode(ctx context.Context, tournamentID uuid.UUID, nickname, code string) (*domain.Rater, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "FindByNicknameAndCode", ctx, tournamentID, nickname, code)
 	ret0, _ := ret[0].(*domain.Rater)
@@ -54,4 +114,19 @@ func (m *MockRaterRepository) FindByNicknameAndCode(ctx any, tournamentID uuid.U
 func (mr *MockRaterRepositoryMockRecorder) FindByNicknameAndCode(ctx, tournamentID, nickname, code any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByNicknameAndCode", reflect.TypeOf((*MockRaterRepository)(nil).FindByNicknameAndCode), ctx, tournamentID, nickname, code)
+}
+
+// ListByTournamentID mocks base method.
+func (m *MockRaterRepository) ListByTournamentID(ctx context.Context, tournamentID uuid.UUID) ([]domain.Rater, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListByTournamentID", ctx, tournamentID)
+	ret0, _ := ret[0].([]domain.Rater)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListByTournamentID indicates an expected call of ListByTournamentID.
+func (mr *MockRaterRepositoryMockRecorder) ListByTournamentID(ctx, tournamentID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByTournamentID", reflect.TypeOf((*MockRaterRepository)(nil).ListByTournamentID), ctx, tournamentID)
 }
