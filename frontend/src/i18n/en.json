@@ -37,7 +37,9 @@
     "status_voting": "Voting",
     "status_archived": "Archived",
     "tables_count": "{{count}} tables",
-    "view_tables": "View Tables"
+    "view_tables": "View Tables",
+    "event_date": "Event date",
+    "location": "Location"
   },
   "table": {
     "number": "Table {{number}}",

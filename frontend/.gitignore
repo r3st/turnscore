@@ -8,4 +8,4 @@ dist-ssr/
 coverage/
 playwright-report/
 test-results/
-src/api/generated/api.ts
+# src/api/generated/api.ts is committed — generated from api/openapi.yaml via `make generate`
