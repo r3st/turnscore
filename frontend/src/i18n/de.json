@@ -37,7 +37,9 @@
     "status_voting": "Abstimmung",
     "status_archived": "Archiviert",
     "tables_count": "{{count}} Tische",
-    "view_tables": "Tische ansehen"
+    "view_tables": "Tische ansehen",
+    "event_date": "Veranstaltungsdatum",
+    "location": "Ort"
   },
   "table": {
     "number": "Tisch {{number}}",
