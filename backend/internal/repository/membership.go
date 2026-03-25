@@ -67,3 +67,34 @@ func (r *MembershipRepository) RemoveMember(ctx context.Context, tournamentID, u
 	}
 	return nil
 }
+
+// ListWithTournamentsByUserID returns memberships with tournament info for a user.
+func (r *MembershipRepository) ListWithTournamentsByUserID(ctx context.Context, userID uuid.UUID) ([]domain.MembershipWithTournament, error) {
+	type row struct {
+		TournamentID   uuid.UUID `gorm:"column:tournament_id"`
+		TournamentName string    `gorm:"column:tournament_name"`
+		TournamentSlug string    `gorm:"column:tournament_slug"`
+		Role           string    `gorm:"column:role"`
+	}
+	var rows []row
+	err := r.db.WithContext(ctx).Raw(`
+		SELECT tm.tournament_id, t.name AS tournament_name, t.slug AS tournament_slug, tm.role
+		FROM tournament_members tm
+		JOIN tournaments t ON tm.tournament_id = t.id
+		WHERE tm.user_id = ?
+		ORDER BY t.name ASC
+	`, userID).Scan(&rows).Error
+	if err != nil {
+		return nil, fmt.Errorf("ListWithTournamentsByUserID: %w", err)
+	}
+	result := make([]domain.MembershipWithTournament, 0, len(rows))
+	for _, row := range rows {
+		result = append(result, domain.MembershipWithTournament{
+			TournamentID:   row.TournamentID,
+			TournamentName: row.TournamentName,
+			TournamentSlug: row.TournamentSlug,
+			Role:           row.Role,
+		})
+	}
+	return result, nil
+}
