@@ -20,6 +20,7 @@ func NewRouter(cfg *config.Config, jwtSvc *service.JWTService, h *handlers.Handl
 
 	r := gin.New()
 	r.Use(gin.Recovery())
+	r.Use(middleware.CORS(cfg.Server.FrontendURL))
 	r.Use(middleware.RequestLogger())
 	r.Use(middleware.OptionalAuth(jwtSvc))
 
