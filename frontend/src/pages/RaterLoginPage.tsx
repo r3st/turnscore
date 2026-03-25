@@ -1,6 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AppLayout } from '@/components/layout/AppLayout';
+import { TurnScoreLogo } from '@/components/ui/TurnScoreLogo';
 
 export function RaterLoginPage() {
   const { slug } = useParams<{ slug?: string }>();
@@ -10,6 +11,9 @@ export function RaterLoginPage() {
     <AppLayout>
       <main className="flex min-h-[60vh] items-center justify-center">
         <div className="w-full max-w-sm space-y-6 p-8 rounded" style={{ backgroundColor: 'var(--color-surface)' }}>
+          <div className="flex justify-center">
+            <TurnScoreLogo height={72} />
+          </div>
           <h1 className="font-heading text-2xl font-bold text-center">
             {t('auth.rater_login_title')}
           </h1>

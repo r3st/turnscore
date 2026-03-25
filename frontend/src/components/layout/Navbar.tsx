@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores/authStore';
+import { TurnScoreLogo } from '@/components/ui/TurnScoreLogo';
 
 export function Navbar() {
   const { t, i18n } = useTranslation();
@@ -17,8 +18,14 @@ export function Navbar() {
         className="container mx-auto flex items-center justify-between px-4 py-3"
         aria-label="Main navigation"
       >
-        <Link to="/" className="font-heading text-xl font-bold" style={{ color: 'var(--color-primary)' }}>
-          {t('app.name')}
+        <Link
+          to="/"
+          className="flex items-center gap-2 font-heading text-xl font-bold"
+          style={{ color: 'var(--color-primary)' }}
+          aria-label={t('app.name')}
+        >
+          <TurnScoreLogo height={32} />
+          <span>{t('app.name')}</span>
         </Link>
 
         <div className="flex items-center gap-4">

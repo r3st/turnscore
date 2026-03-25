@@ -19,6 +19,11 @@
   --shadow:           0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
+/* Logo theme switching — controlled via data-theme on <html> */
+.ts-logo-scifi  { display: none; }
+:root[data-theme="scifi"] .ts-logo-fantasy { display: none; }
+:root[data-theme="scifi"] .ts-logo-scifi   { display: block; }
+
 @layer base {
   * {
     @apply border-border;
