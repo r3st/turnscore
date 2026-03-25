@@ -35,11 +35,19 @@ type DatabaseConfig struct {
 	SSLMode  string `mapstructure:"sslmode"`
 }
 
-// DSN returns the PostgreSQL connection string.
+// DSN returns the PostgreSQL connection string in key=value format (used by GORM).
 func (d DatabaseConfig) DSN() string {
 	return fmt.Sprintf(
 		"host=%s port=%d dbname=%s user=%s password=%s sslmode=%s",
 		d.Host, d.Port, d.Name, d.User, d.Password, d.SSLMode,
+	)
+}
+
+// MigrateDSN returns the PostgreSQL URL used by golang-migrate.
+func (d DatabaseConfig) MigrateDSN() string {
+	return fmt.Sprintf(
+		"postgres://%s:%s@%s:%d/%s?sslmode=%s",
+		d.User, d.Password, d.Host, d.Port, d.Name, d.SSLMode,
 	)
 }
 

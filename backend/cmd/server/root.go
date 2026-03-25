@@ -107,7 +107,7 @@ func runServer(cmd *cobra.Command, args []string) error {
 	log.Info().Str("host", cfg.Database.Host).Int("port", cfg.Database.Port).Msg("database connected")
 
 	// --- Migrations ---
-	if err := runMigrations(cfg.Database.DSN()); err != nil {
+	if err := runMigrations(cfg.Database.MigrateDSN()); err != nil {
 		return fmt.Errorf("running migrations: %w", err)
 	}
 	log.Info().Msg("migrations applied")

@@ -20,10 +20,11 @@ func NewRouter(cfg *config.Config, jwtSvc *service.JWTService, h *handlers.Handl
 
 	r := gin.New()
 	r.Use(gin.Recovery())
+	r.Use(middleware.RequestLogger())
 	r.Use(middleware.OptionalAuth(jwtSvc))
 
 	strictHandler := generated.NewStrictHandler(h, nil)
-	generated.RegisterHandlers(r, strictHandler)
+	generated.RegisterHandlers(r.Group("/api/v1"), strictHandler)
 
 	return r
 }
