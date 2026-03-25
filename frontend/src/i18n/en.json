@@ -1,0 +1,117 @@
+{
+  "app": {
+    "name": "TurnScore",
+    "tagline": "Tabletop Tournament Table Rating"
+  },
+  "nav": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "login": "Login",
+    "logout": "Logout",
+    "imprint": "Imprint",
+    "privacy": "Privacy Policy"
+  },
+  "auth": {
+    "login_title": "Sign In",
+    "login_with_google": "Continue with Google",
+    "rater_login_link": "Rate as participant (no account needed)",
+    "rater_login_title": "Participant Login",
+    "nickname_label": "Nickname",
+    "nickname_placeholder": "Your nickname",
+    "code_label": "Code",
+    "code_placeholder": "Your access code",
+    "login_button": "Start Rating",
+    "logout_confirm": "Sign out?",
+    "error_invalid_credentials": "Invalid nickname or code."
+  },
+  "home": {
+    "upcoming_tournaments": "Upcoming Tournaments",
+    "past_tournaments": "Past Tournaments",
+    "no_tournaments": "No tournaments yet."
+  },
+  "tournament": {
+    "type_fantasy": "Fantasy",
+    "type_scifi": "Sci-Fi",
+    "status_draft": "Draft",
+    "status_active": "Active",
+    "status_voting": "Voting",
+    "status_archived": "Archived",
+    "tables_count": "{{count}} tables",
+    "view_tables": "View Tables"
+  },
+  "table": {
+    "number": "Table {{number}}",
+    "zone_a": "Deployment Zone A",
+    "zone_b": "Deployment Zone B",
+    "photos": "Photos",
+    "no_photos": "No photos yet."
+  },
+  "rating": {
+    "title": "Rate Table",
+    "submit": "Submit Rating",
+    "submitting": "Saving...",
+    "already_rated": "You have already rated this table.",
+    "grade_1": "1 – Excellent",
+    "grade_2": "2 – Good",
+    "grade_3": "3 – Satisfactory",
+    "grade_4": "4 – Sufficient",
+    "grade_5": "5 – Poor",
+    "grade_6": "6 – Failing",
+    "grade_1_short": "Excellent",
+    "grade_6_short": "Failing",
+    "played_zone": "Did you play on this table?",
+    "played_none": "No",
+    "played_zone_a": "Yes – Zone A",
+    "played_zone_b": "Yes – Zone B",
+    "comment_placeholder": "Optional comment (max. 1000 characters)...",
+    "success": "Rating saved successfully!"
+  },
+  "criteria": {
+    "balance": "Balance",
+    "aesthetics": "Aesthetics",
+    "terrain_density": "Terrain Density",
+    "labeling": "Labeling",
+    "overall": "Overall Impression",
+    "zone_a": "Deployment Zone A",
+    "zone_b": "Deployment Zone B",
+    "catering": "Catering",
+    "venue": "Venue",
+    "organization": "Organization"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "my_tournaments": "My Tournaments",
+    "create_tournament": "Create Tournament",
+    "no_tournaments": "You have no tournaments yet."
+  },
+  "photo": {
+    "category_general": "General Photos",
+    "category_zone_a": "Zone A Photos",
+    "category_zone_b": "Zone B Photos",
+    "tap_to_upload": "Tap or click to upload",
+    "uploading": "Uploading...",
+    "delete_confirm": "Delete this photo?"
+  },
+  "results": {
+    "title": "Results",
+    "rank": "Rank",
+    "table": "Table",
+    "average": "Average",
+    "ratings_count": "{{count}} ratings",
+    "no_results": "No ratings submitted yet."
+  },
+  "errors": {
+    "generic": "An error occurred. Please try again.",
+    "not_found": "Not found.",
+    "forbidden": "Access denied."
+  },
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "close": "Close"
+  }
+}

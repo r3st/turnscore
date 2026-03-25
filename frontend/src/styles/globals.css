@@ -1,0 +1,44 @@
+@import '../themes/fantasy.css';
+@import '../themes/scifi.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Default (neutral) theme */
+:root {
+  --color-primary:    #4F6D9A;
+  --color-secondary:  #6B7FA3;
+  --color-background: #F8FAFC;
+  --color-surface:    #FFFFFF;
+  --color-text:       #1E293B;
+  --color-accent:     #3B82F6;
+  --font-heading:     'Inter', sans-serif;
+  --font-body:        'Inter', sans-serif;
+  --border-radius:    6px;
+  --shadow:           0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-text);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+  }
+
+  /* Minimum touch target size (WCAG 2.5.5) */
+  button, a, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
