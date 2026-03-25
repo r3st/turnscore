@@ -23,7 +23,7 @@ func NewRouter(cfg *config.Config, jwtSvc *service.JWTService, h *handlers.Handl
 	r.Use(middleware.OptionalAuth(jwtSvc))
 
 	strictHandler := generated.NewStrictHandler(h, nil)
-	generated.RegisterHandlers(r, strictHandler)
+	generated.RegisterHandlers(r.Group("/api/v1"), strictHandler)
 
 	return r
 }
