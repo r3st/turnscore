@@ -1,11 +1,12 @@
 import { useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useTournament } from '@/api/hooks/useTournaments';
+import { useTournament, useUpdateTournament } from '@/api/hooks/useTournaments';
 import {
   useListTables,
   useCreateTables,
   useUpdateTable,
+  useDeleteTable,
   useUploadPhoto,
   useDeletePhoto,
   useGenerateQRCode,
@@ -19,13 +20,24 @@ export function TableManagementPage() {
   const { data: tournament } = useTournament(slug);
   const { data: tables, isLoading } = useListTables(slug);
   const createTables = useCreateTables(slug);
+  const updateTournament = useUpdateTournament(slug);
   const exportPDF = useGenerateAllQRCodes(slug);
+
+  const handleAddOneTable = async () => {
+    const newCount = (tournament?.table_count ?? 0) + 1;
+    await updateTournament.mutateAsync({ table_count: newCount });
+    createTables.mutate();
+  };
 
   if (isLoading) {
     return <p className="text-sm" style={{ color: 'color-mix(in srgb, var(--color-text) 60%, transparent)' }}>{t('common.loading')}</p>;
   }
 
-  const hasTables = tables && tables.length > 0;
+  const tableCount = tables?.length ?? 0;
+  const targetCount = tournament?.table_count ?? 0;
+  const isDraft = tournament?.status === 'draft';
+  const missingCount = Math.max(0, targetCount - tableCount);
+  const hasTables = tableCount > 0;
 
   return (
     <div className="space-y-8 max-w-3xl">
@@ -56,14 +68,14 @@ export function TableManagementPage() {
         )}
       </div>
 
-      {/* Create tables CTA */}
-      {!hasTables && (
+      {/* Create tables CTA — no tables yet */}
+      {!hasTables && isDraft && (
         <div
           className="p-6 rounded text-center space-y-3"
           style={{ backgroundColor: 'var(--color-surface)' }}
         >
           <p className="text-sm" style={{ color: 'color-mix(in srgb, var(--color-text) 60%, transparent)' }}>
-            {t('table_mgmt.create_tables_hint', { count: tournament?.table_count ?? '?' })}
+            {t('table_mgmt.create_tables_hint', { count: targetCount })}
           </p>
           <button
             onClick={() => createTables.mutate()}
@@ -76,13 +88,42 @@ export function TableManagementPage() {
         </div>
       )}
 
+      {/* Add missing tables CTA — some tables exist but count < target */}
+      {hasTables && missingCount > 0 && isDraft && (
+        <div className="flex items-center gap-3 p-3 rounded" style={{ backgroundColor: 'var(--color-surface)' }}>
+          <p className="text-sm flex-1" style={{ color: 'color-mix(in srgb, var(--color-text) 60%, transparent)' }}>
+            {t('table_mgmt.add_missing_tables', { count: missingCount })}
+          </p>
+          <button
+            onClick={() => createTables.mutate()}
+            disabled={createTables.isPending}
+            className="shrink-0 px-4 py-1.5 rounded text-sm font-medium"
+            style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-background)' }}
+          >
+            {createTables.isPending ? t('common.loading') : t('table_mgmt.create_tables')}
+          </button>
+        </div>
+      )}
+
       {/* Table list */}
       {hasTables && (
         <div className="space-y-4">
           {tables.map((table) => (
-            <TableCard key={table.id} slug={slug} table={table} />
+            <TableCard key={table.id} slug={slug} table={table} isDraft={isDraft} />
           ))}
         </div>
+      )}
+
+      {/* Add one more table (beyond table_count) */}
+      {isDraft && (
+        <button
+          onClick={handleAddOneTable}
+          disabled={updateTournament.isPending || createTables.isPending}
+          className="text-sm px-4 py-2 rounded border font-medium"
+          style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
+        >
+          {t('table_mgmt.add_one_table')}
+        </button>
       )}
 
     </div>
@@ -91,9 +132,10 @@ export function TableManagementPage() {
 
 // ── TableCard ──────────────────────────────────────────────────────────────
 
-function TableCard({ slug, table }: { slug: string; table: TableSummary }) {
+function TableCard({ slug, table, isDraft }: { slug: string; table: TableSummary; isDraft: boolean }) {
   const { t } = useTranslation();
   const updateTable = useUpdateTable(slug, table.number);
+  const deleteTable = useDeleteTable(slug);
   const uploadPhoto = useUploadPhoto(slug, table.number);
   const deletePhoto = useDeletePhoto(slug);
   const generateQR = useGenerateQRCode(slug, table.number);
@@ -141,6 +183,21 @@ function TableCard({ slug, table }: { slug: string; table: TableSummary }) {
         </h2>
 
         <div className="flex gap-2">
+          {isDraft && (
+            <button
+              onClick={() => {
+                if (window.confirm(t('table_mgmt.delete_table_confirm'))) {
+                  deleteTable.mutate(table.number);
+                }
+              }}
+              disabled={deleteTable.isPending}
+              className="text-xs px-3 py-1 rounded border font-medium"
+              style={{ borderColor: '#dc2626', color: '#dc2626' }}
+              aria-label={`${t('table_mgmt.delete_table')} ${table.number}`}
+            >
+              {t('table_mgmt.delete_table')}
+            </button>
+          )}
           {table.qr_code_url ? (
             <a
               href={table.qr_code_url}

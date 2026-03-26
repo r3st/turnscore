@@ -112,6 +112,7 @@ export function TournamentEditPage() {
       } else {
         await updateTournament.mutateAsync({
           name,
+          type,
           description: description || null,
           location: location || null,
           event_date: eventDate || null,
@@ -220,7 +221,6 @@ export function TournamentEditPage() {
                     value={v}
                     checked={type === v}
                     onChange={() => setType(v)}
-                    disabled={!isNew}
                   />
                   {t(`tournament_form.type_${v}`)}
                 </label>

@@ -295,6 +295,10 @@ components:
         name:
           type: string
           maxLength: 200
+        type:
+          allOf:
+            - $ref: "#/components/schemas/TournamentType"
+          nullable: true
         description:
           type: string
           nullable: true
@@ -324,6 +328,11 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CriteriaKey"
+        table_count:
+          type: integer
+          minimum: 1
+          maximum: 100
+          nullable: true
 
     # --- Table ---
 
@@ -1053,6 +1062,22 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TableSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    delete:
+      summary: Delete a table (organizer only, draft status)
+      operationId: deleteTable
+      tags: [Tables]
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Table deleted
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":

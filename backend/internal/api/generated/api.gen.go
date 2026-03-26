@@ -478,6 +478,8 @@ type UpdateTournamentRequest struct {
 	Location       *string             `json:"location,omitempty"`
 	Name           *string             `json:"name,omitempty"`
 	Status         *TournamentStatus   `json:"status,omitempty"`
+	TableCount     *int                `json:"table_count,omitempty"`
+	Type           *TournamentType     `json:"type,omitempty"`
 	VotingEnd      *time.Time          `json:"voting_end,omitempty"`
 	VotingStart    *time.Time          `json:"voting_start,omitempty"`
 }
@@ -636,6 +638,9 @@ type ServerInterface interface {
 	// Create tables for tournament (organizer or helper)
 	// (POST /tournaments/{slug}/tables)
 	CreateTables(c *gin.Context, slug string)
+	// Delete a table (organizer only, draft status)
+	// (DELETE /tournaments/{slug}/tables/{number})
+	DeleteTable(c *gin.Context, slug string, number int)
 	// Get table detail (public — used by QR code scan)
 	// (GET /tournaments/{slug}/tables/{number})
 	GetTable(c *gin.Context, slug string, number int)
@@ -1178,6 +1183,41 @@ func (siw *ServerInterfaceWrapper) CreateTables(c *gin.Context) {
 	siw.Handler.CreateTables(c, slug)
 }
 
+// DeleteTable operation middleware
+func (siw *ServerInterfaceWrapper) DeleteTable(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "slug" -------------
+	var slug string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "slug", c.Param("slug"), &slug, runtime.BindStyledParameterOptions{Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter slug: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Path parameter "number" -------------
+	var number int
+
+	err = runtime.BindStyledParameterWithOptions("simple", "number", c.Param("number"), &number, runtime.BindStyledParameterOptions{Explode: false, Required: true, Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter number: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.DeleteTable(c, slug, number)
+}
+
 // GetTable operation middleware
 func (siw *ServerInterfaceWrapper) GetTable(c *gin.Context) {
 
@@ -1400,6 +1440,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/tournaments/:slug/results", wrapper.GetTournamentResults)
 	router.GET(options.BaseURL+"/tournaments/:slug/tables", wrapper.ListTables)
 	router.POST(options.BaseURL+"/tournaments/:slug/tables", wrapper.CreateTables)
+	router.DELETE(options.BaseURL+"/tournaments/:slug/tables/:number", wrapper.DeleteTable)
 	router.GET(options.BaseURL+"/tournaments/:slug/tables/:number", wrapper.GetTable)
 	router.PUT(options.BaseURL+"/tournaments/:slug/tables/:number", wrapper.UpdateTable)
 	router.POST(options.BaseURL+"/tournaments/:slug/tables/:number/photos", wrapper.UploadPhoto)
@@ -2330,6 +2371,50 @@ func (response CreateTables409JSONResponse) VisitCreateTablesResponse(w http.Res
 	return json.NewEncoder(w).Encode(response)
 }
 
+type DeleteTableRequestObject struct {
+	Slug   string `json:"slug"`
+	Number int    `json:"number"`
+}
+
+type DeleteTableResponseObject interface {
+	VisitDeleteTableResponse(w http.ResponseWriter) error
+}
+
+type DeleteTable204Response struct {
+}
+
+func (response DeleteTable204Response) VisitDeleteTableResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteTable401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response DeleteTable401JSONResponse) VisitDeleteTableResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteTable403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response DeleteTable403JSONResponse) VisitDeleteTableResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteTable404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response DeleteTable404JSONResponse) VisitDeleteTableResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 type GetTableRequestObject struct {
 	Slug   string `json:"slug"`
 	Number int    `json:"number"`
@@ -2644,6 +2729,9 @@ type StrictServerInterface interface {
 	// Create tables for tournament (organizer or helper)
 	// (POST /tournaments/{slug}/tables)
 	CreateTables(ctx context.Context, request CreateTablesRequestObject) (CreateTablesResponseObject, error)
+	// Delete a table (organizer only, draft status)
+	// (DELETE /tournaments/{slug}/tables/{number})
+	DeleteTable(ctx context.Context, request DeleteTableRequestObject) (DeleteTableResponseObject, error)
 	// Get table detail (public — used by QR code scan)
 	// (GET /tournaments/{slug}/tables/{number})
 	GetTable(ctx context.Context, request GetTableRequestObject) (GetTableResponseObject, error)
@@ -3311,6 +3399,34 @@ func (sh *strictHandler) CreateTables(ctx *gin.Context, slug string) {
 		ctx.Status(http.StatusInternalServerError)
 	} else if validResponse, ok := response.(CreateTablesResponseObject); ok {
 		if err := validResponse.VisitCreateTablesResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteTable operation middleware
+func (sh *strictHandler) DeleteTable(ctx *gin.Context, slug string, number int) {
+	var request DeleteTableRequestObject
+
+	request.Slug = slug
+	request.Number = number
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteTable(ctx, request.(DeleteTableRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteTable")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(DeleteTableResponseObject); ok {
+		if err := validResponse.VisitDeleteTableResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
 		}
 	} else if response != nil {

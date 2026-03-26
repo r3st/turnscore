@@ -143,3 +143,16 @@ func (mr *MockTableRepositoryMockRecorder) UpdateQRCodePath(ctx, tableID, path a
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateQRCodePath", reflect.TypeOf((*MockTableRepository)(nil).UpdateQRCodePath), ctx, tableID, path)
 }
+
+func (m *MockTableRepository) Delete(ctx context.Context, id uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Delete", ctx, id)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Delete indicates an expected call of Delete.
+func (mr *MockTableRepositoryMockRecorder) Delete(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockTableRepository)(nil).Delete), ctx, id)
+}

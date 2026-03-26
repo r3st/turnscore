@@ -106,3 +106,11 @@ func (r *TableRepository) UpdateQRCodePath(ctx context.Context, tableID uuid.UUI
 	}
 	return nil
 }
+
+func (r *TableRepository) Delete(ctx context.Context, id uuid.UUID) error {
+	err := r.db.WithContext(ctx).Delete(&domain.Table{}, "id = ?", id).Error
+	if err != nil {
+		return fmt.Errorf("Delete table: %w", err)
+	}
+	return nil
+}

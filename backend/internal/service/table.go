@@ -98,8 +98,8 @@ func (s *TableService) GetBySlugAndNumber(ctx context.Context, slug string, numb
 	return table, t, nil
 }
 
-// CreateForTournament creates tables 1..TableCount for the tournament.
-// Caller must be organizer or helper; returns ErrConflict if tables already exist.
+// CreateForTournament creates all missing tables up to TableCount (additive).
+// Caller must be organizer or helper.
 func (s *TableService) CreateForTournament(ctx context.Context, userID uuid.UUID, slug string) ([]domain.Table, error) {
 	t, err := s.tourneyRepo.FindBySlug(ctx, slug)
 	if err != nil {
@@ -111,28 +111,34 @@ func (s *TableService) CreateForTournament(ctx context.Context, userID uuid.UUID
 		return nil, domain.ErrForbidden
 	}
 
-	count, err := s.tableRepo.CountByTournamentID(ctx, t.ID)
+	existing, err := s.tableRepo.ListByTournamentID(ctx, t.ID)
 	if err != nil {
-		return nil, fmt.Errorf("CreateForTournament count: %w", err)
-	}
-	if count > 0 {
-		return nil, domain.ErrConflict
+		return nil, fmt.Errorf("CreateForTournament list existing: %w", err)
 	}
 
-	tables := make([]domain.Table, 0, t.TableCount)
+	existingNumbers := make(map[int]bool, len(existing))
+	for _, et := range existing {
+		existingNumbers[et.Number] = true
+	}
+
+	toCreate := make([]domain.Table, 0)
 	for i := 1; i <= t.TableCount; i++ {
-		tables = append(tables, domain.Table{
-			ID:           uuid.New(),
-			TournamentID: t.ID,
-			Number:       i,
-		})
+		if !existingNumbers[i] {
+			toCreate = append(toCreate, domain.Table{
+				ID:           uuid.New(),
+				TournamentID: t.ID,
+				Number:       i,
+			})
+		}
 	}
 
-	if err := s.tableRepo.CreateBatch(ctx, tables); err != nil {
-		return nil, fmt.Errorf("CreateForTournament create batch: %w", err)
+	if len(toCreate) > 0 {
+		if err := s.tableRepo.CreateBatch(ctx, toCreate); err != nil {
+			return nil, fmt.Errorf("CreateForTournament create batch: %w", err)
+		}
 	}
 
-	return tables, nil
+	return s.tableRepo.ListByTournamentID(ctx, t.ID)
 }
 
 // Update updates the name and/or description of a table.
@@ -165,6 +171,46 @@ func (s *TableService) Update(ctx context.Context, userID uuid.UUID, slug string
 	}
 
 	return table, nil
+}
+
+// DeleteTable removes a table and its photos. Only allowed in draft status; caller must be organizer.
+func (s *TableService) DeleteTable(ctx context.Context, userID uuid.UUID, slug string, number int) error {
+	t, err := s.tourneyRepo.FindBySlug(ctx, slug)
+	if err != nil {
+		return fmt.Errorf("DeleteTable find tournament: %w", err)
+	}
+
+	role, err := s.memberRepo.GetRole(ctx, t.ID, userID)
+	if err != nil || role != roleOrganizer {
+		return domain.ErrForbidden
+	}
+
+	if t.Status != "draft" {
+		return domain.ErrForbidden
+	}
+
+	table, err := s.tableRepo.FindByTournamentAndNumber(ctx, t.ID, number)
+	if err != nil {
+		return fmt.Errorf("DeleteTable find table: %w", err)
+	}
+
+	// Delete all photos from storage first.
+	for i := range table.Photos {
+		p := &table.Photos[i]
+		if delErr := s.storage.Delete(ctx, p.URL); delErr != nil {
+			return fmt.Errorf("DeleteTable delete photo file: %w", delErr)
+		}
+		if p.ThumbnailURL != nil {
+			if delErr := s.storage.Delete(ctx, *p.ThumbnailURL); delErr != nil {
+				return fmt.Errorf("DeleteTable delete thumbnail: %w", delErr)
+			}
+		}
+	}
+
+	if err := s.tableRepo.Delete(ctx, table.ID); err != nil {
+		return fmt.Errorf("DeleteTable delete record: %w", err)
+	}
+	return nil
 }
 
 // UploadPhoto validates, thumbnails, stores, and records a photo for a table.
