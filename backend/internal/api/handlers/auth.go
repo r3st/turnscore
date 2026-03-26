@@ -5,6 +5,9 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"fmt"
+	"net/http"
+	"net/url"
 
 	"github.com/r3st/turnscore/internal/api/generated"
 	"github.com/r3st/turnscore/internal/domain"
@@ -16,32 +19,45 @@ const (
 	msgOAuthFailed        = "oauth flow failed"
 )
 
+// oauthRedirectResponse implements GoogleOAuthRedirectResponseObject and sets a Location header.
+type oauthRedirectResponse struct{ redirectURL string }
+
+func (r oauthRedirectResponse) VisitGoogleOAuthRedirectResponse(w http.ResponseWriter) error {
+	w.Header().Set("Location", r.redirectURL)
+	w.WriteHeader(http.StatusFound)
+	return nil
+}
+
+// callbackRedirectResponse implements GoogleOAuthCallbackResponseObject and redirects the browser.
+type callbackRedirectResponse struct{ redirectURL string }
+
+func (r callbackRedirectResponse) VisitGoogleOAuthCallbackResponse(w http.ResponseWriter) error {
+	w.Header().Set("Location", r.redirectURL)
+	w.WriteHeader(http.StatusFound)
+	return nil
+}
+
 // GoogleOAuthRedirect initiates the Google OAuth flow by redirecting to Google.
 func (h *Handlers) GoogleOAuthRedirect(ctx context.Context, req generated.GoogleOAuthRedirectRequestObject) (generated.GoogleOAuthRedirectResponseObject, error) {
-	_, err := generateOAuthState()
+	state, err := generateOAuthState()
 	if err != nil {
 		return nil, err
 	}
-	// The generated type does not support custom headers; redirect is handled by the oauth flow.
-	return generated.GoogleOAuthRedirect302Response{}, nil
+	return oauthRedirectResponse{redirectURL: h.authSvc.OAuthRedirectURL(state)}, nil
 }
 
-// GoogleOAuthCallback handles the Google OAuth callback and issues tokens.
+// GoogleOAuthCallback handles the Google OAuth callback and redirects the browser to the frontend with tokens.
 func (h *Handlers) GoogleOAuthCallback(ctx context.Context, req generated.GoogleOAuthCallbackRequestObject) (generated.GoogleOAuthCallbackResponseObject, error) {
 	tokenPair, err := h.authSvc.HandleCallback(ctx, req.Params.Code)
 	if err != nil {
-		return generated.GoogleOAuthCallback400JSONResponse{
-			BadRequestJSONResponse: generated.BadRequestJSONResponse{
-				Code:    "bad_request",
-				Message: msgOAuthFailed,
-			},
-		}, nil
+		return callbackRedirectResponse{redirectURL: h.frontendURL + "/login?error=oauth_failed"}, nil
 	}
-	return generated.GoogleOAuthCallback200JSONResponse(generated.AuthTokens{
-		AccessToken:  tokenPair.AccessToken,
-		RefreshToken: tokenPair.RefreshToken,
-		ExpiresIn:    tokenPair.ExpiresIn,
-	}), nil
+	redirectURL := fmt.Sprintf("%s/auth/callback?token=%s&refresh=%s",
+		h.frontendURL,
+		url.QueryEscape(tokenPair.AccessToken),
+		url.QueryEscape(tokenPair.RefreshToken),
+	)
+	return callbackRedirectResponse{redirectURL: redirectURL}, nil
 }
 
 // RaterLogin validates nickname + code and issues a rater JWT.

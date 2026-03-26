@@ -24,6 +24,7 @@ type Handlers struct {
 	raterSvc      *service.RaterService
 	userSvc       *service.UserService
 	authSvc       *service.AuthService
+	frontendURL   string // used to build OAuth callback redirect URLs
 }
 
 // New creates a new Handlers instance wired to the given services.
@@ -34,6 +35,7 @@ func New(
 	raterSvc *service.RaterService,
 	userSvc *service.UserService,
 	authSvc *service.AuthService,
+	frontendURL string,
 ) *Handlers {
 	return &Handlers{
 		tournamentSvc: tournamentSvc,
@@ -42,6 +44,7 @@ func New(
 		raterSvc:      raterSvc,
 		userSvc:       userSvc,
 		authSvc:       authSvc,
+		frontendURL:   frontendURL,
 	}
 }
 

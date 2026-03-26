@@ -55,6 +55,7 @@ func (d DatabaseConfig) MigrateDSN() string {
 type AuthConfig struct {
 	GoogleClientID     string `mapstructure:"google_client_id"`
 	GoogleClientSecret string `mapstructure:"google_client_secret"`
+	OAuthCallbackURL   string `mapstructure:"oauth_callback_url"` // e.g. "http://localhost:8080/api/v1/auth/google/callback"
 	JWTSecret          string `mapstructure:"jwt_secret"`
 	JWTExpiry          string `mapstructure:"jwt_expiry"`    // e.g. "15m"
 	RefreshExpiry      string `mapstructure:"refresh_expiry"` // e.g. "168h"
