@@ -31,7 +31,7 @@ export function Navbar() {
         <div className="flex items-center gap-4">
           <Link to="/" className="text-sm hover:underline">{t('nav.home')}</Link>
 
-          {isAuthenticated() && (role === 'organizer' || role === 'helper') && (
+          {isAuthenticated() && role === 'user' && (
             <Link to="/dashboard" className="text-sm hover:underline">
               {t('nav.dashboard')}
             </Link>

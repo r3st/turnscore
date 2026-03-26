@@ -30,7 +30,7 @@ export const router = createBrowserRouter([
   {
     path: '/dashboard',
     element: (
-      <ProtectedRoute roles={['organizer', 'helper']}>
+      <ProtectedRoute roles={['user']}>
         <DashboardLayout />
       </ProtectedRoute>
     ),
@@ -46,7 +46,7 @@ export const router = createBrowserRouter([
       {
         path: 'tournaments/:slug/results',
         element: (
-          <ProtectedRoute roles={['organizer']}>
+          <ProtectedRoute roles={['user']}>
             <ResultsPage />
           </ProtectedRoute>
         ),

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-type Role = 'organizer' | 'helper' | 'rater';
+type Role = 'user' | 'rater';
 
 interface JWTClaims {
   sub: string;
