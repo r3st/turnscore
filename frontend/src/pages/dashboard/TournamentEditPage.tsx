@@ -90,6 +90,10 @@ export function TournamentEditPage() {
     e.preventDefault();
     setFormError('');
     setFormSuccess('');
+    if (!name.trim()) {
+      setFormError(t('tournament_form.error_name_required'));
+      return;
+    }
     try {
       if (isNew) {
         const created = await createTournament.mutateAsync({

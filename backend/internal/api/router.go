@@ -24,6 +24,11 @@ func NewRouter(cfg *config.Config, jwtSvc *service.JWTService, h *handlers.Handl
 	r.Use(middleware.RequestLogger())
 	r.Use(middleware.OptionalAuth(jwtSvc))
 
+	// Serve uploaded files for local storage backend.
+	if cfg.Storage.Backend == "local" {
+		r.Static("/uploads", cfg.Storage.Local.Path)
+	}
+
 	strictHandler := generated.NewStrictHandler(h, nil)
 	generated.RegisterHandlers(r.Group("/api/v1"), strictHandler)
 

@@ -139,6 +139,7 @@
     "criteria_optional": "Optionale Kriterien",
     "save_success": "Turnier gespeichert.",
     "create_success": "Turnier erstellt.",
+    "error_name_required": "Turniername ist erforderlich.",
     "error_save": "Turnier konnte nicht gespeichert werden.",
     "error_create": "Turnier konnte nicht erstellt werden."
   },
