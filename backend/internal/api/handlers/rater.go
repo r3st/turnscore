@@ -299,5 +299,61 @@ func (h *Handlers) GetMe(ctx context.Context, req generated.GetMeRequestObject) 
 		AvatarUrl:        user.AvatarURL,
 		HelperInviteCode: user.HelperInviteCode,
 		Memberships:      apiMemberships,
+		Theme:            generated.UserProfileTheme(user.Theme),
+		ColorMode:        generated.UserProfileColorMode(user.ColorMode),
+	}), nil
+}
+
+// PatchMe updates the authenticated user's theme and color_mode preferences.
+func (h *Handlers) PatchMe(ctx context.Context, req generated.PatchMeRequestObject) (generated.PatchMeResponseObject, error) {
+	userID, ok := getUserID(ctx)
+	if !ok {
+		return generated.PatchMe401JSONResponse{
+			UnauthorizedJSONResponse: generated.UnauthorizedJSONResponse{Code: "unauthorized", Message: msgMissingUserID},
+		}, nil
+	}
+	if req.Body == nil {
+		return generated.PatchMe400JSONResponse{
+			BadRequestJSONResponse: generated.BadRequestJSONResponse{Code: "bad_request", Message: msgBodyRequired},
+		}, nil
+	}
+
+	input := domain.UpdatePreferencesInput{}
+	if req.Body.Theme != nil {
+		t := string(*req.Body.Theme)
+		input.Theme = &t
+	}
+	if req.Body.ColorMode != nil {
+		c := string(*req.Body.ColorMode)
+		input.ColorMode = &c
+	}
+
+	if _, err := h.userSvc.UpdatePreferences(ctx, userID, input); err != nil {
+		return nil, err
+	}
+
+	user, memberships, err := h.userSvc.GetProfile(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	apiMemberships := make([]generated.TournamentMembership, 0, len(memberships))
+	for _, m := range memberships {
+		apiMemberships = append(apiMemberships, generated.TournamentMembership{
+			TournamentId:   m.TournamentID,
+			TournamentName: m.TournamentName,
+			TournamentSlug: m.TournamentSlug,
+			Role:           generated.TournamentMembershipRole(m.Role),
+		})
+	}
+
+	return generated.PatchMe200JSONResponse(generated.UserProfile{
+		Id:               user.ID,
+		Name:             user.Name,
+		AvatarUrl:        user.AvatarURL,
+		HelperInviteCode: user.HelperInviteCode,
+		Memberships:      apiMemberships,
+		Theme:            generated.UserProfileTheme(user.Theme),
+		ColorMode:        generated.UserProfileColorMode(user.ColorMode),
 	}), nil
 }

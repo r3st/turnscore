@@ -86,7 +86,8 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /** Update own theme and color mode preferences */
+        patch: operations["patchMe"];
         trace?: never;
     };
     "/tournaments": {
@@ -415,6 +416,24 @@ export interface components {
              */
             helper_invite_code: string;
             memberships: components["schemas"]["TournamentMembership"][];
+            /**
+             * @description Organizer UI theme preference.
+             * @default scifi
+             * @enum {string}
+             */
+            theme: "scifi" | "fantasy";
+            /**
+             * @description Organizer color mode preference.
+             * @default dark
+             * @enum {string}
+             */
+            color_mode: "light" | "dark";
+        };
+        UpdatePreferencesRequest: {
+            /** @enum {string} */
+            theme?: "scifi" | "fantasy";
+            /** @enum {string} */
+            color_mode?: "light" | "dark";
         };
         TournamentMembership: {
             tournament_id: components["schemas"]["UUID"];
@@ -800,6 +819,32 @@ export interface operations {
                     "application/json": components["schemas"]["UserProfile"];
                 };
             };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    patchMe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePreferencesRequest"];
+            };
+        };
+        responses: {
+            /** @description Updated user profile */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserProfile"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
         };
     };

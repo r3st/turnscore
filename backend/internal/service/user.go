@@ -37,6 +37,15 @@ func NewUserService(
 	}
 }
 
+// UpdatePreferences saves theme and color_mode for a user.
+func (s *UserService) UpdatePreferences(ctx context.Context, userID uuid.UUID, input domain.UpdatePreferencesInput) (*domain.User, error) {
+	user, err := s.userRepo.UpdatePreferences(ctx, userID, input)
+	if err != nil {
+		return nil, fmt.Errorf("UpdatePreferences: %w", err)
+	}
+	return user, nil
+}
+
 // GetProfile returns the user's profile together with their tournament memberships.
 func (s *UserService) GetProfile(ctx context.Context, userID uuid.UUID) (*domain.User, []UserMembership, error) {
 	user, err := s.userRepo.FindByID(ctx, userID)

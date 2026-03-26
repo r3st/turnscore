@@ -5,18 +5,19 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Default (neutral) theme */
+/* Default theme: SciFi Dark (matches user profile default) */
 :root {
-  --color-primary:    #4F6D9A;
-  --color-secondary:  #6B7FA3;
-  --color-background: #F8FAFC;
-  --color-surface:    #FFFFFF;
-  --color-text:       #1E293B;
-  --color-accent:     #3B82F6;
-  --font-heading:     'Inter', sans-serif;
-  --font-body:        'Inter', sans-serif;
-  --border-radius:    6px;
-  --shadow:           0 1px 3px rgba(0, 0, 0, 0.1);
+  --color-primary:    #00E5CC;
+  --color-secondary:  #E040FB;
+  --color-background: #0A0E1A;
+  --color-surface:    #1A1A2E;
+  --color-text:       #E2E8F0;
+  --color-accent:     #FF4DFF;
+  --color-accent-light: #CC00FF;
+  --font-heading:     'Orbitron', sans-serif;
+  --font-body:        'Share Tech Mono', monospace;
+  --border-radius:    2px;
+  --shadow:           0 0 12px rgba(0, 229, 204, 0.25), 0 0 6px rgba(224, 64, 251, 0.2);
 }
 
 /* Logo theme switching — controlled via data-theme on <html> */

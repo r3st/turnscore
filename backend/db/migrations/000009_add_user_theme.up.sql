@@ -1,0 +1,3 @@
+ALTER TABLE users
+    ADD COLUMN theme      VARCHAR(10) NOT NULL DEFAULT 'scifi',
+    ADD COLUMN color_mode VARCHAR(10) NOT NULL DEFAULT 'dark';

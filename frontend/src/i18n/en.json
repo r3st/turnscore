@@ -83,10 +83,12 @@
   "dashboard": {
     "title": "Dashboard",
     "my_tournaments": "My Tournaments",
-    "as_helper": "As Helper",
+    "as_helper": "Helper Tournaments",
+    "archived": "Archived",
     "create_tournament": "Create Tournament",
     "no_tournaments": "You have no tournaments yet.",
     "no_helper_tournaments": "You are not a helper in any tournament.",
+    "no_archived": "No archived tournaments.",
     "manage": "Manage",
     "leave_tournament": "Leave",
     "leave_confirm": "Leave this tournament as helper?",
@@ -96,6 +98,17 @@
     "invite_code_label": "Your helper invite code",
     "invite_code_hint": "Share this code with organizers to be added as a helper.",
     "invite_code_copied": "Copied!"
+  },
+  "profile": {
+    "title": "Profile",
+    "appearance": "Appearance",
+    "theme_label": "Theme",
+    "theme_scifi": "Sci-Fi",
+    "theme_fantasy": "Fantasy",
+    "color_mode_label": "Color Mode",
+    "color_mode_dark": "Dark",
+    "color_mode_light": "Light",
+    "save_success": "Saved!"
   },
   "tournament_form": {
     "create_title": "Create Tournament",

@@ -115,6 +115,21 @@ func (mr *MockUserRepositoryMockRecorder) SaveRefreshToken(ctx, userID, hashedTo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveRefreshToken", reflect.TypeOf((*MockUserRepository)(nil).SaveRefreshToken), ctx, userID, hashedToken, expiresAt)
 }
 
+// UpdatePreferences mocks base method.
+func (m *MockUserRepository) UpdatePreferences(ctx any, userID uuid.UUID, input domain.UpdatePreferencesInput) (*domain.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdatePreferences", ctx, userID, input)
+	ret0, _ := ret[0].(*domain.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdatePreferences indicates an expected call of UpdatePreferences.
+func (mr *MockUserRepositoryMockRecorder) UpdatePreferences(ctx, userID, input any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePreferences", reflect.TypeOf((*MockUserRepository)(nil).UpdatePreferences), ctx, userID, input)
+}
+
 // UpsertByGoogleSub mocks base method.
 func (m *MockUserRepository) UpsertByGoogleSub(ctx any, googleSub, email, name, avatarURL string) (*domain.User, error) {
 	m.ctrl.T.Helper()
