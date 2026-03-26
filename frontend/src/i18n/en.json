@@ -189,7 +189,8 @@
     "back_to_tournament": "Back to Tournament",
     "delete_table": "Delete Table",
     "delete_table_confirm": "Delete this table and all its photos?",
-    "add_missing_tables": "Create missing tables ({{count}} remaining)"
+    "add_missing_tables": "Create missing tables ({{count}} remaining)",
+    "add_one_table": "+ Add Table"
   },
   "rater": {
     "section_title": "Raters",

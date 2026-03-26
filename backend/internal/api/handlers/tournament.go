@@ -278,6 +278,10 @@ func buildUpdateInput(body *generated.UpdateTournamentRequest) service.UpdateTou
 		s := string(*body.Type)
 		input.Type = &s
 	}
+	if body.TableCount != nil {
+		tc := *body.TableCount
+		input.TableCount = &tc
+	}
 	if body.EventDate != nil {
 		t := body.EventDate.Time
 		input.EventDate = &t

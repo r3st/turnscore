@@ -98,8 +98,8 @@ func (s *TableService) GetBySlugAndNumber(ctx context.Context, slug string, numb
 	return table, t, nil
 }
 
-// CreateForTournament creates tables 1..TableCount for the tournament.
-// Caller must be organizer or helper; returns ErrConflict if tables already exist.
+// CreateForTournament creates all missing tables up to TableCount (additive).
+// Caller must be organizer or helper.
 func (s *TableService) CreateForTournament(ctx context.Context, userID uuid.UUID, slug string) ([]domain.Table, error) {
 	t, err := s.tourneyRepo.FindBySlug(ctx, slug)
 	if err != nil {
@@ -111,28 +111,34 @@ func (s *TableService) CreateForTournament(ctx context.Context, userID uuid.UUID
 		return nil, domain.ErrForbidden
 	}
 
-	count, err := s.tableRepo.CountByTournamentID(ctx, t.ID)
+	existing, err := s.tableRepo.ListByTournamentID(ctx, t.ID)
 	if err != nil {
-		return nil, fmt.Errorf("CreateForTournament count: %w", err)
-	}
-	if count > 0 {
-		return nil, domain.ErrConflict
+		return nil, fmt.Errorf("CreateForTournament list existing: %w", err)
 	}
 
-	tables := make([]domain.Table, 0, t.TableCount)
+	existingNumbers := make(map[int]bool, len(existing))
+	for _, et := range existing {
+		existingNumbers[et.Number] = true
+	}
+
+	toCreate := make([]domain.Table, 0)
 	for i := 1; i <= t.TableCount; i++ {
-		tables = append(tables, domain.Table{
-			ID:           uuid.New(),
-			TournamentID: t.ID,
-			Number:       i,
-		})
+		if !existingNumbers[i] {
+			toCreate = append(toCreate, domain.Table{
+				ID:           uuid.New(),
+				TournamentID: t.ID,
+				Number:       i,
+			})
+		}
 	}
 
-	if err := s.tableRepo.CreateBatch(ctx, tables); err != nil {
-		return nil, fmt.Errorf("CreateForTournament create batch: %w", err)
+	if len(toCreate) > 0 {
+		if err := s.tableRepo.CreateBatch(ctx, toCreate); err != nil {
+			return nil, fmt.Errorf("CreateForTournament create batch: %w", err)
+		}
 	}
 
-	return tables, nil
+	return s.tableRepo.ListByTournamentID(ctx, t.ID)
 }
 
 // Update updates the name and/or description of a table.

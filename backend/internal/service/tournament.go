@@ -57,6 +57,7 @@ type CreateTournamentInput struct {
 type UpdateTournamentInput struct {
 	Name           *string
 	Type           *string
+	TableCount     *int
 	Description    *string
 	Links          *[]TournamentLink
 	Location       *string
@@ -177,6 +178,9 @@ func (s *TournamentService) Update(ctx context.Context, userID uuid.UUID, slug s
 	}
 	if input.Type != nil {
 		t.Type = *input.Type
+	}
+	if input.TableCount != nil && t.Status == "draft" {
+		t.TableCount = *input.TableCount
 	}
 	if input.Description != nil {
 		t.Description = input.Description

@@ -544,6 +544,7 @@ export interface components {
             /** Format: date-time */
             voting_end?: string | null;
             active_criteria?: components["schemas"]["CriteriaKey"][];
+            table_count?: number | null;
         };
         /** @enum {string} */
         PhotoCategory: "general" | "zone_a" | "zone_b";

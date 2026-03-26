@@ -189,7 +189,8 @@
     "back_to_tournament": "Zurück zum Turnier",
     "delete_table": "Tisch löschen",
     "delete_table_confirm": "Diesen Tisch und alle Fotos löschen?",
-    "add_missing_tables": "Fehlende Tische erstellen ({{count}} ausstehend)"
+    "add_missing_tables": "Fehlende Tische erstellen ({{count}} ausstehend)",
+    "add_one_table": "+ Tisch hinzufügen"
   },
   "rater": {
     "section_title": "Teilnehmer",

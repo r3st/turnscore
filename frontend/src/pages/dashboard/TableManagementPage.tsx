@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useTournament } from '@/api/hooks/useTournaments';
+import { useTournament, useUpdateTournament } from '@/api/hooks/useTournaments';
 import {
   useListTables,
   useCreateTables,
@@ -20,7 +20,14 @@ export function TableManagementPage() {
   const { data: tournament } = useTournament(slug);
   const { data: tables, isLoading } = useListTables(slug);
   const createTables = useCreateTables(slug);
+  const updateTournament = useUpdateTournament(slug);
   const exportPDF = useGenerateAllQRCodes(slug);
+
+  const handleAddOneTable = async () => {
+    const newCount = (tournament?.table_count ?? 0) + 1;
+    await updateTournament.mutateAsync({ table_count: newCount });
+    createTables.mutate();
+  };
 
   if (isLoading) {
     return <p className="text-sm" style={{ color: 'color-mix(in srgb, var(--color-text) 60%, transparent)' }}>{t('common.loading')}</p>;
@@ -105,6 +112,18 @@ export function TableManagementPage() {
             <TableCard key={table.id} slug={slug} table={table} isDraft={isDraft} />
           ))}
         </div>
+      )}
+
+      {/* Add one more table (beyond table_count) */}
+      {isDraft && (
+        <button
+          onClick={handleAddOneTable}
+          disabled={updateTournament.isPending || createTables.isPending}
+          className="text-sm px-4 py-2 rounded border font-medium"
+          style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
+        >
+          {t('table_mgmt.add_one_table')}
+        </button>
       )}
 
     </div>

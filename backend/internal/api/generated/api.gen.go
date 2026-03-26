@@ -478,6 +478,7 @@ type UpdateTournamentRequest struct {
 	Location       *string             `json:"location,omitempty"`
 	Name           *string             `json:"name,omitempty"`
 	Status         *TournamentStatus   `json:"status,omitempty"`
+	TableCount     *int                `json:"table_count,omitempty"`
 	Type           *TournamentType     `json:"type,omitempty"`
 	VotingEnd      *time.Time          `json:"voting_end,omitempty"`
 	VotingStart    *time.Time          `json:"voting_start,omitempty"`

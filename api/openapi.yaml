@@ -328,6 +328,11 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CriteriaKey"
+        table_count:
+          type: integer
+          minimum: 1
+          maximum: 100
+          nullable: true
 
     # --- Table ---
 
