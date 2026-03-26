@@ -1,14 +1,26 @@
+/* Fantasy — light (default) */
 :root[data-theme="fantasy"] {
-  /* Colors calibrated to match the gold-brown hexagonal logo */
-  --color-primary:    #5C3D1E; /* dark chocolate brown — hex fill */
-  --color-secondary:  #A0682A; /* mid brown — hex border/outline */
-  --color-background: #F5F0E8; /* warm parchment */
-  --color-surface:    #EDE6D6; /* slightly darker parchment for cards */
-  --color-text:       #2C1810; /* near-black warm brown */
-  --color-accent:     #C8922A; /* warm gold — star / highlight */
-  --color-accent-light: #E8B96A; /* pale gold — hover states */
+  --color-primary:    #5C3D1E;
+  --color-secondary:  #A0682A;
+  --color-background: #F5F0E8;
+  --color-surface:    #EDE6D6;
+  --color-text:       #2C1810;
+  --color-accent:     #C8922A;
+  --color-accent-light: #E8B96A;
   --font-heading:     'Cinzel', serif;
   --font-body:        'Crimson Text', serif;
   --border-radius:    4px;
   --shadow:           2px 2px 8px rgba(44, 24, 16, 0.3);
+}
+
+/* Fantasy — dark override */
+:root[data-theme="fantasy"][data-color-mode="dark"] {
+  --color-background: #1A0E08;
+  --color-surface:    #2C1810;
+  --color-text:       #F5F0E8;
+  --color-primary:    #C8922A;
+  --color-secondary:  #E8B96A;
+  --color-accent:     #FFD700;
+  --color-accent-light: #FFC107;
+  --shadow:           2px 2px 12px rgba(200, 146, 42, 0.3);
 }

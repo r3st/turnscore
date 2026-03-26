@@ -15,8 +15,16 @@ type User struct {
 	Name             string    `gorm:"not null"`
 	AvatarURL        *string
 	HelperInviteCode string    `gorm:"uniqueIndex;not null"`
+	Theme            string    `gorm:"not null;default:scifi"`
+	ColorMode        string    `gorm:"not null;default:dark"`
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
+}
+
+// UpdatePreferencesInput holds the user-editable preference fields.
+type UpdatePreferencesInput struct {
+	Theme     *string // "scifi" | "fantasy"
+	ColorMode *string // "light" | "dark"
 }
 
 // UserRepository defines data access for users.
@@ -39,4 +47,7 @@ type UserRepository interface {
 
 	// DeleteRefreshToken removes a refresh token (logout).
 	DeleteRefreshToken(ctx interface{}, hashedToken string) error
+
+	// UpdatePreferences persists theme and color_mode for the given user.
+	UpdatePreferences(ctx interface{}, userID uuid.UUID, input UpdatePreferencesInput) (*User, error)
 }

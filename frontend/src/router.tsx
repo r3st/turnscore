@@ -1,5 +1,6 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute';
 import { HomePage } from '@/pages/HomePage';
 import { TournamentPage } from '@/pages/TournamentPage';
@@ -9,7 +10,10 @@ import { OAuthCallbackPage } from '@/pages/OAuthCallbackPage';
 import { RaterLoginPage } from '@/pages/RaterLoginPage';
 import { ImprintPage } from '@/pages/ImprintPage';
 import { PrivacyPage } from '@/pages/PrivacyPage';
-import { DashboardPage } from '@/pages/dashboard/DashboardPage';
+import { MyTournamentsPage } from '@/pages/dashboard/MyTournamentsPage';
+import { HelperTournamentsPage } from '@/pages/dashboard/HelperTournamentsPage';
+import { ArchivedTournamentsPage } from '@/pages/dashboard/ArchivedTournamentsPage';
+import { ProfilePage } from '@/pages/dashboard/ProfilePage';
 import { TournamentEditPage } from '@/pages/dashboard/TournamentEditPage';
 import { TableManagementPage } from '@/pages/dashboard/TableManagementPage';
 import { ResultsPage } from '@/pages/dashboard/ResultsPage';
@@ -27,11 +31,15 @@ export const router = createBrowserRouter([
     path: '/dashboard',
     element: (
       <ProtectedRoute roles={['organizer', 'helper']}>
-        <AppLayout />
+        <DashboardLayout />
       </ProtectedRoute>
     ),
     children: [
-      { index: true, element: <DashboardPage /> },
+      { index: true, element: <Navigate to="/dashboard/my-tournaments" replace /> },
+      { path: 'my-tournaments', element: <MyTournamentsPage /> },
+      { path: 'helper', element: <HelperTournamentsPage /> },
+      { path: 'archived', element: <ArchivedTournamentsPage /> },
+      { path: 'profile', element: <ProfilePage /> },
       { path: 'tournaments/new', element: <TournamentEditPage /> },
       { path: 'tournaments/:slug', element: <TournamentEditPage /> },
       { path: 'tournaments/:slug/tables', element: <TableManagementPage /> },

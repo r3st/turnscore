@@ -47,7 +47,7 @@ components:
 
     UserProfile:
       type: object
-      required: [id, name, avatar_url, helper_invite_code, memberships]
+      required: [id, name, avatar_url, helper_invite_code, memberships, theme, color_mode]
       properties:
         id:
           $ref: "#/components/schemas/UUID"
@@ -66,6 +66,26 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/TournamentMembership"
+        theme:
+          type: string
+          enum: [scifi, fantasy]
+          default: scifi
+          description: Organizer UI theme preference.
+        color_mode:
+          type: string
+          enum: [light, dark]
+          default: dark
+          description: Organizer color mode preference.
+
+    UpdatePreferencesRequest:
+      type: object
+      properties:
+        theme:
+          type: string
+          enum: [scifi, fantasy]
+        color_mode:
+          type: string
+          enum: [light, dark]
 
     TournamentMembership:
       type: object
@@ -674,6 +694,29 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserProfile"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    patch:
+      summary: Update own theme and color mode preferences
+      operationId: patchMe
+      tags: [User]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePreferencesRequest"
+      responses:
+        "200":
+          description: Updated user profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
 

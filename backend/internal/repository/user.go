@@ -162,6 +162,25 @@ func (r *UserRepository) SaveRefreshToken(ctx interface{}, userID uuid.UUID, has
 	return nil
 }
 
+// UpdatePreferences persists theme and color_mode for the given user.
+func (r *UserRepository) UpdatePreferences(ctx interface{}, userID uuid.UUID, input domain.UpdatePreferencesInput) (*domain.User, error) {
+	c := toContext(ctx)
+	updates := map[string]interface{}{}
+	if input.Theme != nil {
+		updates["theme"] = *input.Theme
+	}
+	if input.ColorMode != nil {
+		updates["color_mode"] = *input.ColorMode
+	}
+	if len(updates) == 0 {
+		return r.FindByID(c, userID)
+	}
+	if err := r.db.WithContext(c).Model(&domain.User{}).Where("id = ?", userID).Updates(updates).Error; err != nil {
+		return nil, fmt.Errorf("UpdatePreferences: %w", err)
+	}
+	return r.FindByID(c, userID)
+}
+
 // DeleteRefreshToken removes a refresh token by its hash (logout / rotation).
 func (r *UserRepository) DeleteRefreshToken(ctx interface{}, hashedToken string) error {
 	c := toContext(ctx)

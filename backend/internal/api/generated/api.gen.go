@@ -150,12 +150,84 @@ func (e TournamentStatus) Valid() bool {
 
 // Defines values for TournamentType.
 const (
-	Fantasy TournamentType = "fantasy"
-	Scifi   TournamentType = "scifi"
+	TournamentTypeFantasy TournamentType = "fantasy"
+	TournamentTypeScifi   TournamentType = "scifi"
 )
 
 // Valid indicates whether the value is a known member of the TournamentType enum.
 func (e TournamentType) Valid() bool {
+	switch e {
+	case TournamentTypeFantasy:
+		return true
+	case TournamentTypeScifi:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for UpdatePreferencesRequestColorMode.
+const (
+	UpdatePreferencesRequestColorModeDark  UpdatePreferencesRequestColorMode = "dark"
+	UpdatePreferencesRequestColorModeLight UpdatePreferencesRequestColorMode = "light"
+)
+
+// Valid indicates whether the value is a known member of the UpdatePreferencesRequestColorMode enum.
+func (e UpdatePreferencesRequestColorMode) Valid() bool {
+	switch e {
+	case UpdatePreferencesRequestColorModeDark:
+		return true
+	case UpdatePreferencesRequestColorModeLight:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for UpdatePreferencesRequestTheme.
+const (
+	UpdatePreferencesRequestThemeFantasy UpdatePreferencesRequestTheme = "fantasy"
+	UpdatePreferencesRequestThemeScifi   UpdatePreferencesRequestTheme = "scifi"
+)
+
+// Valid indicates whether the value is a known member of the UpdatePreferencesRequestTheme enum.
+func (e UpdatePreferencesRequestTheme) Valid() bool {
+	switch e {
+	case UpdatePreferencesRequestThemeFantasy:
+		return true
+	case UpdatePreferencesRequestThemeScifi:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for UserProfileColorMode.
+const (
+	UserProfileColorModeDark  UserProfileColorMode = "dark"
+	UserProfileColorModeLight UserProfileColorMode = "light"
+)
+
+// Valid indicates whether the value is a known member of the UserProfileColorMode enum.
+func (e UserProfileColorMode) Valid() bool {
+	switch e {
+	case UserProfileColorModeDark:
+		return true
+	case UserProfileColorModeLight:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for UserProfileTheme.
+const (
+	Fantasy UserProfileTheme = "fantasy"
+	Scifi   UserProfileTheme = "scifi"
+)
+
+// Valid indicates whether the value is a known member of the UserProfileTheme enum.
+func (e UserProfileTheme) Valid() bool {
 	switch e {
 	case Fantasy:
 		return true
@@ -379,6 +451,18 @@ type TournamentType string
 // UUID defines model for UUID.
 type UUID = openapi_types.UUID
 
+// UpdatePreferencesRequest defines model for UpdatePreferencesRequest.
+type UpdatePreferencesRequest struct {
+	ColorMode *UpdatePreferencesRequestColorMode `json:"color_mode,omitempty"`
+	Theme     *UpdatePreferencesRequestTheme     `json:"theme,omitempty"`
+}
+
+// UpdatePreferencesRequestColorMode defines model for UpdatePreferencesRequest.ColorMode.
+type UpdatePreferencesRequestColorMode string
+
+// UpdatePreferencesRequestTheme defines model for UpdatePreferencesRequest.Theme.
+type UpdatePreferencesRequestTheme string
+
 // UpdateTableRequest defines model for UpdateTableRequest.
 type UpdateTableRequest struct {
 	Description *string `json:"description,omitempty"`
@@ -402,12 +486,24 @@ type UpdateTournamentRequest struct {
 type UserProfile struct {
 	AvatarUrl *string `json:"avatar_url"`
 
+	// ColorMode Organizer color mode preference.
+	ColorMode UserProfileColorMode `json:"color_mode"`
+
 	// HelperInviteCode Permanent personal code. Share with organizers to be added as helper.
 	HelperInviteCode string                 `json:"helper_invite_code"`
 	Id               UUID                   `json:"id"`
 	Memberships      []TournamentMembership `json:"memberships"`
 	Name             string                 `json:"name"`
+
+	// Theme Organizer UI theme preference.
+	Theme UserProfileTheme `json:"theme"`
 }
+
+// UserProfileColorMode Organizer color mode preference.
+type UserProfileColorMode string
+
+// UserProfileTheme Organizer UI theme preference.
+type UserProfileTheme string
 
 // BadRequest defines model for BadRequest.
 type BadRequest = ErrorResponse
@@ -444,6 +540,9 @@ type RaterLoginJSONRequestBody = RaterAuthRequest
 
 // RefreshTokenJSONRequestBody defines body for RefreshToken for application/json ContentType.
 type RefreshTokenJSONRequestBody = RefreshRequest
+
+// PatchMeJSONRequestBody defines body for PatchMe for application/json ContentType.
+type PatchMeJSONRequestBody = UpdatePreferencesRequest
 
 // CreateTournamentJSONRequestBody defines body for CreateTournament for application/json ContentType.
 type CreateTournamentJSONRequestBody = CreateTournamentRequest
@@ -486,6 +585,9 @@ type ServerInterface interface {
 	// Get own profile including helper invite code and tournament memberships
 	// (GET /me)
 	GetMe(c *gin.Context)
+	// Update own theme and color mode preferences
+	// (PATCH /me)
+	PatchMe(c *gin.Context)
 	// Delete photo (organizer or helper)
 	// (DELETE /photos/{photoId})
 	DeletePhoto(c *gin.Context, photoId UUID)
@@ -660,6 +762,21 @@ func (siw *ServerInterfaceWrapper) GetMe(c *gin.Context) {
 	}
 
 	siw.Handler.GetMe(c)
+}
+
+// PatchMe operation middleware
+func (siw *ServerInterfaceWrapper) PatchMe(c *gin.Context) {
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.PatchMe(c)
 }
 
 // DeletePhoto operation middleware
@@ -1266,6 +1383,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.POST(options.BaseURL+"/auth/rater", wrapper.RaterLogin)
 	router.POST(options.BaseURL+"/auth/refresh", wrapper.RefreshToken)
 	router.GET(options.BaseURL+"/me", wrapper.GetMe)
+	router.PATCH(options.BaseURL+"/me", wrapper.PatchMe)
 	router.DELETE(options.BaseURL+"/photos/:photoId", wrapper.DeletePhoto)
 	router.GET(options.BaseURL+"/tournaments", wrapper.ListTournaments)
 	router.POST(options.BaseURL+"/tournaments", wrapper.CreateTournament)
@@ -1431,6 +1549,41 @@ func (response GetMe200JSONResponse) VisitGetMeResponse(w http.ResponseWriter) e
 type GetMe401JSONResponse struct{ UnauthorizedJSONResponse }
 
 func (response GetMe401JSONResponse) VisitGetMeResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PatchMeRequestObject struct {
+	Body *PatchMeJSONRequestBody
+}
+
+type PatchMeResponseObject interface {
+	VisitPatchMeResponse(w http.ResponseWriter) error
+}
+
+type PatchMe200JSONResponse UserProfile
+
+func (response PatchMe200JSONResponse) VisitPatchMeResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PatchMe400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response PatchMe400JSONResponse) VisitPatchMeResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PatchMe401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response PatchMe401JSONResponse) VisitPatchMeResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(401)
 
@@ -2440,6 +2593,9 @@ type StrictServerInterface interface {
 	// Get own profile including helper invite code and tournament memberships
 	// (GET /me)
 	GetMe(ctx context.Context, request GetMeRequestObject) (GetMeResponseObject, error)
+	// Update own theme and color mode preferences
+	// (PATCH /me)
+	PatchMe(ctx context.Context, request PatchMeRequestObject) (PatchMeResponseObject, error)
 	// Delete photo (organizer or helper)
 	// (DELETE /photos/{photoId})
 	DeletePhoto(ctx context.Context, request DeletePhotoRequestObject) (DeletePhotoResponseObject, error)
@@ -2653,6 +2809,39 @@ func (sh *strictHandler) GetMe(ctx *gin.Context) {
 		ctx.Status(http.StatusInternalServerError)
 	} else if validResponse, ok := response.(GetMeResponseObject); ok {
 		if err := validResponse.VisitGetMeResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PatchMe operation middleware
+func (sh *strictHandler) PatchMe(ctx *gin.Context) {
+	var request PatchMeRequestObject
+
+	var body PatchMeJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		ctx.Status(http.StatusBadRequest)
+		ctx.Error(err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.PatchMe(ctx, request.(PatchMeRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PatchMe")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(PatchMeResponseObject); ok {
+		if err := validResponse.VisitPatchMeResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
 		}
 	} else if response != nil {

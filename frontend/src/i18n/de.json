@@ -83,10 +83,12 @@
   "dashboard": {
     "title": "Dashboard",
     "my_tournaments": "Meine Turniere",
-    "as_helper": "Als Helfer",
+    "as_helper": "Helfer-Turniere",
+    "archived": "Archiv",
     "create_tournament": "Turnier erstellen",
     "no_tournaments": "Du hast noch keine Turniere.",
     "no_helper_tournaments": "Du bist bei keinem Turnier als Helfer eingetragen.",
+    "no_archived": "Keine archivierten Turniere.",
     "manage": "Verwalten",
     "leave_tournament": "Verlassen",
     "leave_confirm": "Dieses Turnier als Helfer verlassen?",
@@ -96,6 +98,17 @@
     "invite_code_label": "Dein Helfer-Einladungscode",
     "invite_code_hint": "Teile diesen Code mit Organisatoren, um als Helfer hinzugefügt zu werden.",
     "invite_code_copied": "Kopiert!"
+  },
+  "profile": {
+    "title": "Profil",
+    "appearance": "Erscheinungsbild",
+    "theme_label": "Theme",
+    "theme_scifi": "Sci-Fi",
+    "theme_fantasy": "Fantasy",
+    "color_mode_label": "Farbmodus",
+    "color_mode_dark": "Dunkel",
+    "color_mode_light": "Hell",
+    "save_success": "Gespeichert!"
   },
   "tournament_form": {
     "create_title": "Turnier erstellen",
