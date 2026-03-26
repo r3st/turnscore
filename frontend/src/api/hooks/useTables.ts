@@ -3,7 +3,25 @@ import { apiClient } from '@/api/client';
 import type { components } from '@/api/generated/api';
 
 export type TableSummary = components['schemas']['TableSummary'];
+export type TableDetail = components['schemas']['TableDetail'];
 export type UpdateTableRequest = components['schemas']['UpdateTableRequest'];
+export type CreateRatingRequest = components['schemas']['CreateRatingRequest'];
+
+export function useGetTable(slug: string, number: number | string) {
+  return useQuery<TableDetail>({
+    queryKey: ['table', slug, number],
+    queryFn: () =>
+      apiClient.get(`/tournaments/${slug}/tables/${number}`).then((r) => r.data),
+    enabled: !!slug && !!number,
+  });
+}
+
+export function useSubmitRating(slug: string, tableNumber: number | string) {
+  return useMutation<void, Error, CreateRatingRequest>({
+    mutationFn: (body) =>
+      apiClient.post(`/tournaments/${slug}/tables/${tableNumber}/ratings`, body),
+  });
+}
 
 export function useListTables(slug: string) {
   return useQuery<TableSummary[]>({
