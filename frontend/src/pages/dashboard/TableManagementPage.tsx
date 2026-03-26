@@ -12,7 +12,6 @@ import {
   useGenerateAllQRCodes,
   type TableSummary,
 } from '@/api/hooks/useTables';
-import { useListRaters, useCreateRater } from '@/api/hooks/useRaters';
 
 export function TableManagementPage() {
   const { slug = '' } = useParams<{ slug: string }>();
@@ -86,8 +85,6 @@ export function TableManagementPage() {
         </div>
       )}
 
-      {/* Rater management */}
-      {hasTables && <RaterSection slug={slug} />}
     </div>
   );
 }
@@ -272,115 +269,3 @@ function TableCard({ slug, table }: { slug: string; table: TableSummary }) {
   );
 }
 
-// ── RaterSection ───────────────────────────────────────────────────────────
-
-function RaterSection({ slug }: { slug: string }) {
-  const { t } = useTranslation();
-  const { data: raters, isLoading } = useListRaters(slug);
-  const createRater = useCreateRater(slug);
-
-  const [nickname, setNickname] = useState('');
-  const [code, setCode] = useState('');
-  const [error, setError] = useState<string | null>(null);
-
-  const handleAdd = async () => {
-    if (!nickname.trim()) return;
-    setError(null);
-    try {
-      await createRater.mutateAsync({
-        nickname: nickname.trim(),
-        code: code.trim() || undefined,
-      });
-      setNickname('');
-      setCode('');
-    } catch {
-      setError(t('rater.error_add'));
-    }
-  };
-
-  return (
-    <section aria-labelledby="rater-heading" className="space-y-4">
-      <h2 id="rater-heading" className="font-heading text-xl font-bold">
-        {t('rater.section_title')}
-      </h2>
-
-      {/* Add rater form */}
-      <div className="flex flex-wrap gap-3 items-end">
-        <div>
-          <label className="block text-xs font-medium mb-1">{t('rater.nickname_label')}</label>
-          <input
-            type="text"
-            value={nickname}
-            onChange={(e) => setNickname(e.target.value)}
-            placeholder={t('rater.nickname_placeholder')}
-            className="px-3 py-1.5 rounded text-sm border"
-            style={{
-              backgroundColor: 'var(--color-surface)',
-              borderColor: 'color-mix(in srgb, var(--color-primary) 30%, transparent)',
-              color: 'var(--color-text)',
-            }}
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-medium mb-1">{t('rater.code_label')}</label>
-          <input
-            type="text"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            placeholder={t('rater.code_placeholder')}
-            maxLength={6}
-            className="px-3 py-1.5 rounded text-sm border w-36"
-            style={{
-              backgroundColor: 'var(--color-surface)',
-              borderColor: 'color-mix(in srgb, var(--color-primary) 30%, transparent)',
-              color: 'var(--color-text)',
-            }}
-          />
-        </div>
-        <button
-          onClick={handleAdd}
-          disabled={createRater.isPending || !nickname.trim()}
-          className="px-4 py-1.5 rounded text-sm font-medium"
-          style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-background)' }}
-        >
-          {createRater.isPending ? t('common.loading') : t('rater.add_button')}
-        </button>
-        {error && <p className="text-xs self-end" style={{ color: '#dc2626' }}>{error}</p>}
-      </div>
-
-      {/* Rater list */}
-      {isLoading ? (
-        <p className="text-sm" style={{ color: 'color-mix(in srgb, var(--color-text) 60%, transparent)' }}>{t('common.loading')}</p>
-      ) : raters && raters.length > 0 ? (
-        <div
-          className="rounded border overflow-hidden"
-          style={{ borderColor: 'color-mix(in srgb, var(--color-primary) 20%, transparent)' }}
-        >
-          <table className="w-full text-sm">
-            <thead>
-              <tr style={{ backgroundColor: 'color-mix(in srgb, var(--color-primary) 8%, transparent)' }}>
-                <th className="text-left px-4 py-2 font-medium">{t('rater.nickname_label')}</th>
-                <th className="text-left px-4 py-2 font-medium">{t('rater.code_label').split(' ')[0]}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {raters.map((rater, i) => (
-                <tr
-                  key={rater.id}
-                  style={{ backgroundColor: i % 2 === 0 ? 'transparent' : 'color-mix(in srgb, var(--color-primary) 4%, transparent)' }}
-                >
-                  <td className="px-4 py-2">{rater.nickname}</td>
-                  <td className="px-4 py-2 font-mono text-xs">—</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <p className="text-sm" style={{ color: 'color-mix(in srgb, var(--color-text) 60%, transparent)' }}>
-          {t('rater.no_raters')}
-        </p>
-      )}
-    </section>
-  );
-}

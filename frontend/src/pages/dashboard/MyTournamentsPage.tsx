@@ -56,6 +56,13 @@ export function MyTournamentsPage() {
                   {t('dashboard.tables')}
                 </Link>
                 <Link
+                  to={`/dashboard/tournaments/${m.tournament_slug}/raters`}
+                  className="inline-flex items-center justify-center text-xs px-3 py-1 rounded border"
+                  style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
+                >
+                  {t('rater.section_title')}
+                </Link>
+                <Link
                   to={`/dashboard/tournaments/${m.tournament_slug}/results`}
                   className="inline-flex items-center justify-center text-xs px-3 py-1 rounded border"
                   style={{ borderColor: 'var(--color-accent)', color: 'var(--color-accent)' }}

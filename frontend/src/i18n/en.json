@@ -39,7 +39,10 @@
     "tables_count": "{{count}} tables",
     "view_tables": "View Tables",
     "event_date": "Event date",
-    "location": "Location"
+    "location": "Location",
+    "links_disclaimer": "We are not responsible for the content of external links.",
+    "no_tables": "No tables have been set up yet.",
+    "rate_table": "Rate"
   },
   "table": {
     "number": "Table {{number}}",
