@@ -8,6 +8,13 @@ import { queryClient } from '@/api/client';
 import '@/i18n';
 import '@/styles/globals.css';
 
+// Apply default theme attributes so CSS selectors [data-theme=...] work from the start.
+// ProfilePage overwrites these after the user's saved preferences are loaded.
+if (!document.documentElement.getAttribute('data-theme')) {
+  document.documentElement.setAttribute('data-theme', 'scifi');
+  document.documentElement.setAttribute('data-color-mode', 'dark');
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>

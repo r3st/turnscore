@@ -12,12 +12,11 @@ export function DashboardLayout() {
   const { data: profile } = useMe();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // Apply user's saved theme + color mode preferences
+  // Apply user's saved theme + color mode as soon as profile loads
   useEffect(() => {
     if (!profile) return;
-    const root = document.documentElement;
-    root.setAttribute('data-theme', profile.theme);
-    root.setAttribute('data-color-mode', profile.color_mode);
+    document.documentElement.setAttribute('data-theme', profile.theme);
+    document.documentElement.setAttribute('data-color-mode', profile.color_mode);
   }, [profile?.theme, profile?.color_mode]);
 
   const handleLogout = () => {
