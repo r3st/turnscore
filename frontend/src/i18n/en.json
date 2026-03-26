@@ -22,7 +22,9 @@
     "code_placeholder": "Your access code",
     "login_button": "Start Rating",
     "logout_confirm": "Sign out?",
-    "error_invalid_credentials": "Invalid nickname or code."
+    "error_invalid_credentials": "Invalid nickname or code.",
+    "slug_label": "Tournament Slug",
+    "slug_placeholder": "e.g. essen-open-2025"
   },
   "home": {
     "upcoming_tournaments": "Upcoming Tournaments",

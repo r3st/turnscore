@@ -276,7 +276,7 @@ func (s *RaterService) ExportRatersPDF(ctx context.Context, userID uuid.UUID, sl
 		return nil, fmt.Errorf("ExportRatersPDF list raters: %w", err)
 	}
 
-	return buildRatersPDF(t.Name, raters)
+	return buildRatersPDF(t.Name, t.Slug, raters)
 }
 
 // generateUniqueCode tries up to maxCodeAttempts to find an unused 4-digit code.
