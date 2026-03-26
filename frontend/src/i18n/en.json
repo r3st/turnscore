@@ -139,6 +139,7 @@
     "criteria_optional": "Optional Criteria",
     "save_success": "Tournament saved.",
     "create_success": "Tournament created.",
+    "error_name_required": "Tournament name is required.",
     "error_save": "Could not save tournament.",
     "error_create": "Could not create tournament."
   },

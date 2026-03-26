@@ -43,21 +43,21 @@ export function MyTournamentsPage() {
               <div className="flex gap-2 flex-wrap">
                 <button
                   onClick={() => navigate(`/dashboard/tournaments/${m.tournament_slug}`)}
-                  className="text-xs px-3 py-1 rounded border"
+                  className="inline-flex items-center justify-center text-xs px-3 py-1 rounded border"
                   style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
                 >
                   {t('dashboard.manage')}
                 </button>
                 <Link
                   to={`/dashboard/tournaments/${m.tournament_slug}/tables`}
-                  className="text-xs px-3 py-1 rounded border"
+                  className="inline-flex items-center justify-center text-xs px-3 py-1 rounded border"
                   style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
                 >
                   {t('dashboard.tables')}
                 </Link>
                 <Link
                   to={`/dashboard/tournaments/${m.tournament_slug}/results`}
-                  className="text-xs px-3 py-1 rounded border"
+                  className="inline-flex items-center justify-center text-xs px-3 py-1 rounded border"
                   style={{ borderColor: 'var(--color-accent)', color: 'var(--color-accent)' }}
                 >
                   {t('results.title')}
@@ -65,7 +65,7 @@ export function MyTournamentsPage() {
                 <button
                   onClick={() => handleDelete(m)}
                   disabled={deleteTournament.isPending}
-                  className="text-xs px-3 py-1 rounded border"
+                  className="inline-flex items-center justify-center text-xs px-3 py-1 rounded border"
                   style={{ borderColor: '#dc2626', color: '#dc2626' }}
                   aria-label={`${t('dashboard.delete_tournament')} ${m.tournament_name}`}
                 >

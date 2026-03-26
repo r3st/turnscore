@@ -29,15 +29,15 @@ export function Navbar() {
       >
         <Link
           to="/"
-          className="flex items-center gap-2 font-heading text-xl font-bold"
+          className="flex items-center gap-2 font-heading text-xl font-bold shrink-0"
           style={{ color: 'var(--color-primary)' }}
           aria-label={t('app.name')}
         >
           <TurnScoreLogo height={32} />
-          <span>{t('app.name')}</span>
+          <span className="hidden sm:inline">{t('app.name')}</span>
         </Link>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 min-w-0">
           <Link to="/" className={linkClass}>{t('nav.home')}</Link>
 
           {isAuthenticated() && role === 'user' && (
@@ -59,7 +59,7 @@ export function Navbar() {
             <Link to="/login" className={linkClass}>{t('nav.login')}</Link>
           )}
 
-          <div className="flex gap-1 ml-2" role="group" aria-label="Select language">
+          <div className="hidden sm:flex gap-1 ml-2" role="group" aria-label="Select language">
             <button
               onClick={() => changeLanguage('en')}
               aria-pressed={i18n.language === 'en'}
