@@ -39,7 +39,10 @@
     "tables_count": "{{count}} Tische",
     "view_tables": "Tische ansehen",
     "event_date": "Veranstaltungsdatum",
-    "location": "Ort"
+    "location": "Ort",
+    "links_disclaimer": "Wir übernehmen keine Verantwortung für externe Inhalte.",
+    "no_tables": "Es wurden noch keine Tische angelegt.",
+    "rate_table": "Bewerten"
   },
   "table": {
     "number": "Tisch {{number}}",
