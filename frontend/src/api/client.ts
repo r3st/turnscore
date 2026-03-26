@@ -18,13 +18,19 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-// Handle 401: clear auth and redirect to login
+// Handle 401: clear auth and redirect to appropriate login page
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
+      const role = useAuthStore.getState().role;
       useAuthStore.getState().logout();
-      window.location.href = '/login';
+      if (role === 'rater') {
+        // Raters go back to rater login — keep path so slug can be extracted if needed
+        window.location.href = '/rate-login';
+      } else {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   },
