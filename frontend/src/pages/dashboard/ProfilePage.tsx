@@ -10,6 +10,7 @@ export function ProfilePage() {
   const [theme, setTheme] = useState<'scifi' | 'fantasy'>('scifi');
   const [colorMode, setColorMode] = useState<'dark' | 'light'>('dark');
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     if (profile) {
@@ -19,11 +20,16 @@ export function ProfilePage() {
   }, [profile?.theme, profile?.color_mode]);
 
   const handleSave = async () => {
-    await updatePreferences.mutateAsync({ theme, color_mode: colorMode });
-    document.documentElement.setAttribute('data-theme', theme);
-    document.documentElement.setAttribute('data-color-mode', colorMode);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    setSaveError(null);
+    try {
+      await updatePreferences.mutateAsync({ theme, color_mode: colorMode });
+      document.documentElement.setAttribute('data-theme', theme);
+      document.documentElement.setAttribute('data-color-mode', colorMode);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (e) {
+      setSaveError(t('errors.generic'));
+    }
   };
 
   if (isLoading) {
@@ -112,14 +118,17 @@ export function ProfilePage() {
           </div>
         </fieldset>
 
-        <button
-          onClick={handleSave}
-          disabled={updatePreferences.isPending}
-          className="px-6 py-2 rounded text-sm font-medium"
-          style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-background)' }}
-        >
-          {updatePreferences.isPending ? t('common.loading') : saved ? t('profile.save_success') : t('common.save')}
-        </button>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={handleSave}
+            disabled={updatePreferences.isPending}
+            className="px-6 py-2 rounded text-sm font-medium"
+            style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-background)' }}
+          >
+            {updatePreferences.isPending ? t('common.loading') : saved ? t('profile.save_success') : t('common.save')}
+          </button>
+          {saveError && <p className="text-sm" style={{ color: '#dc2626' }}>{saveError}</p>}
+        </div>
       </div>
     </section>
   );
