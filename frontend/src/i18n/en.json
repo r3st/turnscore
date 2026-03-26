@@ -202,7 +202,8 @@
     "add_button": "Add Rater",
     "added": "Rater added.",
     "error_add": "Could not add rater.",
-    "code_hint": "Code: {{code}}"
+    "code_hint": "Code: {{code}}",
+    "export_pdf": "Export PDF"
   },
   "results": {
     "title": "Results",

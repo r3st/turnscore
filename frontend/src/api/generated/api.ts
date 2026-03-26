@@ -332,6 +332,25 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tournaments/{slug}/raters/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        /** Export rater list as PDF (organizer or helper) */
+        get: operations["exportRatersPdf"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tournaments/{slug}/tables/{number}/ratings": {
         parameters: {
             query?: never;
@@ -578,6 +597,8 @@ export interface components {
         Rater: {
             id: components["schemas"]["UUID"];
             nickname: string;
+            /** @description Plaintext access code for the rater */
+            code: string;
         };
         CreateRaterRequest: {
             nickname: string;
@@ -1371,6 +1392,31 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
+        };
+    };
+    exportRatersPdf: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description PDF file with rater nicknames and codes */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": string;
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
         };
     };
     submitRating: {

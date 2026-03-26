@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"context"
 	"errors"
 
@@ -52,9 +53,40 @@ func (h *Handlers) ListRaters(ctx context.Context, req generated.ListRatersReque
 		result = append(result, generated.Rater{
 			Id:       r.ID,
 			Nickname: r.Nickname,
+			Code:     r.Code,
 		})
 	}
 	return result, nil
+}
+
+// ExportRatersPdf returns a PDF listing all raters with their access codes (organizer or helper only).
+func (h *Handlers) ExportRatersPdf(ctx context.Context, req generated.ExportRatersPdfRequestObject) (generated.ExportRatersPdfResponseObject, error) {
+	userID, ok := getUserID(ctx)
+	if !ok {
+		return generated.ExportRatersPdf401JSONResponse{
+			UnauthorizedJSONResponse: generated.UnauthorizedJSONResponse{Code: "unauthorized", Message: msgMissingUserID},
+		}, nil
+	}
+
+	pdfBytes, err := h.raterSvc.ExportRatersPDF(ctx, userID, req.Slug)
+	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			return generated.ExportRatersPdf404JSONResponse{
+				NotFoundJSONResponse: generated.NotFoundJSONResponse{Code: "not_found", Message: msgTournamentNotFound},
+			}, nil
+		}
+		if errors.Is(err, domain.ErrForbidden) {
+			return generated.ExportRatersPdf403JSONResponse{
+				ForbiddenJSONResponse: generated.ForbiddenJSONResponse{Code: "forbidden", Message: msgForbiddenResults},
+			}, nil
+		}
+		return nil, err
+	}
+
+	return generated.ExportRatersPdf200ApplicationpdfResponse{
+		Body:          bytes.NewReader(pdfBytes),
+		ContentLength: int64(len(pdfBytes)),
+	}, nil
 }
 
 // CreateRater registers a new rater for a tournament (organizer or helper only).

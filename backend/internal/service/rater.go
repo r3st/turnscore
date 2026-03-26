@@ -258,6 +258,27 @@ func (s *RaterService) UpdateResultConfig(ctx context.Context, userID uuid.UUID,
 	return t, nil
 }
 
+// ExportRatersPDF generates a PDF listing all raters and their access codes.
+// Caller must be organizer or helper.
+func (s *RaterService) ExportRatersPDF(ctx context.Context, userID uuid.UUID, slug string) ([]byte, error) {
+	t, err := s.tourneyRepo.FindBySlug(ctx, slug)
+	if err != nil {
+		return nil, fmt.Errorf("ExportRatersPDF find tournament: %w", err)
+	}
+
+	role, err := s.memberRepo.GetRole(ctx, t.ID, userID)
+	if err != nil || (role != roleOrganizer && role != roleHelper) {
+		return nil, domain.ErrForbidden
+	}
+
+	raters, err := s.raterRepo.ListByTournamentID(ctx, t.ID)
+	if err != nil {
+		return nil, fmt.Errorf("ExportRatersPDF list raters: %w", err)
+	}
+
+	return buildRatersPDF(t.Name, raters)
+}
+
 // generateUniqueCode tries up to maxCodeAttempts to find an unused 4-digit code.
 func (s *RaterService) generateUniqueCode(ctx context.Context, tournamentID uuid.UUID) (string, error) {
 	for i := 0; i < maxCodeAttempts; i++ {

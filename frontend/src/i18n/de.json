@@ -202,7 +202,8 @@
     "add_button": "Teilnehmer hinzufügen",
     "added": "Teilnehmer hinzugefügt.",
     "error_add": "Teilnehmer konnte nicht hinzugefügt werden.",
-    "code_hint": "Code: {{code}}"
+    "code_hint": "Code: {{code}}",
+    "export_pdf": "PDF exportieren"
   },
   "results": {
     "title": "Ergebnisse",

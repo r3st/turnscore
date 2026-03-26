@@ -21,3 +21,20 @@ export function useCreateRater(slug: string) {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['raters', slug] }),
   });
 }
+
+export function useExportRatersPdf(slug: string) {
+  return useMutation<Blob, Error, void>({
+    mutationFn: () =>
+      apiClient
+        .get(`/tournaments/${slug}/raters/pdf`, { responseType: 'blob' })
+        .then((r) => r.data as Blob),
+    onSuccess: (blob) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `raters-${slug}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    },
+  });
+}
