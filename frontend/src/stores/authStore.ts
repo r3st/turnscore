@@ -23,7 +23,8 @@ interface AuthState {
   refreshToken: string | null;
   userId: string | null;
   role: Role | null;
-  login: (token: string, refreshToken: string | null) => void;
+  nickname: string | null;
+  login: (token: string, refreshToken: string | null, nickname?: string) => void;
   logout: () => void;
   isAuthenticated: () => boolean;
   hasRole: (...roles: string[]) => boolean;
@@ -36,14 +37,15 @@ export const useAuthStore = create<AuthState>()(
       refreshToken: null,
       userId: null,
       role: null,
-      login: (token, refreshToken) => {
+      nickname: null,
+      login: (token, refreshToken, nickname) => {
         const claims = parseJWT(token);
         if (claims) {
-          set({ token, refreshToken, userId: claims.sub, role: claims.role });
+          set({ token, refreshToken, userId: claims.sub, role: claims.role, nickname: nickname ?? null });
         }
       },
       logout: () =>
-        set({ token: null, refreshToken: null, userId: null, role: null }),
+        set({ token: null, refreshToken: null, userId: null, role: null, nickname: null }),
       isAuthenticated: () => {
         const { token } = get();
         if (!token) return false;

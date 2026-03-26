@@ -6,7 +6,7 @@ import { TurnScoreLogo } from '@/components/ui/TurnScoreLogo';
 
 export function Navbar() {
   const { t, i18n } = useTranslation();
-  const { isAuthenticated, logout, role } = useAuthStore();
+  const { isAuthenticated, logout, role, nickname } = useAuthStore();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -17,10 +17,17 @@ export function Navbar() {
   };
 
   const handleLogout = () => {
+    const wasRater = role === 'rater';
     logout();
-    navigate('/login');
+    navigate(wasRater ? '/rate-login' : '/login');
     setMenuOpen(false);
   };
+
+  const isRater = isAuthenticated() && role === 'rater';
+  const isUser = isAuthenticated() && role === 'user';
+
+  // Initial letter for the rater avatar
+  const raterInitial = nickname ? nickname.charAt(0).toUpperCase() : '?';
 
   const linkClass = 'flex items-center h-9 px-3 rounded text-sm font-medium hover:bg-[color-mix(in_srgb,var(--color-primary)_12%,transparent)] transition-colors';
   const logoutClass = 'flex items-center h-9 px-3 rounded text-sm font-medium border transition-colors hover:opacity-80';
@@ -47,13 +54,45 @@ export function Navbar() {
         <div className="hidden sm:flex items-center gap-1">
           <Link to="/" className={linkClass}>{t('nav.home')}</Link>
 
-          {isAuthenticated() && role === 'user' && (
+          {isUser && (
             <Link to="/dashboard" className={linkClass}>
               {t('nav.dashboard')}
             </Link>
           )}
 
-          {isAuthenticated() ? (
+          {/* Rater: nickname pill + logout */}
+          {isRater && (
+            <div className="flex items-center gap-2 ml-1">
+              <div
+                className="flex items-center gap-2 px-3 h-9 rounded text-sm font-medium"
+                style={{
+                  backgroundColor: 'color-mix(in srgb, var(--color-primary) 12%, transparent)',
+                  color: 'var(--color-primary)',
+                }}
+                title={t('auth.logged_in_as', { name: nickname })}
+              >
+                <span
+                  className="flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold shrink-0"
+                  style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-background)' }}
+                  aria-hidden="true"
+                >
+                  {raterInitial}
+                </span>
+                <span className="max-w-[120px] truncate">{nickname}</span>
+              </div>
+              <button
+                onClick={handleLogout}
+                className={logoutClass}
+                style={{ borderColor: 'var(--color-accent)', color: 'var(--color-accent)' }}
+                aria-label={t('nav.logout')}
+              >
+                {t('nav.logout')}
+              </button>
+            </div>
+          )}
+
+          {/* Organizer: logout */}
+          {isUser && (
             <button
               onClick={handleLogout}
               className={logoutClass}
@@ -62,7 +101,9 @@ export function Navbar() {
             >
               {t('nav.logout')}
             </button>
-          ) : (
+          )}
+
+          {!isAuthenticated() && (
             <Link to="/login" className={linkClass}>{t('nav.login')}</Link>
           )}
 
@@ -86,27 +127,39 @@ export function Navbar() {
           </div>
         </div>
 
-        {/* Mobile hamburger button */}
-        <button
-          className="sm:hidden flex items-center justify-center h-9 w-9 rounded"
-          onClick={() => setMenuOpen((o) => !o)}
-          aria-expanded={menuOpen}
-          aria-label="Toggle menu"
-          style={{ color: 'var(--color-text)' }}
-        >
-          {menuOpen ? (
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <line x1="4" y1="4" x2="16" y2="16" />
-              <line x1="16" y1="4" x2="4" y2="16" />
-            </svg>
-          ) : (
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <line x1="3" y1="6" x2="17" y2="6" />
-              <line x1="3" y1="10" x2="17" y2="10" />
-              <line x1="3" y1="14" x2="17" y2="14" />
-            </svg>
+        {/* Mobile: rater avatar (always visible) + hamburger */}
+        <div className="sm:hidden flex items-center gap-2">
+          {isRater && (
+            <div
+              className="flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold shrink-0"
+              style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-background)' }}
+              title={nickname ?? undefined}
+              aria-label={t('auth.logged_in_as', { name: nickname })}
+            >
+              {raterInitial}
+            </div>
           )}
-        </button>
+          <button
+            className="flex items-center justify-center h-9 w-9 rounded"
+            onClick={() => setMenuOpen((o) => !o)}
+            aria-expanded={menuOpen}
+            aria-label="Toggle menu"
+            style={{ color: 'var(--color-text)' }}
+          >
+            {menuOpen ? (
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <line x1="4" y1="4" x2="16" y2="16" />
+                <line x1="16" y1="4" x2="4" y2="16" />
+              </svg>
+            ) : (
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <line x1="3" y1="6" x2="17" y2="6" />
+                <line x1="3" y1="10" x2="17" y2="10" />
+                <line x1="3" y1="14" x2="17" y2="14" />
+              </svg>
+            )}
+          </button>
+        </div>
       </nav>
 
       {/* Mobile dropdown menu */}
@@ -119,13 +172,44 @@ export function Navbar() {
             {t('nav.home')}
           </Link>
 
-          {isAuthenticated() && role === 'user' && (
+          {isUser && (
             <Link to="/dashboard" className={mobileLinkClass} onClick={() => setMenuOpen(false)}>
               {t('nav.dashboard')}
             </Link>
           )}
 
-          {isAuthenticated() ? (
+          {/* Rater: identity row + logout */}
+          {isRater && (
+            <>
+              <div
+                className="flex items-center gap-3 h-11 px-4 rounded"
+                style={{ backgroundColor: 'color-mix(in srgb, var(--color-primary) 10%, transparent)' }}
+              >
+                <span
+                  className="flex items-center justify-center w-7 h-7 rounded-full text-sm font-bold shrink-0"
+                  style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-background)' }}
+                  aria-hidden="true"
+                >
+                  {raterInitial}
+                </span>
+                <span
+                  className="text-sm font-medium truncate"
+                  style={{ color: 'var(--color-primary)' }}
+                >
+                  {nickname}
+                </span>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="flex items-center h-11 px-4 rounded text-sm font-medium border transition-colors hover:opacity-80"
+                style={{ borderColor: 'var(--color-accent)', color: 'var(--color-accent)' }}
+              >
+                {t('nav.logout')}
+              </button>
+            </>
+          )}
+
+          {isUser && (
             <button
               onClick={handleLogout}
               className="flex items-center h-11 px-4 rounded text-sm font-medium border transition-colors hover:opacity-80"
@@ -133,7 +217,9 @@ export function Navbar() {
             >
               {t('nav.logout')}
             </button>
-          ) : (
+          )}
+
+          {!isAuthenticated() && (
             <Link to="/login" className={mobileLinkClass} onClick={() => setMenuOpen(false)}>
               {t('nav.login')}
             </Link>
