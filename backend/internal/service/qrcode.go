@@ -173,29 +173,33 @@ func (s *QRCodeService) ExportPDF(ctx context.Context, userID uuid.UUID, slug st
 }
 
 // buildRatersPDF generates a simple A4 PDF table listing rater nicknames and codes.
-func buildRatersPDF(tournamentName string, raters []domain.Rater) ([]byte, error) {
+func buildRatersPDF(tournamentName string, slug string, raters []domain.Rater) ([]byte, error) {
 	pdf := gofpdf.New("P", "mm", "A4", "")
 	pdf.SetMargins(15, 15, 15)
 	pdf.AddPage()
 
 	// Title
 	pdf.SetFont("Helvetica", "B", 16)
-	pdf.CellFormat(0, 10, tournamentName+" — Teilnehmerliste", "", 1, "L", false, 0, "")
+	pdf.CellFormat(0, 10, tournamentName+" - Teilnehmerliste", "", 1, "L", false, 0, "")
+	pdf.SetFont("Helvetica", "", 10)
+	pdf.CellFormat(0, 6, "Slug: "+slug, "", 1, "L", false, 0, "")
 	pdf.Ln(4)
 
 	// Header row
 	pdf.SetFont("Helvetica", "B", 11)
 	pdf.SetFillColor(220, 220, 220)
-	pdf.CellFormat(110, 8, "Spitzname / Nickname", "1", 0, "L", true, 0, "")
-	pdf.CellFormat(60, 8, "Code", "1", 1, "C", true, 0, "")
+	pdf.CellFormat(95, 8, "Spitzname / Nickname", "1", 0, "L", true, 0, "")
+	pdf.CellFormat(45, 8, "Code", "1", 0, "C", true, 0, "")
+	pdf.CellFormat(45, 8, "Turnier-Slug", "1", 1, "L", true, 0, "")
 
 	// Data rows
 	pdf.SetFont("Helvetica", "", 11)
 	fill := false
 	pdf.SetFillColor(245, 245, 245)
 	for _, r := range raters {
-		pdf.CellFormat(110, 8, r.Nickname, "1", 0, "L", fill, 0, "")
-		pdf.CellFormat(60, 8, r.Code, "1", 1, "C", fill, 0, "")
+		pdf.CellFormat(95, 8, r.Nickname, "1", 0, "L", fill, 0, "")
+		pdf.CellFormat(45, 8, r.Code, "1", 0, "C", fill, 0, "")
+		pdf.CellFormat(45, 8, slug, "1", 1, "L", fill, 0, "")
 		fill = !fill
 	}
 

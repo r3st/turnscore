@@ -22,7 +22,9 @@
     "code_placeholder": "Dein Zugangscode",
     "login_button": "Bewertung starten",
     "logout_confirm": "Abmelden?",
-    "error_invalid_credentials": "Ungültiger Spitzname oder Code."
+    "error_invalid_credentials": "Ungültiger Spitzname oder Code.",
+    "slug_label": "Turnier-Slug",
+    "slug_placeholder": "z. B. essen-open-2025"
   },
   "home": {
     "upcoming_tournaments": "Kommende Turniere",
