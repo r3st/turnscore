@@ -250,6 +250,31 @@ func (h *Handlers) DeletePhoto(ctx context.Context, req generated.DeletePhotoReq
 	return generated.DeletePhoto204Response{}, nil
 }
 
+// DeleteTable removes a table (organizer only, draft status).
+func (h *Handlers) DeleteTable(ctx context.Context, req generated.DeleteTableRequestObject) (generated.DeleteTableResponseObject, error) {
+	userID, ok := getUserID(ctx)
+	if !ok {
+		return generated.DeleteTable401JSONResponse{
+			UnauthorizedJSONResponse: generated.UnauthorizedJSONResponse{Code: "unauthorized", Message: msgMissingUserID},
+		}, nil
+	}
+
+	if err := h.tableSvc.DeleteTable(ctx, userID, req.Slug, req.Number); err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			return generated.DeleteTable404JSONResponse{
+				NotFoundJSONResponse: generated.NotFoundJSONResponse{Code: "not_found", Message: msgTableNotFound},
+			}, nil
+		}
+		if errors.Is(err, domain.ErrForbidden) {
+			return generated.DeleteTable403JSONResponse{
+				ForbiddenJSONResponse: generated.ForbiddenJSONResponse{Code: "forbidden", Message: msgForbiddenUpdate},
+			}, nil
+		}
+		return nil, err
+	}
+	return generated.DeleteTable204Response{}, nil
+}
+
 // GenerateQRCode generates a QR code PNG for a table and returns it as image/png.
 func (h *Handlers) GenerateQRCode(ctx context.Context, req generated.GenerateQRCodeRequestObject) (generated.GenerateQRCodeResponseObject, error) {
 	userID, ok := getUserID(ctx)

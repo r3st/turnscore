@@ -227,7 +227,8 @@ export interface paths {
         /** Update table name/description (organizer or helper) */
         put: operations["updateTable"];
         post?: never;
-        delete?: never;
+        /** Delete a table (organizer only, draft status) */
+        delete: operations["deleteTable"];
         options?: never;
         head?: never;
         patch?: never;
@@ -531,6 +532,7 @@ export interface components {
         };
         UpdateTournamentRequest: {
             name?: string;
+            type?: components["schemas"]["TournamentType"] | null;
             description?: string | null;
             links?: components["schemas"]["TournamentLink"][];
             location?: string | null;
@@ -1170,6 +1172,30 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["TableSummary"];
                 };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    deleteTable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+                number: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Table deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];

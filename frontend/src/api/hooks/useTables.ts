@@ -57,6 +57,14 @@ export function useGenerateQRCode(slug: string, tableNumber: number) {
   });
 }
 
+export function useDeleteTable(slug: string) {
+  const qc = useQueryClient();
+  return useMutation<void, Error, number>({
+    mutationFn: (number) => apiClient.delete(`/tournaments/${slug}/tables/${number}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tables', slug] }),
+  });
+}
+
 export function useGenerateAllQRCodes(slug: string) {
   return useMutation<Blob, Error, void>({
     mutationFn: () =>

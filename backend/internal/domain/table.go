@@ -40,6 +40,7 @@ type TableRepository interface {
 	CreateBatch(ctx context.Context, tables []Table) error
 	Update(ctx context.Context, t *Table) error
 	UpdateQRCodePath(ctx context.Context, tableID uuid.UUID, path string) error
+	Delete(ctx context.Context, id uuid.UUID) error
 }
 
 // PhotoRepository defines data access for photos.

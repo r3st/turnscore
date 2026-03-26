@@ -274,6 +274,10 @@ func buildUpdateInput(body *generated.UpdateTournamentRequest) service.UpdateTou
 		VotingStart: body.VotingStart,
 		VotingEnd:   body.VotingEnd,
 	}
+	if body.Type != nil {
+		s := string(*body.Type)
+		input.Type = &s
+	}
 	if body.EventDate != nil {
 		t := body.EventDate.Time
 		input.EventDate = &t

@@ -186,7 +186,10 @@
     "qr_download": "QR herunterladen",
     "qr_export_all": "Alle QR-Codes exportieren (PDF)",
     "qr_generating": "Wird generiert...",
-    "back_to_tournament": "Zurück zum Turnier"
+    "back_to_tournament": "Zurück zum Turnier",
+    "delete_table": "Tisch löschen",
+    "delete_table_confirm": "Diesen Tisch und alle Fotos löschen?",
+    "add_missing_tables": "Fehlende Tische erstellen ({{count}} ausstehend)"
   },
   "rater": {
     "section_title": "Teilnehmer",

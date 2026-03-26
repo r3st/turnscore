@@ -167,6 +167,46 @@ func (s *TableService) Update(ctx context.Context, userID uuid.UUID, slug string
 	return table, nil
 }
 
+// DeleteTable removes a table and its photos. Only allowed in draft status; caller must be organizer.
+func (s *TableService) DeleteTable(ctx context.Context, userID uuid.UUID, slug string, number int) error {
+	t, err := s.tourneyRepo.FindBySlug(ctx, slug)
+	if err != nil {
+		return fmt.Errorf("DeleteTable find tournament: %w", err)
+	}
+
+	role, err := s.memberRepo.GetRole(ctx, t.ID, userID)
+	if err != nil || role != roleOrganizer {
+		return domain.ErrForbidden
+	}
+
+	if t.Status != "draft" {
+		return domain.ErrForbidden
+	}
+
+	table, err := s.tableRepo.FindByTournamentAndNumber(ctx, t.ID, number)
+	if err != nil {
+		return fmt.Errorf("DeleteTable find table: %w", err)
+	}
+
+	// Delete all photos from storage first.
+	for i := range table.Photos {
+		p := &table.Photos[i]
+		if delErr := s.storage.Delete(ctx, p.URL); delErr != nil {
+			return fmt.Errorf("DeleteTable delete photo file: %w", delErr)
+		}
+		if p.ThumbnailURL != nil {
+			if delErr := s.storage.Delete(ctx, *p.ThumbnailURL); delErr != nil {
+				return fmt.Errorf("DeleteTable delete thumbnail: %w", delErr)
+			}
+		}
+	}
+
+	if err := s.tableRepo.Delete(ctx, table.ID); err != nil {
+		return fmt.Errorf("DeleteTable delete record: %w", err)
+	}
+	return nil
+}
+
 // UploadPhoto validates, thumbnails, stores, and records a photo for a table.
 // Caller must be organizer or helper.
 func (s *TableService) UploadPhoto(
