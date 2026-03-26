@@ -1,13 +1,23 @@
+import { useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useTournament } from '@/api/hooks/useTournaments';
+import { useTheme } from '@/hooks/useTheme';
 import type { TableSummary } from '@/api/hooks/useTables';
 
 export function TournamentPage() {
   const { slug = '' } = useParams<{ slug: string }>();
   const { t } = useTranslation();
   const { data: tournament, isLoading, isError } = useTournament(slug);
+  const { applyTheme, clearTheme } = useTheme();
+
+  useEffect(() => {
+    if (tournament?.type) {
+      applyTheme(tournament.type as 'fantasy' | 'scifi');
+    }
+    return () => clearTheme();
+  }, [tournament?.type]);
 
   return (
     <AppLayout>

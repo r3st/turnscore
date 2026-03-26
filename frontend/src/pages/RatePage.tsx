@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useGetTable, useSubmitRating } from '@/api/hooks/useTables';
 import { useAuthStore } from '@/stores/authStore';
+import { useTheme } from '@/hooks/useTheme';
 import type { components } from '@/api/generated/api';
 
 type CriteriaKey = components['schemas']['CriteriaKey'];
@@ -20,6 +21,14 @@ export function RatePage() {
 
   const { data: table, isLoading } = useGetTable(slug, tableNum);
   const submitRating = useSubmitRating(slug, tableNum);
+  const { applyTheme, clearTheme } = useTheme();
+
+  useEffect(() => {
+    if (table?.tournament_type) {
+      applyTheme(table.tournament_type as 'fantasy' | 'scifi');
+    }
+    return () => clearTheme();
+  }, [table?.tournament_type]);
 
   const [scores, setScores] = useState<Record<string, number>>({});
   const [playedZone, setPlayedZone] = useState<PlayedZone>('none');
