@@ -35,7 +35,7 @@ services:
       APP_DATABASE_SSLMODE: disable
       APP_AUTH_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       APP_AUTH_GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-      APP_AUTH_JWT_SECRET: dev-jwt-secret-not-for-production
+      APP_AUTH_JWT_SECRET: ${JWT_SECRET}
       APP_STORAGE_BACKEND: local
       APP_STORAGE_LOCAL_PATH: /app/uploads
       APP_STORAGE_LOCAL_BASE_URL: http://localhost:8080

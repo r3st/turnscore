@@ -145,7 +145,7 @@ func runServer(cmd *cobra.Command, args []string) error {
 	userSvc := service.NewUserService(userRepo, memberRepo, tourneyRepo)
 
 	// --- Handlers & Router ---
-	h := handlers.New(tournamentSvc, tableSvc, qrSvc, raterSvc, userSvc, authSvc)
+	h := handlers.New(tournamentSvc, tableSvc, qrSvc, raterSvc, userSvc, authSvc, cfg.Server.FrontendURL)
 	router := api.NewRouter(cfg, jwtSvc, h)
 
 	// --- HTTP Server with graceful shutdown ---
