@@ -320,6 +320,8 @@ type PlayedZone string
 
 // Rater defines model for Rater.
 type Rater struct {
+	// Code Plaintext access code for the rater
+	Code     string `json:"code"`
 	Id       UUID   `json:"id"`
 	Nickname string `json:"nickname"`
 }
@@ -626,6 +628,9 @@ type ServerInterface interface {
 	// Register rater (organizer or helper)
 	// (POST /tournaments/{slug}/raters)
 	CreateRater(c *gin.Context, slug string)
+	// Export rater list as PDF (organizer or helper)
+	// (GET /tournaments/{slug}/raters/pdf)
+	ExportRatersPdf(c *gin.Context, slug string)
 	// Update result visibility config (organizer only)
 	// (PUT /tournaments/{slug}/result-config)
 	UpdateResultConfig(c *gin.Context, slug string)
@@ -1079,6 +1084,32 @@ func (siw *ServerInterfaceWrapper) CreateRater(c *gin.Context) {
 	siw.Handler.CreateRater(c, slug)
 }
 
+// ExportRatersPdf operation middleware
+func (siw *ServerInterfaceWrapper) ExportRatersPdf(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "slug" -------------
+	var slug string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "slug", c.Param("slug"), &slug, runtime.BindStyledParameterOptions{Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter slug: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.ExportRatersPdf(c, slug)
+}
+
 // UpdateResultConfig operation middleware
 func (siw *ServerInterfaceWrapper) UpdateResultConfig(c *gin.Context) {
 
@@ -1436,6 +1467,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.POST(options.BaseURL+"/tournaments/:slug/qrcodes", wrapper.ExportQRCodesPDF)
 	router.GET(options.BaseURL+"/tournaments/:slug/raters", wrapper.ListRaters)
 	router.POST(options.BaseURL+"/tournaments/:slug/raters", wrapper.CreateRater)
+	router.GET(options.BaseURL+"/tournaments/:slug/raters/pdf", wrapper.ExportRatersPdf)
 	router.PUT(options.BaseURL+"/tournaments/:slug/result-config", wrapper.UpdateResultConfig)
 	router.GET(options.BaseURL+"/tournaments/:slug/results", wrapper.GetTournamentResults)
 	router.GET(options.BaseURL+"/tournaments/:slug/tables", wrapper.ListTables)
@@ -2176,6 +2208,60 @@ func (response CreateRater409JSONResponse) VisitCreateRaterResponse(w http.Respo
 	return json.NewEncoder(w).Encode(response)
 }
 
+type ExportRatersPdfRequestObject struct {
+	Slug string `json:"slug"`
+}
+
+type ExportRatersPdfResponseObject interface {
+	VisitExportRatersPdfResponse(w http.ResponseWriter) error
+}
+
+type ExportRatersPdf200ApplicationpdfResponse struct {
+	Body          io.Reader
+	ContentLength int64
+}
+
+func (response ExportRatersPdf200ApplicationpdfResponse) VisitExportRatersPdfResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/pdf")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(200)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type ExportRatersPdf401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response ExportRatersPdf401JSONResponse) VisitExportRatersPdfResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ExportRatersPdf403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response ExportRatersPdf403JSONResponse) VisitExportRatersPdfResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ExportRatersPdf404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response ExportRatersPdf404JSONResponse) VisitExportRatersPdfResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 type UpdateResultConfigRequestObject struct {
 	Slug string `json:"slug"`
 	Body *UpdateResultConfigJSONRequestBody
@@ -2717,6 +2803,9 @@ type StrictServerInterface interface {
 	// Register rater (organizer or helper)
 	// (POST /tournaments/{slug}/raters)
 	CreateRater(ctx context.Context, request CreateRaterRequestObject) (CreateRaterResponseObject, error)
+	// Export rater list as PDF (organizer or helper)
+	// (GET /tournaments/{slug}/raters/pdf)
+	ExportRatersPdf(ctx context.Context, request ExportRatersPdfRequestObject) (ExportRatersPdfResponseObject, error)
 	// Update result visibility config (organizer only)
 	// (PUT /tournaments/{slug}/result-config)
 	UpdateResultConfig(ctx context.Context, request UpdateResultConfigRequestObject) (UpdateResultConfigResponseObject, error)
@@ -3283,6 +3372,33 @@ func (sh *strictHandler) CreateRater(ctx *gin.Context, slug string) {
 		ctx.Status(http.StatusInternalServerError)
 	} else if validResponse, ok := response.(CreateRaterResponseObject); ok {
 		if err := validResponse.VisitCreateRaterResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ExportRatersPdf operation middleware
+func (sh *strictHandler) ExportRatersPdf(ctx *gin.Context, slug string) {
+	var request ExportRatersPdfRequestObject
+
+	request.Slug = slug
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ExportRatersPdf(ctx, request.(ExportRatersPdfRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ExportRatersPdf")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(ExportRatersPdfResponseObject); ok {
+		if err := validResponse.VisitExportRatersPdfResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
 		}
 	} else if response != nil {

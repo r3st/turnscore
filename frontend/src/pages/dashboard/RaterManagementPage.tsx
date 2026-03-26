@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useTournament } from '@/api/hooks/useTournaments';
-import { useListRaters, useCreateRater } from '@/api/hooks/useRaters';
+import { useListRaters, useCreateRater, useExportRatersPdf } from '@/api/hooks/useRaters';
 
 export function RaterManagementPage() {
   const { slug = '' } = useParams<{ slug: string }>();
@@ -10,6 +10,7 @@ export function RaterManagementPage() {
   const { data: tournament } = useTournament(slug);
   const { data: raters, isLoading } = useListRaters(slug);
   const createRater = useCreateRater(slug);
+  const exportPdf = useExportRatersPdf(slug);
 
   const [nickname, setNickname] = useState('');
   const [code, setCode] = useState('');
@@ -33,17 +34,29 @@ export function RaterManagementPage() {
   return (
     <div className="space-y-6 max-w-2xl">
       {/* Header */}
-      <div>
-        <Link
-          to={`/dashboard/tournaments/${slug}`}
-          className="text-xs hover:underline mb-1 block"
-          style={{ color: 'color-mix(in srgb, var(--color-text) 60%, transparent)' }}
-        >
-          ← {t('table_mgmt.back_to_tournament')}
-        </Link>
-        <h1 className="font-heading text-2xl font-bold">
-          {t('rater.section_title')} — {tournament?.name ?? slug}
-        </h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <Link
+            to={`/dashboard/tournaments/${slug}`}
+            className="text-xs hover:underline mb-1 block"
+            style={{ color: 'color-mix(in srgb, var(--color-text) 60%, transparent)' }}
+          >
+            ← {t('table_mgmt.back_to_tournament')}
+          </Link>
+          <h1 className="font-heading text-2xl font-bold">
+            {t('rater.section_title')} — {tournament?.name ?? slug}
+          </h1>
+        </div>
+        {raters && raters.length > 0 && (
+          <button
+            onClick={() => exportPdf.mutate()}
+            disabled={exportPdf.isPending}
+            className="text-sm px-4 py-2 rounded border font-medium"
+            style={{ borderColor: 'var(--color-accent)', color: 'var(--color-accent)' }}
+          >
+            {exportPdf.isPending ? t('common.loading') : t('rater.export_pdf')}
+          </button>
+        )}
       </div>
 
       {/* Add rater form */}
@@ -115,7 +128,7 @@ export function RaterManagementPage() {
                   style={{ backgroundColor: i % 2 === 0 ? 'transparent' : 'color-mix(in srgb, var(--color-primary) 4%, transparent)' }}
                 >
                   <td className="px-4 py-2">{rater.nickname}</td>
-                  <td className="px-4 py-2 font-mono text-xs">—</td>
+                  <td className="px-4 py-2 font-mono text-xs">{rater.code}</td>
                 </tr>
               ))}
             </tbody>
