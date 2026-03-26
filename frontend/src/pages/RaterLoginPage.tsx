@@ -30,7 +30,7 @@ export function RaterLoginPage() {
         nickname: nickname.trim(),
         code: code.trim(),
       });
-      login(data.token, data.refresh_token ?? null);
+      login(data.token, data.refresh_token ?? null, nickname.trim());
       navigate(`/t/${slug.trim()}`);
     } catch {
       setError(t('auth.error_invalid_credentials'));
