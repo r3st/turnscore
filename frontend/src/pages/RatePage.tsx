@@ -24,10 +24,13 @@ export function RatePage() {
   const { applyTheme, clearTheme } = useTheme();
 
   useEffect(() => {
-    if (table?.tournament_type) {
-      applyTheme(table.tournament_type as 'fantasy' | 'scifi');
-    }
-    return () => clearTheme();
+    if (!table?.tournament_type) return;
+    const prev = document.documentElement.getAttribute('data-theme');
+    applyTheme(table.tournament_type as 'fantasy' | 'scifi');
+    return () => {
+      if (prev) document.documentElement.setAttribute('data-theme', prev);
+      else clearTheme();
+    };
   }, [table?.tournament_type]);
 
   const [scores, setScores] = useState<Record<string, number>>({});

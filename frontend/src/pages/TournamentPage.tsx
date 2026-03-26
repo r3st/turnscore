@@ -13,10 +13,13 @@ export function TournamentPage() {
   const { applyTheme, clearTheme } = useTheme();
 
   useEffect(() => {
-    if (tournament?.type) {
-      applyTheme(tournament.type as 'fantasy' | 'scifi');
-    }
-    return () => clearTheme();
+    if (!tournament?.type) return;
+    const prev = document.documentElement.getAttribute('data-theme');
+    applyTheme(tournament.type as 'fantasy' | 'scifi');
+    return () => {
+      if (prev) document.documentElement.setAttribute('data-theme', prev);
+      else clearTheme();
+    };
   }, [tournament?.type]);
 
   return (
