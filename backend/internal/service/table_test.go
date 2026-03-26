@@ -59,9 +59,15 @@ func TestTableServiceCreateForTournamentSuccess(t *testing.T) {
 	organizerID := uuid.New()
 	tourney := fakeTournament(tableCountDefault)
 
+	created := make([]domain.Table, tableCountDefault)
+	for i := range created {
+		created[i] = domain.Table{ID: uuid.New(), TournamentID: tourney.ID, Number: i + 1}
+	}
+
 	tourneyRepo.EXPECT().FindBySlug(ctx, slugTableTournament).Return(tourney, nil)
 	memberRepo.EXPECT().GetRole(ctx, tourney.ID, organizerID).Return(roleOrganizer, nil)
-	tableRepo.EXPECT().CountByTournamentID(ctx, tourney.ID).Return(int64(0), nil)
+	// First call: no existing tables
+	tableRepo.EXPECT().ListByTournamentID(ctx, tourney.ID).Return([]domain.Table{}, nil)
 	tableRepo.EXPECT().CreateBatch(ctx, gomock.Any()).DoAndReturn(
 		func(_ context.Context, tables []domain.Table) error {
 			assert.Len(t, tables, tableCountDefault)
@@ -72,6 +78,8 @@ func TestTableServiceCreateForTournamentSuccess(t *testing.T) {
 			return nil
 		},
 	)
+	// Second call: return final list
+	tableRepo.EXPECT().ListByTournamentID(ctx, tourney.ID).Return(created, nil)
 
 	tables, err := svc.CreateForTournament(ctx, organizerID, slugTableTournament)
 	require.NoError(t, err)
@@ -81,7 +89,7 @@ func TestTableServiceCreateForTournamentSuccess(t *testing.T) {
 	}
 }
 
-func TestTableServiceCreateForTournamentConflict(t *testing.T) {
+func TestTableServiceCreateForTournamentAdditive(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	svc, tableRepo, memberRepo, tourneyRepo, _, _ := newTableService(ctrl)
 
@@ -89,13 +97,34 @@ func TestTableServiceCreateForTournamentConflict(t *testing.T) {
 	organizerID := uuid.New()
 	tourney := fakeTournament(tableCountDefault)
 
+	// Tables 1 and 2 already exist; 3–5 are missing.
+	existing := []domain.Table{
+		{ID: uuid.New(), TournamentID: tourney.ID, Number: 1},
+		{ID: uuid.New(), TournamentID: tourney.ID, Number: 2},
+	}
+	all := append(existing,
+		domain.Table{ID: uuid.New(), TournamentID: tourney.ID, Number: 3},
+		domain.Table{ID: uuid.New(), TournamentID: tourney.ID, Number: 4},
+		domain.Table{ID: uuid.New(), TournamentID: tourney.ID, Number: 5},
+	)
+
 	tourneyRepo.EXPECT().FindBySlug(ctx, slugTableTournament).Return(tourney, nil)
 	memberRepo.EXPECT().GetRole(ctx, tourney.ID, organizerID).Return(roleOrganizer, nil)
-	tableRepo.EXPECT().CountByTournamentID(ctx, tourney.ID).Return(int64(tableCountDefault), nil)
+	tableRepo.EXPECT().ListByTournamentID(ctx, tourney.ID).Return(existing, nil)
+	tableRepo.EXPECT().CreateBatch(ctx, gomock.Any()).DoAndReturn(
+		func(_ context.Context, tables []domain.Table) error {
+			assert.Len(t, tables, 3)
+			assert.Equal(t, 3, tables[0].Number)
+			assert.Equal(t, 4, tables[1].Number)
+			assert.Equal(t, 5, tables[2].Number)
+			return nil
+		},
+	)
+	tableRepo.EXPECT().ListByTournamentID(ctx, tourney.ID).Return(all, nil)
 
 	tables, err := svc.CreateForTournament(ctx, organizerID, slugTableTournament)
-	assert.Nil(t, tables)
-	assert.ErrorIs(t, err, domain.ErrConflict)
+	require.NoError(t, err)
+	assert.Len(t, tables, tableCountDefault)
 }
 
 func TestTableServiceCreateForTournamentForbidden(t *testing.T) {
