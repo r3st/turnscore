@@ -36,6 +36,8 @@ type TournamentMembership struct {
 	JoinedAt     time.Time
 }
 
+func (TournamentMembership) TableName() string { return "tournament_members" }
+
 // TournamentRepository defines data access for tournaments.
 type TournamentRepository interface {
 	FindBySlug(ctx context.Context, slug string) (*Tournament, error)

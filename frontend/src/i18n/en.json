@@ -167,6 +167,35 @@
     "uploading": "Uploading...",
     "delete_confirm": "Delete this photo?"
   },
+  "table_mgmt": {
+    "title": "Tables — {{name}}",
+    "create_tables": "Create Tables",
+    "create_tables_hint": "Creates all {{count}} tables for this tournament.",
+    "create_tables_success": "Tables created.",
+    "no_tables": "No tables yet.",
+    "table_number": "Table {{number}}",
+    "name_label": "Name (optional)",
+    "name_placeholder": "e.g. Alpine Pass",
+    "description_label": "Description (optional)",
+    "save": "Save",
+    "qr_generate": "Generate QR",
+    "qr_download": "Download QR",
+    "qr_export_all": "Export all QR codes (PDF)",
+    "qr_generating": "Generating...",
+    "back_to_tournament": "Back to Tournament"
+  },
+  "rater": {
+    "section_title": "Raters",
+    "no_raters": "No raters registered yet.",
+    "nickname_label": "Nickname",
+    "nickname_placeholder": "e.g. Thorbjörn42",
+    "code_label": "Code (optional, 4–6 digits)",
+    "code_placeholder": "Auto-generated if empty",
+    "add_button": "Add Rater",
+    "added": "Rater added.",
+    "error_add": "Could not add rater.",
+    "code_hint": "Code: {{code}}"
+  },
   "results": {
     "title": "Results",
     "rank": "Rank",

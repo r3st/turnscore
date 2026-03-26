@@ -167,6 +167,35 @@
     "uploading": "Wird hochgeladen...",
     "delete_confirm": "Dieses Foto löschen?"
   },
+  "table_mgmt": {
+    "title": "Tische — {{name}}",
+    "create_tables": "Tische erstellen",
+    "create_tables_hint": "Erstellt alle {{count}} Tische für dieses Turnier.",
+    "create_tables_success": "Tische erstellt.",
+    "no_tables": "Noch keine Tische vorhanden.",
+    "table_number": "Tisch {{number}}",
+    "name_label": "Name (optional)",
+    "name_placeholder": "z. B. Alpenpass",
+    "description_label": "Beschreibung (optional)",
+    "save": "Speichern",
+    "qr_generate": "QR generieren",
+    "qr_download": "QR herunterladen",
+    "qr_export_all": "Alle QR-Codes exportieren (PDF)",
+    "qr_generating": "Wird generiert...",
+    "back_to_tournament": "Zurück zum Turnier"
+  },
+  "rater": {
+    "section_title": "Teilnehmer",
+    "no_raters": "Noch keine Teilnehmer registriert.",
+    "nickname_label": "Spitzname",
+    "nickname_placeholder": "z. B. Thorbjörn42",
+    "code_label": "Code (optional, 4–6 Ziffern)",
+    "code_placeholder": "Wird automatisch generiert",
+    "add_button": "Teilnehmer hinzufügen",
+    "added": "Teilnehmer hinzugefügt.",
+    "error_add": "Teilnehmer konnte nicht hinzugefügt werden.",
+    "code_hint": "Code: {{code}}"
+  },
   "results": {
     "title": "Ergebnisse",
     "rank": "Rang",
