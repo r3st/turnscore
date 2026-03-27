@@ -33,11 +33,12 @@ func newRaterService(ctrl *gomock.Controller) (
 ) {
 	raterRepo := mocks.NewMockRaterRepository(ctrl)
 	ratingRepo := mocks.NewMockRatingRepository(ctrl)
+	eventRatingRepo := mocks.NewMockEventRatingRepository(ctrl)
 	tableRepo := mocks.NewMockTableRepository(ctrl)
 	memberRepo := mocks.NewMockTournamentMemberRepository(ctrl)
 	tourneyRepo := mocks.NewMockTournamentRepository(ctrl)
 	userRepo := mocks.NewMockUserRepository(ctrl)
-	svc := NewRaterService(raterRepo, ratingRepo, tableRepo, memberRepo, tourneyRepo, userRepo)
+	svc := NewRaterService(raterRepo, ratingRepo, eventRatingRepo, tableRepo, memberRepo, tourneyRepo, userRepo)
 	return svc, raterRepo, ratingRepo, tableRepo, memberRepo, tourneyRepo, userRepo
 }
 
