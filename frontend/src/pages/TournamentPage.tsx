@@ -22,6 +22,14 @@ export function TournamentPage() {
   const { isAuthenticated, role } = useAuthStore();
   const isRater = isAuthenticated() && role === 'rater';
 
+  const isVotingActive = (() => {
+    if (!tournament || tournament.status !== 'active') return false;
+    const now = new Date();
+    if (tournament.voting_start && now < new Date(tournament.voting_start)) return false;
+    if (tournament.voting_end && now > new Date(tournament.voting_end)) return false;
+    return true;
+  })();
+
   useEffect(() => {
     if (!tournament?.type) return;
     const prev = document.documentElement.getAttribute('data-theme');
@@ -121,8 +129,8 @@ export function TournamentPage() {
               </div>
             )}
 
-            {/* Event Rating — shown above tables when optional criteria exist and rater is logged in */}
-            {isRater && tournament.active_criteria?.some((c) => OPTIONAL_CRITERIA.includes(c as CriteriaKey)) && (
+            {/* Event Rating — shown above tables when optional criteria exist, rater is logged in, and voting is open */}
+            {isRater && isVotingActive && tournament.active_criteria?.some((c) => OPTIONAL_CRITERIA.includes(c as CriteriaKey)) && (
               <EventRatingSection slug={slug} activeCriteria={(tournament.active_criteria as CriteriaKey[]).filter((c) => OPTIONAL_CRITERIA.includes(c))} />
             )}
 
@@ -139,7 +147,7 @@ export function TournamentPage() {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {tournament.tables.map((table) => (
-                    <TableCard key={table.id} slug={slug} table={table} rateLabel={t('tournament.rate_table')} tableLabel={t('table.number', { number: table.number })} />
+                    <TableCard key={table.id} slug={slug} table={table} showRateButton={isRater && isVotingActive} rateLabel={t('tournament.rate_table')} tableLabel={t('table.number', { number: table.number })} />
                   ))}
                 </div>
               )}
@@ -278,9 +286,10 @@ function EventRatingSection({ slug, activeCriteria }: { slug: string; activeCrit
   );
 }
 
-function TableCard({ slug, table, rateLabel, tableLabel }: {
+function TableCard({ slug, table, showRateButton, rateLabel, tableLabel }: {
   slug: string;
   table: TableSummary;
+  showRateButton: boolean;
   rateLabel: string;
   tableLabel: string;
 }) {
@@ -311,13 +320,15 @@ function TableCard({ slug, table, rateLabel, tableLabel }: {
             </p>
           )}
         </div>
-        <Link
-          to={`/rate/${slug}/${table.number}`}
-          className="shrink-0 inline-flex items-center justify-center text-xs px-3 py-1.5 rounded font-medium"
-          style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-background)' }}
-        >
-          {rateLabel}
-        </Link>
+        {showRateButton && (
+          <Link
+            to={`/rate/${slug}/${table.number}`}
+            className="shrink-0 inline-flex items-center justify-center text-xs px-3 py-1.5 rounded font-medium"
+            style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-background)' }}
+          >
+            {rateLabel}
+          </Link>
+        )}
       </div>
     </div>
   );

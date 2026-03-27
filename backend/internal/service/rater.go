@@ -339,12 +339,9 @@ func (s *RaterService) HasEventRating(ctx context.Context, raterID, tournamentID
 }
 
 // isVotingOpen returns true when rating submissions should be accepted.
-// Accepts either the legacy "voting" status, or "active" status with the current
-// time inside the configured voting window.
+// Tournament must be "active" and the current time must be within the voting window
+// (if start/end are set).
 func isVotingOpen(t *domain.Tournament) bool {
-	if t.Status == "voting" {
-		return true
-	}
 	if t.Status != "active" {
 		return false
 	}
