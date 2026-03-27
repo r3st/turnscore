@@ -328,6 +328,17 @@ export function TournamentEditPage() {
               className="w-full px-3 py-2 rounded border text-sm resize-y"
               style={inputStyle}
             />
+            <p className="text-xs mt-1" style={{ color: 'color-mix(in srgb, var(--color-text) 50%, transparent)' }}>
+              {t('tournament_form.description_markdown_hint')}{' '}
+              <a
+                href="https://www.markdownguide.org/basic-syntax/"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: 'var(--color-primary)' }}
+              >
+                Markdown
+              </a>
+            </p>
           </Field>
 
           {/* Links */}
