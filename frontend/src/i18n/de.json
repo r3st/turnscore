@@ -22,6 +22,7 @@
     "code_placeholder": "Dein Zugangscode",
     "login_button": "Bewertung starten",
     "logout_confirm": "Abmelden?",
+    "dev_login_hint": "Dev-Login",
     "logged_in_as": "Eingeloggt als {{name}}",
     "error_invalid_credentials": "Ungültiger Spitzname oder Code.",
     "slug_label": "Turnier-Slug",
