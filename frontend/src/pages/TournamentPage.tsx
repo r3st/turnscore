@@ -97,11 +97,35 @@ export function TournamentPage() {
             {/* Description */}
             {tournament.description && (
               <div
-                className="p-4 rounded text-sm leading-relaxed prose prose-sm max-w-none"
+                className="p-4 rounded text-sm leading-relaxed"
                 style={{ backgroundColor: 'var(--color-surface)', color: 'var(--color-text)' }}
               >
                 <ReactMarkdown
                   components={{
+                    h1: ({ children }) => <h1 className="text-xl font-bold font-heading mb-2 mt-4 first:mt-0">{children}</h1>,
+                    h2: ({ children }) => <h2 className="text-lg font-bold font-heading mb-2 mt-4 first:mt-0">{children}</h2>,
+                    h3: ({ children }) => <h3 className="text-base font-bold mb-1 mt-3 first:mt-0">{children}</h3>,
+                    p: ({ children }) => <p className="mb-3 last:mb-0">{children}</p>,
+                    ul: ({ children }) => <ul className="list-disc list-outside pl-5 mb-3 space-y-1">{children}</ul>,
+                    ol: ({ children }) => <ol className="list-decimal list-outside pl-5 mb-3 space-y-1">{children}</ol>,
+                    li: ({ children }) => <li>{children}</li>,
+                    blockquote: ({ children }) => (
+                      <blockquote
+                        className="pl-3 mb-3 italic"
+                        style={{ borderLeft: '3px solid var(--color-primary)', color: 'color-mix(in srgb, var(--color-text) 70%, transparent)' }}
+                      >
+                        {children}
+                      </blockquote>
+                    ),
+                    code: ({ children, className }) => {
+                      const isBlock = !!className;
+                      return isBlock ? (
+                        <code className="block p-3 rounded text-xs font-mono mb-3 overflow-x-auto whitespace-pre" style={{ backgroundColor: 'color-mix(in srgb, var(--color-text) 8%, transparent)' }}>{children}</code>
+                      ) : (
+                        <code className="px-1 py-0.5 rounded text-xs font-mono" style={{ backgroundColor: 'color-mix(in srgb, var(--color-text) 8%, transparent)' }}>{children}</code>
+                      );
+                    },
+                    pre: ({ children }) => <>{children}</>,
                     a: ({ href, children }) => (
                       <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary)' }}>
                         {children}
