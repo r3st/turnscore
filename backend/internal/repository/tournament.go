@@ -65,7 +65,7 @@ func (r *TournamentRepository) ExistsBySlug(ctx context.Context, slug string) (b
 func (r *TournamentRepository) ListUpcoming(ctx context.Context, limit int) ([]domain.Tournament, error) {
 	var ts []domain.Tournament
 	err := r.db.WithContext(ctx).
-		Where("status IN ('draft','active','voting') AND (event_date >= NOW() OR event_date IS NULL)").
+		Where("status IN ('draft','active') AND (event_date >= CURRENT_DATE OR event_date IS NULL)").
 		Order("event_date ASC NULLS LAST").
 		Limit(limit).
 		Find(&ts).Error
@@ -80,7 +80,7 @@ func (r *TournamentRepository) ListUpcoming(ctx context.Context, limit int) ([]d
 func (r *TournamentRepository) ListPast(ctx context.Context, limit int) ([]domain.Tournament, error) {
 	var ts []domain.Tournament
 	err := r.db.WithContext(ctx).
-		Where("status = 'archived' OR event_date < NOW()").
+		Where("status = 'archived' OR event_date < CURRENT_DATE").
 		Order("event_date DESC").
 		Limit(limit).
 		Find(&ts).Error
