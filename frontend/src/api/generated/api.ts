@@ -509,7 +509,7 @@ export interface components {
         /** @enum {string} */
         TournamentType: "fantasy" | "scifi";
         /** @enum {string} */
-        TournamentStatus: "draft" | "active" | "voting" | "archived";
+        TournamentStatus: "draft" | "active" | "archived";
         TournamentLink: {
             /** Format: uri */
             url: string;

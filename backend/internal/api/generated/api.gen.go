@@ -129,7 +129,6 @@ const (
 	Active   TournamentStatus = "active"
 	Archived TournamentStatus = "archived"
 	Draft    TournamentStatus = "draft"
-	Voting   TournamentStatus = "voting"
 )
 
 // Valid indicates whether the value is a known member of the TournamentStatus enum.
@@ -140,8 +139,6 @@ func (e TournamentStatus) Valid() bool {
 	case Archived:
 		return true
 	case Draft:
-		return true
-	case Voting:
 		return true
 	default:
 		return false

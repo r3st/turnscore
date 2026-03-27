@@ -18,7 +18,7 @@ const CORE_CRITERIA: CriteriaKey[] = [
 ];
 const OPTIONAL_CRITERIA: CriteriaKey[] = ['catering', 'venue', 'organization'];
 const ALL_CRITERIA = [...CORE_CRITERIA, ...OPTIONAL_CRITERIA];
-const STATUSES = ['draft', 'active', 'voting', 'archived'] as const;
+const STATUSES = ['draft', 'active', 'archived'] as const;
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
