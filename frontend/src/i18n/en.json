@@ -163,7 +163,9 @@
     "added_success": "{{name}} added as helper.",
     "not_found": "No user found with this invite code.",
     "already_member": "This user is already a member.",
-    "error_add": "Could not add helper."
+    "error_add": "Could not add helper.",
+    "remove_button": "Remove",
+    "remove_confirm": "Remove this helper from the tournament?"
   },
   "result_config": {
     "section_title": "Result Configuration",

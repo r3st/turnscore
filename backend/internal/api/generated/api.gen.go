@@ -625,6 +625,9 @@ type ServerInterface interface {
 	// Submit tournament-level event rating (rater only)
 	// (POST /tournaments/{slug}/event-rating)
 	SubmitEventRating(c *gin.Context, slug string)
+	// List helpers of a tournament (organizer only)
+	// (GET /tournaments/{slug}/members)
+	ListTournamentMembers(c *gin.Context, slug string)
 	// Add helper by invite code (organizer only)
 	// (POST /tournaments/{slug}/members)
 	AddTournamentMember(c *gin.Context, slug string)
@@ -984,6 +987,32 @@ func (siw *ServerInterfaceWrapper) SubmitEventRating(c *gin.Context) {
 	}
 
 	siw.Handler.SubmitEventRating(c, slug)
+}
+
+// ListTournamentMembers operation middleware
+func (siw *ServerInterfaceWrapper) ListTournamentMembers(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "slug" -------------
+	var slug string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "slug", c.Param("slug"), &slug, runtime.BindStyledParameterOptions{Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter slug: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.ListTournamentMembers(c, slug)
 }
 
 // AddTournamentMember operation middleware
@@ -1530,6 +1559,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.PUT(options.BaseURL+"/tournaments/:slug", wrapper.UpdateTournament)
 	router.GET(options.BaseURL+"/tournaments/:slug/event-rating", wrapper.GetEventRatingStatus)
 	router.POST(options.BaseURL+"/tournaments/:slug/event-rating", wrapper.SubmitEventRating)
+	router.GET(options.BaseURL+"/tournaments/:slug/members", wrapper.ListTournamentMembers)
 	router.POST(options.BaseURL+"/tournaments/:slug/members", wrapper.AddTournamentMember)
 	router.DELETE(options.BaseURL+"/tournaments/:slug/members/me", wrapper.LeaveTournament)
 	router.DELETE(options.BaseURL+"/tournaments/:slug/members/:userId", wrapper.RemoveTournamentMember)
@@ -2038,6 +2068,41 @@ type SubmitEventRating409JSONResponse ErrorResponse
 func (response SubmitEventRating409JSONResponse) VisitSubmitEventRatingResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(409)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListTournamentMembersRequestObject struct {
+	Slug string `json:"slug"`
+}
+
+type ListTournamentMembersResponseObject interface {
+	VisitListTournamentMembersResponse(w http.ResponseWriter) error
+}
+
+type ListTournamentMembers200JSONResponse []MemberPreview
+
+func (response ListTournamentMembers200JSONResponse) VisitListTournamentMembersResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListTournamentMembers401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response ListTournamentMembers401JSONResponse) VisitListTournamentMembersResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListTournamentMembers403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response ListTournamentMembers403JSONResponse) VisitListTournamentMembersResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
 
 	return json.NewEncoder(w).Encode(response)
 }
@@ -2941,6 +3006,9 @@ type StrictServerInterface interface {
 	// Submit tournament-level event rating (rater only)
 	// (POST /tournaments/{slug}/event-rating)
 	SubmitEventRating(ctx context.Context, request SubmitEventRatingRequestObject) (SubmitEventRatingResponseObject, error)
+	// List helpers of a tournament (organizer only)
+	// (GET /tournaments/{slug}/members)
+	ListTournamentMembers(ctx context.Context, request ListTournamentMembersRequestObject) (ListTournamentMembersResponseObject, error)
 	// Add helper by invite code (organizer only)
 	// (POST /tournaments/{slug}/members)
 	AddTournamentMember(ctx context.Context, request AddTournamentMemberRequestObject) (AddTournamentMemberResponseObject, error)
@@ -3411,6 +3479,33 @@ func (sh *strictHandler) SubmitEventRating(ctx *gin.Context, slug string) {
 		ctx.Status(http.StatusInternalServerError)
 	} else if validResponse, ok := response.(SubmitEventRatingResponseObject); ok {
 		if err := validResponse.VisitSubmitEventRatingResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListTournamentMembers operation middleware
+func (sh *strictHandler) ListTournamentMembers(ctx *gin.Context, slug string) {
+	var request ListTournamentMembersRequestObject
+
+	request.Slug = slug
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ListTournamentMembers(ctx, request.(ListTournamentMembersRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListTournamentMembers")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(ListTournamentMembersResponseObject); ok {
+		if err := validResponse.VisitListTournamentMembersResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
 		}
 	} else if response != nil {

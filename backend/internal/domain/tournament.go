@@ -58,6 +58,14 @@ type MembershipWithTournament struct {
 	Role           string
 }
 
+// MemberWithUser is a read-model joining membership with user info for the helper list.
+type MemberWithUser struct {
+	UserID    uuid.UUID
+	Name      string
+	AvatarURL *string
+	Role      string
+}
+
 // TournamentMemberRepository defines data access for tournament membership.
 type TournamentMemberRepository interface {
 	GetRole(ctx context.Context, tournamentID, userID uuid.UUID) (string, error)
@@ -66,4 +74,7 @@ type TournamentMemberRepository interface {
 
 	// ListWithTournamentsByUserID returns memberships with tournament info for a user.
 	ListWithTournamentsByUserID(ctx context.Context, userID uuid.UUID) ([]MembershipWithTournament, error)
+
+	// ListByTournamentID returns all members (helpers + organizer) with user info for a tournament.
+	ListByTournamentID(ctx context.Context, tournamentID uuid.UUID) ([]MemberWithUser, error)
 }

@@ -163,7 +163,9 @@
     "added_success": "{{name}} wurde als Helfer hinzugefügt.",
     "not_found": "Kein Benutzer mit diesem Einladungscode gefunden.",
     "already_member": "Dieser Benutzer ist bereits Mitglied.",
-    "error_add": "Helfer konnte nicht hinzugefügt werden."
+    "error_add": "Helfer konnte nicht hinzugefügt werden.",
+    "remove_button": "Entfernen",
+    "remove_confirm": "Diesen Helfer aus dem Turnier entfernen?"
   },
   "result_config": {
     "section_title": "Ergebniskonfiguration",

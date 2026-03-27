@@ -241,6 +241,19 @@ func (s *TournamentService) Delete(ctx context.Context, userID uuid.UUID, slug s
 
 // AddMember adds a user as helper by their invite code.
 // Caller must be organizer.
+// ListMembers returns all members of a tournament. Caller must be organizer.
+func (s *TournamentService) ListMembers(ctx context.Context, userID uuid.UUID, slug string) ([]domain.MemberWithUser, error) {
+	t, err := s.tourneyRepo.FindBySlug(ctx, slug)
+	if err != nil {
+		return nil, fmt.Errorf("ListMembers: %w", err)
+	}
+	role, err := s.memberRepo.GetRole(ctx, t.ID, userID)
+	if err != nil || role != roleOrganizer {
+		return nil, domain.ErrForbidden
+	}
+	return s.memberRepo.ListByTournamentID(ctx, t.ID)
+}
+
 func (s *TournamentService) AddMember(ctx context.Context, userID uuid.UUID, slug, inviteCode string) (*domain.User, error) {
 	t, err := s.tourneyRepo.FindBySlug(ctx, slug)
 	if err != nil {

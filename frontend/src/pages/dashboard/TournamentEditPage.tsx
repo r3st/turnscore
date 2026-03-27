@@ -9,7 +9,7 @@ import {
   useUpdateResultConfig,
   type CriteriaKey,
 } from '@/api/hooks/useTournaments';
-import { useAddMember } from '@/api/hooks/useMembers';
+import { useAddMember, useRemoveMember, useTournamentMembers } from '@/api/hooks/useMembers';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -26,7 +26,7 @@ export function TournamentEditPage() {
   const { slug } = useParams<{ slug?: string }>();
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { role } = useAuthStore();
+  const { role, userId } = useAuthStore();
   const isNew = !slug;
   const isOrganizer = role === 'organizer';
 
@@ -35,6 +35,8 @@ export function TournamentEditPage() {
   const updateTournament = useUpdateTournament(slug ?? '');
   const updateResultConfig = useUpdateResultConfig(slug ?? '');
   const addMember = useAddMember(slug ?? '');
+  const removeMember = useRemoveMember(slug ?? '');
+  const { data: members } = useTournamentMembers(slug && !isNew ? slug : '');
 
   // ── Form state ────────────────────────────────────────────────────────────
 
@@ -497,6 +499,28 @@ export function TournamentEditPage() {
               <p role="status" className="text-sm" style={{ color: '#16a34a' }}>{helperSuccess}</p>
             )}
           </form>
+
+          {members && members.length > 0 && (
+            <ul className="mt-4 space-y-2">
+              {members.filter((m) => m.id !== userId).map((m) => (
+                <li key={m.id} className="flex items-center justify-between gap-2 px-3 py-2 rounded text-sm" style={{ backgroundColor: 'color-mix(in srgb, var(--color-text) 5%, transparent)' }}>
+                  <span className="truncate">{m.name}</span>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!window.confirm(t('helper.remove_confirm'))) return;
+                      await removeMember.mutateAsync(m.id);
+                    }}
+                    disabled={removeMember.isPending}
+                    className="shrink-0 text-xs px-2 py-1 rounded"
+                    style={{ color: '#dc2626', border: '1px solid #dc2626' }}
+                  >
+                    {t('helper.remove_button')}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       )}
 
