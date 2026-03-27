@@ -58,7 +58,7 @@ func TestMigrationsUp(t *testing.T) {
 	version, dirty, err := m.Version()
 	require.NoError(t, err)
 	assert.False(t, dirty, "database should not be in dirty state after migrations")
-	assert.Equal(t, uint(9), version, "should be at migration version 9")
+	assert.Equal(t, uint(10), version, "should be at migration version 10")
 }
 
 // TestMigrationsUpDown verifies that every migration can be rolled back cleanly.
