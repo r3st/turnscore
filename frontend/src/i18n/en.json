@@ -133,6 +133,7 @@
     "table_count_hint": "Cannot be changed after creation.",
     "description_label": "Description (Markdown supported)",
     "description_placeholder": "What should participants know about this tournament?",
+    "description_markdown_hint": "Formatting supported:",
     "location_label": "Location",
     "location_placeholder": "e.g. Messe Essen, Hall 1",
     "event_date_label": "Event Date",

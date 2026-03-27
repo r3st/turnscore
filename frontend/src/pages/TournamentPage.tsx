@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import ReactMarkdown from 'react-markdown';
 import { useTranslation } from 'react-i18next';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useTournament } from '@/api/hooks/useTournaments';
@@ -96,10 +97,20 @@ export function TournamentPage() {
             {/* Description */}
             {tournament.description && (
               <div
-                className="p-4 rounded text-sm leading-relaxed whitespace-pre-wrap"
-                style={{ backgroundColor: 'var(--color-surface)' }}
+                className="p-4 rounded text-sm leading-relaxed prose prose-sm max-w-none"
+                style={{ backgroundColor: 'var(--color-surface)', color: 'var(--color-text)' }}
               >
-                {tournament.description}
+                <ReactMarkdown
+                  components={{
+                    a: ({ href, children }) => (
+                      <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary)' }}>
+                        {children}
+                      </a>
+                    ),
+                  }}
+                >
+                  {tournament.description}
+                </ReactMarkdown>
               </div>
             )}
 

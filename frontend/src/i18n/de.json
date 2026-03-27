@@ -133,6 +133,7 @@
     "table_count_hint": "Kann nach der Erstellung nicht mehr geändert werden.",
     "description_label": "Beschreibung (Markdown unterstützt)",
     "description_placeholder": "Was sollen Teilnehmer über dieses Turnier wissen?",
+    "description_markdown_hint": "Formatierung unterstützt:",
     "location_label": "Ort",
     "location_placeholder": "z. B. Messe Essen, Halle 1",
     "event_date_label": "Veranstaltungsdatum",
