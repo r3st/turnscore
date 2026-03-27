@@ -25,6 +25,7 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       const role = useAuthStore.getState().role;
       useAuthStore.getState().logout();
+      queryClient.clear();
       if (role === 'rater') {
         // Raters go back to rater login — keep path so slug can be extracted if needed
         window.location.href = '/rate-login';

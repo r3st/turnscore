@@ -9,7 +9,6 @@ import {
   useUpdateResultConfig,
   type CriteriaKey,
 } from '@/api/hooks/useTournaments';
-import { useAddMember } from '@/api/hooks/useMembers';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -34,7 +33,6 @@ export function TournamentEditPage() {
   const createTournament = useCreateTournament();
   const updateTournament = useUpdateTournament(slug ?? '');
   const updateResultConfig = useUpdateResultConfig(slug ?? '');
-  const addMember = useAddMember(slug ?? '');
 
   // ── Form state ────────────────────────────────────────────────────────────
 
@@ -61,9 +59,6 @@ export function TournamentEditPage() {
 
   // ── Helper invite state ───────────────────────────────────────────────────
 
-  const [inviteCode, setInviteCode] = useState('');
-  const [helperSuccess, setHelperSuccess] = useState('');
-  const [helperError, setHelperError] = useState('');
 
   // ── Populate form from loaded tournament ──────────────────────────────────
 
@@ -141,22 +136,6 @@ export function TournamentEditPage() {
       setRcSuccess(t('result_config.save_success'));
     } catch {
       setRcError(t('result_config.error_save'));
-    }
-  };
-
-  const handleAddHelper = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setHelperError('');
-    setHelperSuccess('');
-    try {
-      const preview = await addMember.mutateAsync(inviteCode.trim());
-      setHelperSuccess(t('helper.added_success', { name: preview.name }));
-      setInviteCode('');
-    } catch (err: unknown) {
-      const httpStatus = (err as { response?: { status?: number } })?.response?.status;
-      if (httpStatus === 404) setHelperError(t('helper.not_found'));
-      else if (httpStatus === 409) setHelperError(t('helper.already_member'));
-      else setHelperError(t('helper.error_add'));
     }
   };
 
@@ -462,43 +441,6 @@ export function TournamentEditPage() {
         </form>
       </section>
 
-      {/* ── Helper Management (edit + organizer only) ─────────── */}
-      {!isNew && isOrganizer && (
-        <section aria-labelledby="helper-heading">
-          <h2 id="helper-heading" className="font-heading text-xl font-bold mb-4">
-            {t('helper.section_title')}
-          </h2>
-          <form onSubmit={handleAddHelper} className="space-y-3">
-            <Field label={t('helper.add_label')} htmlFor="helper-code">
-              <div className="flex gap-2">
-                <input
-                  id="helper-code"
-                  type="text"
-                  value={inviteCode}
-                  onChange={(e) => setInviteCode(e.target.value)}
-                  placeholder={t('helper.add_placeholder')}
-                  className="flex-1 px-3 py-2 rounded border text-sm font-mono"
-                  style={inputStyle}
-                />
-                <button
-                  type="submit"
-                  disabled={!inviteCode.trim() || addMember.isPending}
-                  className="px-4 py-2 rounded text-sm font-medium"
-                  style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
-                >
-                  {t('helper.add_button')}
-                </button>
-              </div>
-            </Field>
-            {helperError && (
-              <p role="alert" className="text-sm" style={{ color: '#dc2626' }}>{helperError}</p>
-            )}
-            {helperSuccess && (
-              <p role="status" className="text-sm" style={{ color: '#16a34a' }}>{helperSuccess}</p>
-            )}
-          </form>
-        </section>
-      )}
 
       {/* ── Result Config (edit + organizer only) ─────────────── */}
       {!isNew && isOrganizer && (

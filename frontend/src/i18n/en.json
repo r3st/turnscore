@@ -22,6 +22,7 @@
     "code_placeholder": "Your access code",
     "login_button": "Start Rating",
     "logout_confirm": "Sign out?",
+    "dev_login_hint": "Dev login",
     "logged_in_as": "Logged in as {{name}}",
     "error_invalid_credentials": "Invalid nickname or code.",
     "slug_label": "Tournament Slug",
@@ -163,7 +164,10 @@
     "added_success": "{{name}} added as helper.",
     "not_found": "No user found with this invite code.",
     "already_member": "This user is already a member.",
-    "error_add": "Could not add helper."
+    "error_add": "Could not add helper.",
+    "remove_button": "Remove",
+    "remove_confirm": "Remove this helper from the tournament?",
+    "no_helpers": "No helpers added yet."
   },
   "result_config": {
     "section_title": "Result Configuration",

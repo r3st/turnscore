@@ -22,6 +22,7 @@
     "code_placeholder": "Dein Zugangscode",
     "login_button": "Bewertung starten",
     "logout_confirm": "Abmelden?",
+    "dev_login_hint": "Dev-Login",
     "logged_in_as": "Eingeloggt als {{name}}",
     "error_invalid_credentials": "Ungültiger Spitzname oder Code.",
     "slug_label": "Turnier-Slug",
@@ -163,7 +164,10 @@
     "added_success": "{{name}} wurde als Helfer hinzugefügt.",
     "not_found": "Kein Benutzer mit diesem Einladungscode gefunden.",
     "already_member": "Dieser Benutzer ist bereits Mitglied.",
-    "error_add": "Helfer konnte nicht hinzugefügt werden."
+    "error_add": "Helfer konnte nicht hinzugefügt werden.",
+    "remove_button": "Entfernen",
+    "remove_confirm": "Diesen Helfer aus dem Turnier entfernen?",
+    "no_helpers": "Noch keine Helfer hinzugefügt."
   },
   "result_config": {
     "section_title": "Ergebniskonfiguration",

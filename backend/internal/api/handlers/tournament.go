@@ -19,6 +19,7 @@ const (
 	msgTournamentNotFound   = "tournament not found"
 	msgForbiddenOrganizerDelete  = "only the organizer can delete a tournament"
 	msgForbiddenOrganizerAdd     = "only the organizer can add members"
+	msgForbiddenOrganizerList    = "only the organizer can list members"
 	msgForbiddenOrganizerRemove  = "only the organizer can remove members"
 	msgForbiddenLeave            = "Organizers cannot leave their own tournament"
 	msgForbiddenUpdate           = "you do not have permission to update this tournament"
@@ -144,6 +145,31 @@ func (h *Handlers) DeleteTournament(ctx context.Context, req generated.DeleteTou
 		return nil, err
 	}
 	return generated.DeleteTournament204Response{}, nil
+}
+
+// ListTournamentMembers returns all helpers of a tournament (organizer only).
+func (h *Handlers) ListTournamentMembers(ctx context.Context, req generated.ListTournamentMembersRequestObject) (generated.ListTournamentMembersResponseObject, error) {
+	userID, ok := getUserID(ctx)
+	if !ok {
+		return generated.ListTournamentMembers401JSONResponse{
+			UnauthorizedJSONResponse: generated.UnauthorizedJSONResponse{Code: "unauthorized", Message: msgMissingUserID},
+		}, nil
+	}
+	members, err := h.tournamentSvc.ListMembers(ctx, userID, req.Slug)
+	if err != nil {
+		if errors.Is(err, domain.ErrForbidden) {
+			return generated.ListTournamentMembers403JSONResponse{
+				ForbiddenJSONResponse: generated.ForbiddenJSONResponse{Code: "forbidden", Message: msgForbiddenOrganizerList},
+			}, nil
+		}
+		return nil, err
+	}
+	resp := make([]generated.MemberPreview, len(members))
+	for i, m := range members {
+		m := m
+		resp[i] = generated.MemberPreview{Id: m.UserID, Name: m.Name, AvatarUrl: m.AvatarURL}
+	}
+	return generated.ListTournamentMembers200JSONResponse(resp), nil
 }
 
 // AddTournamentMember adds a helper to a tournament by invite code.

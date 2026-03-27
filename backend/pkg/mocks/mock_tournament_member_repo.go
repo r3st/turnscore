@@ -71,6 +71,21 @@ func (mr *MockTournamentMemberRepositoryMockRecorder) GetRole(ctx, tournamentID,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRole", reflect.TypeOf((*MockTournamentMemberRepository)(nil).GetRole), ctx, tournamentID, userID)
 }
 
+// ListByTournamentID mocks base method.
+func (m *MockTournamentMemberRepository) ListByTournamentID(ctx context.Context, tournamentID uuid.UUID) ([]domain.MemberWithUser, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListByTournamentID", ctx, tournamentID)
+	ret0, _ := ret[0].([]domain.MemberWithUser)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListByTournamentID indicates an expected call of ListByTournamentID.
+func (mr *MockTournamentMemberRepositoryMockRecorder) ListByTournamentID(ctx, tournamentID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByTournamentID", reflect.TypeOf((*MockTournamentMemberRepository)(nil).ListByTournamentID), ctx, tournamentID)
+}
+
 // ListWithTournamentsByUserID mocks base method.
 func (m *MockTournamentMemberRepository) ListWithTournamentsByUserID(ctx context.Context, userID uuid.UUID) ([]domain.MembershipWithTournament, error) {
 	m.ctrl.T.Helper()

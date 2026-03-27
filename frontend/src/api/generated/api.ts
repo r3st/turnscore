@@ -139,7 +139,8 @@ export interface paths {
             };
             cookie?: never;
         };
-        get?: never;
+        /** List helpers of a tournament (organizer only) */
+        get: operations["listTournamentMembers"];
         put?: never;
         /** Add helper by invite code (organizer only) */
         post: operations["addTournamentMember"];
@@ -1028,6 +1029,30 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
+        };
+    };
+    listTournamentMembers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of helpers */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberPreview"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
         };
     };
     addTournamentMember: {

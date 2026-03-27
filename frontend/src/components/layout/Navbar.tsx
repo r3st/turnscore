@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores/authStore';
+import { queryClient } from '@/api/client';
 import { TurnScoreLogo } from '@/components/ui/TurnScoreLogo';
 
 export function Navbar() {
@@ -19,6 +20,7 @@ export function Navbar() {
   const handleLogout = () => {
     const wasRater = role === 'rater';
     logout();
+    queryClient.clear();
     navigate(wasRater ? '/rate-login' : '/login');
     setMenuOpen(false);
   };

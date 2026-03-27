@@ -878,6 +878,26 @@ paths:
         schema:
           type: string
 
+    get:
+      summary: List helpers of a tournament (organizer only)
+      operationId: listTournamentMembers
+      tags: [Members]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of helpers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MemberPreview"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
     post:
       summary: Add helper by invite code (organizer only)
       operationId: addTournamentMember

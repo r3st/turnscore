@@ -24,6 +24,7 @@ import (
 	dbmigrations "github.com/r3st/turnscore/db/migrations"
 	"github.com/r3st/turnscore/internal/api"
 	"github.com/r3st/turnscore/internal/api/handlers"
+	"github.com/r3st/turnscore/internal/devusers"
 	"github.com/r3st/turnscore/internal/domain"
 	"github.com/r3st/turnscore/internal/repository"
 	"github.com/r3st/turnscore/internal/service"
@@ -111,6 +112,15 @@ func runServer(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("running migrations: %w", err)
 	}
 	log.Info().Msg("migrations applied")
+
+	// --- Dev user seeding (debug mode only) ---
+	if cfg.Server.Mode == "debug" {
+		if err := devusers.Seed(context.Background(), db); err != nil {
+			log.Warn().Err(err).Msg("dev user seeding failed")
+		} else {
+			log.Info().Msg("dev users seeded")
+		}
+	}
 
 	// --- Repositories ---
 	userRepo := repository.NewUserRepository(db)

@@ -2,12 +2,15 @@
 package api
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 
 	"github.com/r3st/turnscore/config"
 	"github.com/r3st/turnscore/internal/api/generated"
 	"github.com/r3st/turnscore/internal/api/handlers"
 	"github.com/r3st/turnscore/internal/api/middleware"
+	"github.com/r3st/turnscore/internal/devusers"
 	"github.com/r3st/turnscore/internal/service"
 )
 
@@ -32,5 +35,38 @@ func NewRouter(cfg *config.Config, jwtSvc *service.JWTService, h *handlers.Handl
 	strictHandler := generated.NewStrictHandler(h, nil)
 	generated.RegisterHandlers(r.Group("/api/v1"), strictHandler)
 
+	// Dev-only login endpoint — only registered outside of release mode.
+	if cfg.Server.Mode != "release" {
+		r.POST("/api/v1/auth/dev-login", devLoginHandler(jwtSvc))
+	}
+
 	return r
+}
+
+// devLoginHandler returns a Gin handler for the dev-only login endpoint.
+// Accepts { "password": "<name>" } and issues a token pair for the matching dev user.
+func devLoginHandler(jwtSvc *service.JWTService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var body struct {
+			Password string `json:"password"`
+		}
+		if err := c.ShouldBindJSON(&body); err != nil || body.Password == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"code": "bad_request", "message": "password required"})
+			return
+		}
+		u := devusers.FindByPassword(body.Password)
+		if u == nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"code": "unauthorized", "message": "unknown dev user"})
+			return
+		}
+		tokenPair, _, err := jwtSvc.IssueUserTokenPair(u.ID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"code": "internal", "message": "token error"})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"access_token":  tokenPair.AccessToken,
+			"refresh_token": tokenPair.RefreshToken,
+		})
+	}
 }
