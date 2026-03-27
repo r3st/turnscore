@@ -165,7 +165,8 @@
     "already_member": "Dieser Benutzer ist bereits Mitglied.",
     "error_add": "Helfer konnte nicht hinzugefügt werden.",
     "remove_button": "Entfernen",
-    "remove_confirm": "Diesen Helfer aus dem Turnier entfernen?"
+    "remove_confirm": "Diesen Helfer aus dem Turnier entfernen?",
+    "no_helpers": "Noch keine Helfer hinzugefügt."
   },
   "result_config": {
     "section_title": "Ergebniskonfiguration",

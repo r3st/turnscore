@@ -17,6 +17,7 @@ import { ProfilePage } from '@/pages/dashboard/ProfilePage';
 import { TournamentEditPage } from '@/pages/dashboard/TournamentEditPage';
 import { TableManagementPage } from '@/pages/dashboard/TableManagementPage';
 import { RaterManagementPage } from '@/pages/dashboard/RaterManagementPage';
+import { HelperManagementPage } from '@/pages/dashboard/HelperManagementPage';
 import { ResultsPage } from '@/pages/dashboard/ResultsPage';
 
 export const router = createBrowserRouter([
@@ -45,6 +46,7 @@ export const router = createBrowserRouter([
       { path: 'tournaments/:slug', element: <TournamentEditPage /> },
       { path: 'tournaments/:slug/tables', element: <TableManagementPage /> },
       { path: 'tournaments/:slug/raters', element: <RaterManagementPage /> },
+      { path: 'tournaments/:slug/helpers', element: <HelperManagementPage /> },
       {
         path: 'tournaments/:slug/results',
         element: (

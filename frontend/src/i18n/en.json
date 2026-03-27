@@ -165,7 +165,8 @@
     "already_member": "This user is already a member.",
     "error_add": "Could not add helper.",
     "remove_button": "Remove",
-    "remove_confirm": "Remove this helper from the tournament?"
+    "remove_confirm": "Remove this helper from the tournament?",
+    "no_helpers": "No helpers added yet."
   },
   "result_config": {
     "section_title": "Result Configuration",
