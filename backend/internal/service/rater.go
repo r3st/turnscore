@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand/v2"
 	"regexp"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -140,8 +141,8 @@ func (s *RaterService) SubmitRating(ctx context.Context, input SubmitRatingInput
 		return fmt.Errorf("SubmitRating find tournament: %w", err)
 	}
 
-	// Verify tournament is in voting status.
-	if t.Status != "voting" {
+	// Verify voting is open: either explicit "voting" status, or "active" within the voting window.
+	if !isVotingOpen(t) {
 		return domain.ErrVotingNotActive
 	}
 
@@ -277,6 +278,26 @@ func (s *RaterService) ExportRatersPDF(ctx context.Context, userID uuid.UUID, sl
 	}
 
 	return buildRatersPDF(t.Name, t.Slug, raters)
+}
+
+// isVotingOpen returns true when rating submissions should be accepted.
+// Accepts either the legacy "voting" status, or "active" status with the current
+// time inside the configured voting window.
+func isVotingOpen(t *domain.Tournament) bool {
+	if t.Status == "voting" {
+		return true
+	}
+	if t.Status != "active" {
+		return false
+	}
+	now := time.Now()
+	if t.VotingStart != nil && now.Before(*t.VotingStart) {
+		return false
+	}
+	if t.VotingEnd != nil && now.After(*t.VotingEnd) {
+		return false
+	}
+	return true
 }
 
 // generateUniqueCode tries up to maxCodeAttempts to find an unused 4-digit code.

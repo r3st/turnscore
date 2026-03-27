@@ -72,7 +72,8 @@
     "played_zone_a": "Ja – Zone A",
     "played_zone_b": "Ja – Zone B",
     "comment_placeholder": "Optionaler Kommentar (max. 1000 Zeichen)...",
-    "success": "Bewertung erfolgreich gespeichert!"
+    "success": "Bewertung erfolgreich gespeichert!",
+    "event_section": "Veranstaltungsbewertung"
   },
   "criteria": {
     "balance": "Balance",
