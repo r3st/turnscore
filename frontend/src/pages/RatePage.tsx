@@ -87,14 +87,13 @@ export function RatePage() {
 
   const activeCriteria = table.active_criteria as CriteriaKey[];
   const tableCriteria = activeCriteria.filter((c) => !OPTIONAL_CRITERIA.includes(c));
-  const eventCriteria = activeCriteria.filter((c) => OPTIONAL_CRITERIA.includes(c));
   const zonePhotos = {
     zone_a: table.photos.filter((p) => p.category === 'zone_a'),
     zone_b: table.photos.filter((p) => p.category === 'zone_b'),
     general: table.photos.filter((p) => p.category === 'general'),
   };
 
-  const allScored = activeCriteria.every((c) => scores[c] !== undefined);
+  const allScored = tableCriteria.every((c) => scores[c] !== undefined);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -177,7 +176,6 @@ export function RatePage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Table criteria */}
           <div className="space-y-6">
             {tableCriteria.map((criterion) => (
               <CriterionRow
@@ -196,27 +194,6 @@ export function RatePage() {
             ))}
           </div>
 
-          {/* Optional event-level criteria — visually separated */}
-          {eventCriteria.length > 0 && (
-            <div
-              className="space-y-6 pt-6 border-t"
-              style={{ borderColor: 'color-mix(in srgb, var(--color-primary) 20%, transparent)' }}
-            >
-              <p className="text-xs font-medium uppercase tracking-wide"
-                style={{ color: 'color-mix(in srgb, var(--color-text) 50%, transparent)' }}>
-                {t('rating.event_section')}
-              </p>
-              {eventCriteria.map((criterion) => (
-                <CriterionRow
-                  key={criterion}
-                  criterion={criterion}
-                  value={scores[criterion]}
-                  onChange={(v) => setScores((prev) => ({ ...prev, [criterion]: v }))}
-                  photos={[]}
-                />
-              ))}
-            </div>
-          )}
 
           {/* Played zone */}
           <div>

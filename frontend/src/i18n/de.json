@@ -73,7 +73,11 @@
     "played_zone_b": "Ja – Zone B",
     "comment_placeholder": "Optionaler Kommentar (max. 1000 Zeichen)...",
     "success": "Bewertung erfolgreich gespeichert!",
-    "event_section": "Veranstaltungsbewertung"
+    "event_section": "Veranstaltungsbewertung",
+    "event_title": "Veranstaltung bewerten",
+    "event_subtitle": "Catering, Location und Organisation — einmalig für das gesamte Turnier.",
+    "event_already_rated": "Du hast diese Veranstaltung bereits bewertet.",
+    "event_submit": "Veranstaltungsbewertung abgeben"
   },
   "criteria": {
     "balance": "Balance",

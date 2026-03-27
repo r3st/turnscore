@@ -1,16 +1,26 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useTournament } from '@/api/hooks/useTournaments';
 import { useTheme } from '@/hooks/useTheme';
+import { useAuthStore } from '@/stores/authStore';
+import { useEventRatingStatus, useSubmitEventRating } from '@/api/hooks/useEventRating';
 import type { TableSummary } from '@/api/hooks/useTables';
+import type { components } from '@/api/generated/api';
+
+type CriteriaKey = components['schemas']['CriteriaKey'];
+
+const OPTIONAL_CRITERIA: CriteriaKey[] = ['catering', 'venue', 'organization'];
+const GRADES = [1, 2, 3, 4, 5, 6] as const;
 
 export function TournamentPage() {
   const { slug = '' } = useParams<{ slug: string }>();
   const { t } = useTranslation();
   const { data: tournament, isLoading, isError } = useTournament(slug);
   const { applyTheme, clearTheme } = useTheme();
+  const { isAuthenticated, role } = useAuthStore();
+  const isRater = isAuthenticated() && role === 'rater';
 
   useEffect(() => {
     if (!tournament?.type) return;
@@ -111,6 +121,11 @@ export function TournamentPage() {
               </div>
             )}
 
+            {/* Event Rating — shown above tables when optional criteria exist and rater is logged in */}
+            {isRater && tournament.active_criteria?.some((c) => OPTIONAL_CRITERIA.includes(c as CriteriaKey)) && (
+              <EventRatingSection slug={slug} activeCriteria={(tournament.active_criteria as CriteriaKey[]).filter((c) => OPTIONAL_CRITERIA.includes(c))} />
+            )}
+
             {/* Tables */}
             <div className="space-y-3">
               <h2 className="font-heading text-xl font-bold">
@@ -134,6 +149,122 @@ export function TournamentPage() {
         )}
       </main>
     </AppLayout>
+  );
+}
+
+// ── EventRatingSection ────────────────────────────────────────────────────────
+
+function EventRatingSection({ slug, activeCriteria }: { slug: string; activeCriteria: CriteriaKey[] }) {
+  const { t } = useTranslation();
+  const { data: status } = useEventRatingStatus(slug, true);
+  const submitEventRating = useSubmitEventRating(slug);
+
+  const [scores, setScores] = useState<Record<string, number>>({});
+  const [comment, setComment] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+
+  if (status?.submitted || submitted) {
+    return (
+      <div
+        className="p-4 rounded border space-y-1"
+        style={{
+          backgroundColor: 'color-mix(in srgb, var(--color-primary) 8%, transparent)',
+          borderColor: 'color-mix(in srgb, var(--color-primary) 25%, transparent)',
+        }}
+      >
+        <p className="text-sm font-medium" style={{ color: 'var(--color-primary)' }}>
+          ✓ {t('rating.event_already_rated')}
+        </p>
+      </div>
+    );
+  }
+
+  const allScored = activeCriteria.every((c) => scores[c] !== undefined);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!allScored) return;
+    try {
+      await submitEventRating.mutateAsync({
+        criteria_scores: scores,
+        comment: comment.trim() || null,
+      });
+      setSubmitted(true);
+    } catch {
+      // silently ignore — duplicate returns 409 which also means submitted
+      setSubmitted(true);
+    }
+  };
+
+  const inputStyle = {
+    backgroundColor: 'var(--color-background)',
+    borderColor: 'color-mix(in srgb, var(--color-primary) 30%, transparent)',
+    color: 'var(--color-text)',
+  };
+
+  return (
+    <div
+      className="p-4 rounded border space-y-4"
+      style={{
+        backgroundColor: 'var(--color-surface)',
+        borderColor: 'color-mix(in srgb, var(--color-primary) 20%, transparent)',
+      }}
+    >
+      <div>
+        <h2 className="font-heading text-lg font-bold">{t('rating.event_title')}</h2>
+        <p className="text-xs mt-0.5" style={{ color: 'color-mix(in srgb, var(--color-text) 60%, transparent)' }}>
+          {t('rating.event_subtitle')}
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {activeCriteria.map((criterion) => (
+          <div key={criterion} className="space-y-1.5">
+            <span className="text-sm font-medium">{t(`criteria.${criterion}`)}</span>
+            <div className="flex gap-1">
+              {GRADES.map((g) => (
+                <button
+                  key={g}
+                  type="button"
+                  onClick={() => setScores((prev) => ({ ...prev, [criterion]: g }))}
+                  className="flex-1 h-9 rounded font-mono font-bold text-sm border"
+                  style={{
+                    borderColor: scores[criterion] === g ? 'var(--color-primary)' : 'color-mix(in srgb, var(--color-text) 25%, transparent)',
+                    backgroundColor: scores[criterion] === g ? 'var(--color-primary)' : 'transparent',
+                    color: scores[criterion] === g ? 'var(--color-background)' : 'var(--color-text)',
+                  }}
+                >
+                  {g}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+
+        <textarea
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          placeholder={t('rating.comment_placeholder')}
+          maxLength={1000}
+          rows={2}
+          className="w-full px-3 py-2 rounded border text-sm resize-none"
+          style={inputStyle}
+        />
+
+        <button
+          type="submit"
+          disabled={submitEventRating.isPending || !allScored}
+          className="w-full py-2 rounded font-medium text-sm"
+          style={{
+            backgroundColor: 'var(--color-primary)',
+            color: 'var(--color-background)',
+            opacity: submitEventRating.isPending || !allScored ? 0.6 : 1,
+          }}
+        >
+          {submitEventRating.isPending ? t('common.loading') : t('rating.event_submit')}
+        </button>
+      </form>
+    </div>
   );
 }
 

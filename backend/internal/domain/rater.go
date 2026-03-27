@@ -41,6 +41,26 @@ type RatingResult struct {
 	ZoneB            int64
 }
 
+// EventRating is a rater's one-time evaluation of the tournament as a whole
+// (optional criteria: catering, venue, organization). Not tied to a specific table.
+type EventRating struct {
+	ID             uuid.UUID `gorm:"type:uuid;primaryKey"`
+	TournamentID   uuid.UUID `gorm:"type:uuid;not null"`
+	RaterID        uuid.UUID `gorm:"type:uuid;not null"`
+	CriteriaScores string    `gorm:"type:jsonb;not null;default:'{}'"`
+	Comment        *string
+	CreatedAt      time.Time
+}
+
+// EventRatingRepository defines data access for tournament-level event ratings.
+type EventRatingRepository interface {
+	// Create persists a new event rating. Returns ErrDuplicateRating if already submitted.
+	Create(ctx context.Context, r *EventRating) error
+
+	// ExistsByTournamentAndRater returns true if the rater already submitted an event rating.
+	ExistsByTournamentAndRater(ctx context.Context, tournamentID, raterID uuid.UUID) (bool, error)
+}
+
 // RaterRepository defines data access for raters.
 type RaterRepository interface {
 	// FindByNicknameAndCode looks up a rater by tournament, nickname, and code.
