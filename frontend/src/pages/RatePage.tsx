@@ -13,6 +13,9 @@ type Photo = components['schemas']['Photo'];
 
 const GRADES = [1, 2, 3, 4, 5, 6] as const;
 
+// Optional criteria relate to the overall event (not individual tables).
+const OPTIONAL_CRITERIA: CriteriaKey[] = ['catering', 'venue', 'organization'];
+
 export function RatePage() {
   const { slug = '', tableNum = '' } = useParams<{ slug: string; tableNum: string }>();
   const { t } = useTranslation();
@@ -83,13 +86,14 @@ export function RatePage() {
   }
 
   const activeCriteria = table.active_criteria as CriteriaKey[];
+  const tableCriteria = activeCriteria.filter((c) => !OPTIONAL_CRITERIA.includes(c));
   const zonePhotos = {
     zone_a: table.photos.filter((p) => p.category === 'zone_a'),
     zone_b: table.photos.filter((p) => p.category === 'zone_b'),
     general: table.photos.filter((p) => p.category === 'general'),
   };
 
-  const allScored = activeCriteria.every((c) => scores[c] !== undefined);
+  const allScored = tableCriteria.every((c) => scores[c] !== undefined);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -172,9 +176,8 @@ export function RatePage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Criteria ratings */}
           <div className="space-y-6">
-            {activeCriteria.map((criterion) => (
+            {tableCriteria.map((criterion) => (
               <CriterionRow
                 key={criterion}
                 criterion={criterion}
@@ -190,6 +193,7 @@ export function RatePage() {
               />
             ))}
           </div>
+
 
           {/* Played zone */}
           <div>

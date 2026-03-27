@@ -120,6 +120,7 @@ func runServer(cmd *cobra.Command, args []string) error {
 	photoRepo := repository.NewPhotoRepository(db)
 	raterRepo := repository.NewRaterRepository(db)
 	ratingRepo := repository.NewRatingRepository(db)
+	eventRatingRepo := repository.NewEventRatingRepository(db)
 
 	// --- JWT Service ---
 	accessExpiry, err := time.ParseDuration(cfg.Auth.JWTExpiry)
@@ -141,7 +142,7 @@ func runServer(cmd *cobra.Command, args []string) error {
 	tournamentSvc := service.NewTournamentService(tourneyRepo, memberRepo, userRepo)
 	tableSvc := service.NewTableService(tableRepo, memberRepo, tourneyRepo, photoRepo, stor)
 	qrSvc := service.NewQRCodeService(tableRepo, memberRepo, tourneyRepo, stor, cfg.Server.FrontendURL)
-	raterSvc := service.NewRaterService(raterRepo, ratingRepo, tableRepo, memberRepo, tourneyRepo, userRepo)
+	raterSvc := service.NewRaterService(raterRepo, ratingRepo, eventRatingRepo, tableRepo, memberRepo, tourneyRepo, userRepo)
 	userSvc := service.NewUserService(userRepo, memberRepo, tourneyRepo)
 
 	// --- Handlers & Router ---

@@ -371,6 +371,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tournaments/{slug}/event-rating": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        /** Check if rater has already submitted an event rating */
+        get: operations["getEventRatingStatus"];
+        put?: never;
+        /**
+         * Submit tournament-level event rating (rater only)
+         * @description Submits ratings for optional event-level criteria (catering, venue, organization)
+         *     and an optional comment. Can only be submitted once per rater per tournament.
+         */
+        post: operations["submitEventRating"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tournaments/{slug}/results": {
         parameters: {
             query?: never;
@@ -626,6 +650,11 @@ export interface components {
         CreateRatingRequest: {
             criteria_scores: components["schemas"]["CriteriaScores"];
             played_zone: components["schemas"]["PlayedZone"];
+            comment?: string | null;
+        };
+        CreateEventRatingRequest: {
+            /** @description Only optional criteria keys (catering, venue, organization) are accepted. */
+            criteria_scores: components["schemas"]["CriteriaScores"];
             comment?: string | null;
         };
         TableResult: {
@@ -1455,6 +1484,75 @@ export interface operations {
             };
             404: components["responses"]["NotFound"];
             /** @description Rater has already rated this table */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getEventRatingStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Event rating status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        submitted: boolean;
+                    };
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    submitEventRating: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateEventRatingRequest"];
+            };
+        };
+        responses: {
+            /** @description Event rating submitted */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            /** @description Voting period not active, or rater does not belong to this tournament. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Rater has already submitted an event rating for this tournament */
             409: {
                 headers: {
                     [name: string]: unknown;

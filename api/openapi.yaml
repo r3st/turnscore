@@ -474,6 +474,18 @@ components:
           maxLength: 1000
           nullable: true
 
+    CreateEventRatingRequest:
+      type: object
+      required: [criteria_scores]
+      properties:
+        criteria_scores:
+          $ref: "#/components/schemas/CriteriaScores"
+          description: Only optional criteria keys (catering, venue, organization) are accepted.
+        comment:
+          type: string
+          maxLength: 1000
+          nullable: true
+
     # --- Results ---
 
     TableResult:
@@ -1383,6 +1395,69 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+
+  /tournaments/{slug}/event-rating:
+    parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+
+    post:
+      summary: Submit tournament-level event rating (rater only)
+      description: |
+        Submits ratings for optional event-level criteria (catering, venue, organization)
+        and an optional comment. Can only be submitted once per rater per tournament.
+      operationId: submitEventRating
+      tags: [Ratings]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEventRatingRequest"
+      responses:
+        "201":
+          description: Event rating submitted
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: Voting period not active, or rater does not belong to this tournament.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Rater has already submitted an event rating for this tournament
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    get:
+      summary: Check if rater has already submitted an event rating
+      operationId: getEventRatingStatus
+      tags: [Ratings]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Event rating status
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [submitted]
+                properties:
+                  submitted:
+                    type: boolean
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
   # =========================================================================
   # Results

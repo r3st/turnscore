@@ -253,6 +253,15 @@ type AuthTokens struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
+// CreateEventRatingRequest defines model for CreateEventRatingRequest.
+type CreateEventRatingRequest struct {
+	Comment *string `json:"comment,omitempty"`
+
+	// CriteriaScores Map of active criteria to scores (1–6, school grade scale: 1=best, 6=worst).
+	// Only include keys for criteria that are active for this tournament.
+	CriteriaScores CriteriaScores `json:"criteria_scores"`
+}
+
 // CreateRaterRequest defines model for CreateRaterRequest.
 type CreateRaterRequest struct {
 	// Code 4–6 digit numeric code. Auto-generated if omitted.
@@ -554,6 +563,9 @@ type CreateTournamentJSONRequestBody = CreateTournamentRequest
 // UpdateTournamentJSONRequestBody defines body for UpdateTournament for application/json ContentType.
 type UpdateTournamentJSONRequestBody = UpdateTournamentRequest
 
+// SubmitEventRatingJSONRequestBody defines body for SubmitEventRating for application/json ContentType.
+type SubmitEventRatingJSONRequestBody = CreateEventRatingRequest
+
 // AddTournamentMemberJSONRequestBody defines body for AddTournamentMember for application/json ContentType.
 type AddTournamentMemberJSONRequestBody = AddMemberRequest
 
@@ -610,6 +622,12 @@ type ServerInterface interface {
 	// Update tournament (organizer or helper)
 	// (PUT /tournaments/{slug})
 	UpdateTournament(c *gin.Context, slug string)
+	// Check if rater has already submitted an event rating
+	// (GET /tournaments/{slug}/event-rating)
+	GetEventRatingStatus(c *gin.Context, slug string)
+	// Submit tournament-level event rating (rater only)
+	// (POST /tournaments/{slug}/event-rating)
+	SubmitEventRating(c *gin.Context, slug string)
 	// Add helper by invite code (organizer only)
 	// (POST /tournaments/{slug}/members)
 	AddTournamentMember(c *gin.Context, slug string)
@@ -917,6 +935,58 @@ func (siw *ServerInterfaceWrapper) UpdateTournament(c *gin.Context) {
 	}
 
 	siw.Handler.UpdateTournament(c, slug)
+}
+
+// GetEventRatingStatus operation middleware
+func (siw *ServerInterfaceWrapper) GetEventRatingStatus(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "slug" -------------
+	var slug string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "slug", c.Param("slug"), &slug, runtime.BindStyledParameterOptions{Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter slug: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetEventRatingStatus(c, slug)
+}
+
+// SubmitEventRating operation middleware
+func (siw *ServerInterfaceWrapper) SubmitEventRating(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "slug" -------------
+	var slug string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "slug", c.Param("slug"), &slug, runtime.BindStyledParameterOptions{Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter slug: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.SubmitEventRating(c, slug)
 }
 
 // AddTournamentMember operation middleware
@@ -1461,6 +1531,8 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.DELETE(options.BaseURL+"/tournaments/:slug", wrapper.DeleteTournament)
 	router.GET(options.BaseURL+"/tournaments/:slug", wrapper.GetTournament)
 	router.PUT(options.BaseURL+"/tournaments/:slug", wrapper.UpdateTournament)
+	router.GET(options.BaseURL+"/tournaments/:slug/event-rating", wrapper.GetEventRatingStatus)
+	router.POST(options.BaseURL+"/tournaments/:slug/event-rating", wrapper.SubmitEventRating)
 	router.POST(options.BaseURL+"/tournaments/:slug/members", wrapper.AddTournamentMember)
 	router.DELETE(options.BaseURL+"/tournaments/:slug/members/me", wrapper.LeaveTournament)
 	router.DELETE(options.BaseURL+"/tournaments/:slug/members/:userId", wrapper.RemoveTournamentMember)
@@ -1888,6 +1960,87 @@ type UpdateTournament404JSONResponse struct{ NotFoundJSONResponse }
 func (response UpdateTournament404JSONResponse) VisitUpdateTournamentResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetEventRatingStatusRequestObject struct {
+	Slug string `json:"slug"`
+}
+
+type GetEventRatingStatusResponseObject interface {
+	VisitGetEventRatingStatusResponse(w http.ResponseWriter) error
+}
+
+type GetEventRatingStatus200JSONResponse struct {
+	Submitted bool `json:"submitted"`
+}
+
+func (response GetEventRatingStatus200JSONResponse) VisitGetEventRatingStatusResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetEventRatingStatus401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response GetEventRatingStatus401JSONResponse) VisitGetEventRatingStatusResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type SubmitEventRatingRequestObject struct {
+	Slug string `json:"slug"`
+	Body *SubmitEventRatingJSONRequestBody
+}
+
+type SubmitEventRatingResponseObject interface {
+	VisitSubmitEventRatingResponse(w http.ResponseWriter) error
+}
+
+type SubmitEventRating201Response struct {
+}
+
+func (response SubmitEventRating201Response) VisitSubmitEventRatingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(201)
+	return nil
+}
+
+type SubmitEventRating400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response SubmitEventRating400JSONResponse) VisitSubmitEventRatingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type SubmitEventRating401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response SubmitEventRating401JSONResponse) VisitSubmitEventRatingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type SubmitEventRating403JSONResponse ErrorResponse
+
+func (response SubmitEventRating403JSONResponse) VisitSubmitEventRatingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type SubmitEventRating409JSONResponse ErrorResponse
+
+func (response SubmitEventRating409JSONResponse) VisitSubmitEventRatingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
 
 	return json.NewEncoder(w).Encode(response)
 }
@@ -2785,6 +2938,12 @@ type StrictServerInterface interface {
 	// Update tournament (organizer or helper)
 	// (PUT /tournaments/{slug})
 	UpdateTournament(ctx context.Context, request UpdateTournamentRequestObject) (UpdateTournamentResponseObject, error)
+	// Check if rater has already submitted an event rating
+	// (GET /tournaments/{slug}/event-rating)
+	GetEventRatingStatus(ctx context.Context, request GetEventRatingStatusRequestObject) (GetEventRatingStatusResponseObject, error)
+	// Submit tournament-level event rating (rater only)
+	// (POST /tournaments/{slug}/event-rating)
+	SubmitEventRating(ctx context.Context, request SubmitEventRatingRequestObject) (SubmitEventRatingResponseObject, error)
 	// Add helper by invite code (organizer only)
 	// (POST /tournaments/{slug}/members)
 	AddTournamentMember(ctx context.Context, request AddTournamentMemberRequestObject) (AddTournamentMemberResponseObject, error)
@@ -3193,6 +3352,68 @@ func (sh *strictHandler) UpdateTournament(ctx *gin.Context, slug string) {
 		ctx.Status(http.StatusInternalServerError)
 	} else if validResponse, ok := response.(UpdateTournamentResponseObject); ok {
 		if err := validResponse.VisitUpdateTournamentResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetEventRatingStatus operation middleware
+func (sh *strictHandler) GetEventRatingStatus(ctx *gin.Context, slug string) {
+	var request GetEventRatingStatusRequestObject
+
+	request.Slug = slug
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetEventRatingStatus(ctx, request.(GetEventRatingStatusRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetEventRatingStatus")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(GetEventRatingStatusResponseObject); ok {
+		if err := validResponse.VisitGetEventRatingStatusResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SubmitEventRating operation middleware
+func (sh *strictHandler) SubmitEventRating(ctx *gin.Context, slug string) {
+	var request SubmitEventRatingRequestObject
+
+	request.Slug = slug
+
+	var body SubmitEventRatingJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		ctx.Status(http.StatusBadRequest)
+		ctx.Error(err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.SubmitEventRating(ctx, request.(SubmitEventRatingRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SubmitEventRating")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(SubmitEventRatingResponseObject); ok {
+		if err := validResponse.VisitSubmitEventRatingResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
 		}
 	} else if response != nil {

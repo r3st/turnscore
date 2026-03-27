@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand/v2"
 	"regexp"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -23,30 +24,33 @@ var codeRegexp = regexp.MustCompile(codePattern)
 
 // RaterService contains business logic for rater and rating management.
 type RaterService struct {
-	raterRepo   domain.RaterRepository
-	ratingRepo  domain.RatingRepository
-	tableRepo   domain.TableRepository
-	memberRepo  domain.TournamentMemberRepository
-	tourneyRepo domain.TournamentRepository
-	userRepo    domain.UserRepository
+	raterRepo       domain.RaterRepository
+	ratingRepo      domain.RatingRepository
+	eventRatingRepo domain.EventRatingRepository
+	tableRepo       domain.TableRepository
+	memberRepo      domain.TournamentMemberRepository
+	tourneyRepo     domain.TournamentRepository
+	userRepo        domain.UserRepository
 }
 
 // NewRaterService creates a new RaterService.
 func NewRaterService(
 	raterRepo domain.RaterRepository,
 	ratingRepo domain.RatingRepository,
+	eventRatingRepo domain.EventRatingRepository,
 	tableRepo domain.TableRepository,
 	memberRepo domain.TournamentMemberRepository,
 	tourneyRepo domain.TournamentRepository,
 	userRepo domain.UserRepository,
 ) *RaterService {
 	return &RaterService{
-		raterRepo:   raterRepo,
-		ratingRepo:  ratingRepo,
-		tableRepo:   tableRepo,
-		memberRepo:  memberRepo,
-		tourneyRepo: tourneyRepo,
-		userRepo:    userRepo,
+		raterRepo:       raterRepo,
+		ratingRepo:      ratingRepo,
+		eventRatingRepo: eventRatingRepo,
+		tableRepo:       tableRepo,
+		memberRepo:      memberRepo,
+		tourneyRepo:     tourneyRepo,
+		userRepo:        userRepo,
 	}
 }
 
@@ -140,8 +144,8 @@ func (s *RaterService) SubmitRating(ctx context.Context, input SubmitRatingInput
 		return fmt.Errorf("SubmitRating find tournament: %w", err)
 	}
 
-	// Verify tournament is in voting status.
-	if t.Status != "voting" {
+	// Verify voting is open: either explicit "voting" status, or "active" within the voting window.
+	if !isVotingOpen(t) {
 		return domain.ErrVotingNotActive
 	}
 
@@ -277,6 +281,81 @@ func (s *RaterService) ExportRatersPDF(ctx context.Context, userID uuid.UUID, sl
 	}
 
 	return buildRatersPDF(t.Name, t.Slug, raters)
+}
+
+// SubmitEventRating submits a tournament-level event rating (optional criteria + comment).
+// A rater may only submit one event rating per tournament.
+func (s *RaterService) SubmitEventRating(ctx context.Context, raterID, tournamentID uuid.UUID, slug string, scores map[string]int, comment *string) error {
+	t, err := s.tourneyRepo.FindBySlug(ctx, slug)
+	if err != nil {
+		return fmt.Errorf("SubmitEventRating find tournament: %w", err)
+	}
+
+	if !isVotingOpen(t) {
+		return domain.ErrVotingNotActive
+	}
+
+	if t.ID != tournamentID {
+		return domain.ErrForbidden
+	}
+
+	dup, err := s.eventRatingRepo.ExistsByTournamentAndRater(ctx, t.ID, raterID)
+	if err != nil {
+		return fmt.Errorf("SubmitEventRating duplicate check: %w", err)
+	}
+	if dup {
+		return domain.ErrDuplicateRating
+	}
+
+	scoresJSON, err := json.Marshal(scores)
+	if err != nil {
+		return fmt.Errorf("SubmitEventRating marshal scores: %w", err)
+	}
+
+	er := &domain.EventRating{
+		ID:             uuid.New(),
+		TournamentID:   t.ID,
+		RaterID:        raterID,
+		CriteriaScores: string(scoresJSON),
+		Comment:        comment,
+	}
+
+	if err := s.eventRatingRepo.Create(ctx, er); err != nil {
+		return fmt.Errorf("SubmitEventRating create: %w", err)
+	}
+	return nil
+}
+
+// HasEventRating returns true if the rater already submitted an event rating for the tournament.
+func (s *RaterService) HasEventRating(ctx context.Context, raterID, tournamentID uuid.UUID, slug string) (bool, error) {
+	t, err := s.tourneyRepo.FindBySlug(ctx, slug)
+	if err != nil {
+		return false, fmt.Errorf("HasEventRating find tournament: %w", err)
+	}
+	if t.ID != tournamentID {
+		return false, domain.ErrForbidden
+	}
+	return s.eventRatingRepo.ExistsByTournamentAndRater(ctx, t.ID, raterID)
+}
+
+// isVotingOpen returns true when rating submissions should be accepted.
+// Accepts either the legacy "voting" status, or "active" status with the current
+// time inside the configured voting window.
+func isVotingOpen(t *domain.Tournament) bool {
+	if t.Status == "voting" {
+		return true
+	}
+	if t.Status != "active" {
+		return false
+	}
+	now := time.Now()
+	if t.VotingStart != nil && now.Before(*t.VotingStart) {
+		return false
+	}
+	if t.VotingEnd != nil && now.After(*t.VotingEnd) {
+		return false
+	}
+	return true
 }
 
 // generateUniqueCode tries up to maxCodeAttempts to find an unused 4-digit code.

@@ -179,6 +179,71 @@ func (h *Handlers) SubmitRating(ctx context.Context, req generated.SubmitRatingR
 	return generated.SubmitRating201Response{}, nil
 }
 
+// SubmitEventRating submits a tournament-level event rating (optional criteria + comment).
+func (h *Handlers) SubmitEventRating(ctx context.Context, req generated.SubmitEventRatingRequestObject) (generated.SubmitEventRatingResponseObject, error) {
+	raterID, ok := getUserID(ctx)
+	if !ok {
+		return generated.SubmitEventRating401JSONResponse{
+			UnauthorizedJSONResponse: generated.UnauthorizedJSONResponse{Code: "unauthorized", Message: msgMissingRaterID},
+		}, nil
+	}
+	tournamentID, ok := getTournamentID(ctx)
+	if !ok {
+		return generated.SubmitEventRating401JSONResponse{
+			UnauthorizedJSONResponse: generated.UnauthorizedJSONResponse{Code: "unauthorized", Message: msgMissingTournamentID},
+		}, nil
+	}
+	if req.Body == nil {
+		return generated.SubmitEventRating400JSONResponse{
+			BadRequestJSONResponse: generated.BadRequestJSONResponse{Code: "bad_request", Message: msgBodyRequired},
+		}, nil
+	}
+
+	scores := map[string]int(req.Body.CriteriaScores)
+
+	err := h.raterSvc.SubmitEventRating(ctx, raterID, tournamentID, req.Slug, scores, req.Body.Comment)
+	if err != nil {
+		if errors.Is(err, domain.ErrVotingNotActive) {
+			return generated.SubmitEventRating403JSONResponse{Code: "forbidden", Message: msgVotingNotActive}, nil
+		}
+		if errors.Is(err, domain.ErrForbidden) {
+			return generated.SubmitEventRating403JSONResponse{Code: "forbidden", Message: msgForbiddenRater}, nil
+		}
+		if errors.Is(err, domain.ErrDuplicateRating) {
+			return generated.SubmitEventRating409JSONResponse{Code: "conflict", Message: "you have already submitted an event rating for this tournament"}, nil
+		}
+		return nil, err
+	}
+	return generated.SubmitEventRating201Response{}, nil
+}
+
+// GetEventRatingStatus returns whether the rater has already submitted an event rating.
+func (h *Handlers) GetEventRatingStatus(ctx context.Context, req generated.GetEventRatingStatusRequestObject) (generated.GetEventRatingStatusResponseObject, error) {
+	raterID, ok := getUserID(ctx)
+	if !ok {
+		return generated.GetEventRatingStatus401JSONResponse{
+			UnauthorizedJSONResponse: generated.UnauthorizedJSONResponse{Code: "unauthorized", Message: msgMissingRaterID},
+		}, nil
+	}
+	tournamentID, ok := getTournamentID(ctx)
+	if !ok {
+		return generated.GetEventRatingStatus401JSONResponse{
+			UnauthorizedJSONResponse: generated.UnauthorizedJSONResponse{Code: "unauthorized", Message: msgMissingTournamentID},
+		}, nil
+	}
+
+	submitted, err := h.raterSvc.HasEventRating(ctx, raterID, tournamentID, req.Slug)
+	if err != nil {
+		if errors.Is(err, domain.ErrForbidden) {
+			return generated.GetEventRatingStatus401JSONResponse{
+				UnauthorizedJSONResponse: generated.UnauthorizedJSONResponse{Code: "unauthorized", Message: msgMissingTournamentID},
+			}, nil
+		}
+		return nil, err
+	}
+	return generated.GetEventRatingStatus200JSONResponse{Submitted: submitted}, nil
+}
+
 // GetTournamentResults returns tournament results (organizer or helper only).
 func (h *Handlers) GetTournamentResults(ctx context.Context, req generated.GetTournamentResultsRequestObject) (generated.GetTournamentResultsResponseObject, error) {
 	userID, ok := getUserID(ctx)

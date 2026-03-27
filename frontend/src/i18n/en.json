@@ -72,7 +72,12 @@
     "played_zone_a": "Yes – Zone A",
     "played_zone_b": "Yes – Zone B",
     "comment_placeholder": "Optional comment (max. 1000 characters)...",
-    "success": "Rating saved successfully!"
+    "success": "Rating saved successfully!",
+    "event_section": "Event Rating",
+    "event_title": "Rate the Event",
+    "event_subtitle": "Catering, venue and organization — rate once for the whole tournament.",
+    "event_already_rated": "You have already rated this event.",
+    "event_submit": "Submit Event Rating"
   },
   "criteria": {
     "balance": "Balance",
