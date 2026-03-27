@@ -162,6 +162,7 @@ function EventRatingSection({ slug, activeCriteria }: { slug: string; activeCrit
   const [scores, setScores] = useState<Record<string, number>>({});
   const [comment, setComment] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   if (status?.submitted || submitted) {
     return (
@@ -184,15 +185,20 @@ function EventRatingSection({ slug, activeCriteria }: { slug: string; activeCrit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!allScored) return;
+    setSubmitError(null);
     try {
       await submitEventRating.mutateAsync({
         criteria_scores: scores,
         comment: comment.trim() || null,
       });
       setSubmitted(true);
-    } catch {
-      // silently ignore — duplicate returns 409 which also means submitted
-      setSubmitted(true);
+    } catch (err: unknown) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      if (status === 409) {
+        setSubmitted(true);
+      } else {
+        setSubmitError(t('errors.generic'));
+      }
     }
   };
 
@@ -250,6 +256,10 @@ function EventRatingSection({ slug, activeCriteria }: { slug: string; activeCrit
           className="w-full px-3 py-2 rounded border text-sm resize-none"
           style={inputStyle}
         />
+
+        {submitError && (
+          <p className="text-sm" style={{ color: '#dc2626' }}>{submitError}</p>
+        )}
 
         <button
           type="submit"
