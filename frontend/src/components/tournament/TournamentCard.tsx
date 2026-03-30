@@ -60,15 +60,23 @@ export function TournamentCard({ tournament }: TournamentCardProps) {
           </div>
         </div>
 
+        {/* Game system badge */}
+        {tournament.game_system && (
+          <div
+            className="self-start inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded"
+            style={{
+              backgroundColor: 'color-mix(in srgb, var(--color-primary) 12%, transparent)',
+              color: 'var(--color-primary)',
+            }}
+            aria-label={`${t('tournament_form.game_system_label')}: ${tournament.game_system}`}
+          >
+            <Swords className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            {tournament.game_system}
+          </div>
+        )}
+
         {/* Meta info */}
         <dl className="flex flex-wrap gap-x-4 gap-y-1 text-sm" style={{ color: 'color-mix(in srgb, var(--color-text) 65%, transparent)' }}>
-          {tournament.game_system && (
-            <div className="flex items-center gap-1">
-              <Swords className="h-3.5 w-3.5" aria-hidden />
-              <dt className="sr-only">{t('tournament_form.game_system_label')}</dt>
-              <dd>{tournament.game_system}</dd>
-            </div>
-          )}
           {tournament.event_date && (
             <div className="flex items-center gap-1">
               <CalendarDays className="h-3.5 w-3.5" aria-hidden />

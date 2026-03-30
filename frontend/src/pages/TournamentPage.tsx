@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { Swords } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { useTranslation } from 'react-i18next';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -76,15 +77,23 @@ export function TournamentPage() {
               <h1 className="font-heading text-3xl font-bold">{tournament.name}</h1>
             </div>
 
+            {/* Game system */}
+            {tournament.game_system && (
+              <div
+                className="self-start inline-flex items-center gap-2 text-sm font-medium px-3 py-1.5 rounded"
+                style={{
+                  backgroundColor: 'color-mix(in srgb, var(--color-primary) 12%, transparent)',
+                  color: 'var(--color-primary)',
+                }}
+              >
+                <Swords className="h-4 w-4 shrink-0" aria-hidden />
+                {tournament.game_system}
+              </div>
+            )}
+
             {/* Meta info */}
-            {(tournament.event_date || tournament.location || tournament.game_system) && (
+            {(tournament.event_date || tournament.location) && (
               <div className="flex flex-wrap gap-4 text-sm" style={{ color: 'color-mix(in srgb, var(--color-text) 70%, transparent)' }}>
-                {tournament.game_system && (
-                  <span>
-                    <span className="font-medium">{t('tournament_form.game_system_label')}:</span>{' '}
-                    {tournament.game_system}
-                  </span>
-                )}
                 {tournament.event_date && (
                   <span>
                     <span className="font-medium">{t('tournament.event_date')}:</span>{' '}
