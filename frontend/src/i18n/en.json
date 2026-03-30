@@ -109,7 +109,8 @@
     "tables": "Tables",
     "invite_code_label": "Your helper invite code",
     "invite_code_hint": "Share this code with organizers to be added as a helper.",
-    "invite_code_copied": "Copied!"
+    "invite_code_copied": "Copied!",
+    "invite_code_share": "Share invite code"
   },
   "profile": {
     "title": "Profile",

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Copy, Check, Share2 } from 'lucide-react';
 import { useMe, useUpdatePreferences } from '@/api/hooks/useUser';
 
 export function ProfilePage() {
@@ -11,6 +12,17 @@ export function ProfilePage() {
   const [colorMode, setColorMode] = useState<'dark' | 'light'>('dark');
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [codeCopied, setCodeCopied] = useState(false);
+
+  const handleCopyCode = async (code: string) => {
+    await navigator.clipboard.writeText(code);
+    setCodeCopied(true);
+    setTimeout(() => setCodeCopied(false), 2000);
+  };
+
+  const handleShareCode = async (code: string) => {
+    await navigator.share({ text: code });
+  };
 
   useEffect(() => {
     if (profile) {
@@ -53,9 +65,30 @@ export function ProfilePage() {
           )}
           <div>
             <p className="font-medium">{profile.name}</p>
-            <p className="text-xs mt-0.5" style={{ color: 'color-mix(in srgb, var(--color-text) 60%, transparent)' }}>
-              {t('dashboard.invite_code_label')}: <code className="font-mono">{profile.helper_invite_code}</code>
-            </p>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className="text-xs" style={{ color: 'color-mix(in srgb, var(--color-text) 60%, transparent)' }}>
+                {t('dashboard.invite_code_label')}:
+              </span>
+              <code className="font-mono text-xs">{profile.helper_invite_code}</code>
+              <button
+                onClick={() => handleCopyCode(profile.helper_invite_code!)}
+                title={codeCopied ? t('dashboard.invite_code_copied') : t('dashboard.invite_code_label')}
+                className="p-0.5 rounded hover:opacity-70 transition-opacity"
+                style={{ color: codeCopied ? '#16a34a' : 'color-mix(in srgb, var(--color-text) 60%, transparent)' }}
+              >
+                {codeCopied ? <Check size={13} /> : <Copy size={13} />}
+              </button>
+              {typeof navigator.share === 'function' && (
+                <button
+                  onClick={() => handleShareCode(profile.helper_invite_code!)}
+                  title={t('dashboard.invite_code_share')}
+                  className="p-0.5 rounded hover:opacity-70 transition-opacity"
+                  style={{ color: 'color-mix(in srgb, var(--color-text) 60%, transparent)' }}
+                >
+                  <Share2 size={13} />
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

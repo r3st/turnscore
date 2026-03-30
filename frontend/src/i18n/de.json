@@ -109,7 +109,8 @@
     "tables": "Tische",
     "invite_code_label": "Dein Helfer-Einladungscode",
     "invite_code_hint": "Teile diesen Code mit Organisatoren, um als Helfer hinzugefügt zu werden.",
-    "invite_code_copied": "Kopiert!"
+    "invite_code_copied": "Kopiert!",
+    "invite_code_share": "Einladungscode teilen"
   },
   "profile": {
     "title": "Profil",
