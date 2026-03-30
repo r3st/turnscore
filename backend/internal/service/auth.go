@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 
@@ -62,6 +63,7 @@ func (s *AuthService) OAuthRedirectURL(state string) string {
 func (s *AuthService) HandleCallback(ctx context.Context, code string) (*domain.TokenPair, error) {
 	oauthToken, err := s.oauthCfg.Exchange(ctx, code)
 	if err != nil {
+		log.Error().Err(err).Str("redirect_uri", s.oauthCfg.RedirectURL).Msg("oauth code exchange failed")
 		return nil, fmt.Errorf("%w: exchanging oauth code", domain.ErrUnauthorized)
 	}
 
