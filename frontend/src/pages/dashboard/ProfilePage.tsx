@@ -15,7 +15,19 @@ export function ProfilePage() {
   const [codeCopied, setCodeCopied] = useState(false);
 
   const handleCopyCode = async (code: string) => {
-    await navigator.clipboard.writeText(code);
+    try {
+      await navigator.clipboard.writeText(code);
+    } catch {
+      // Fallback for non-secure contexts (HTTP dev)
+      const el = document.createElement('textarea');
+      el.value = code;
+      el.style.position = 'fixed';
+      el.style.opacity = '0';
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+    }
     setCodeCopied(true);
     setTimeout(() => setCodeCopied(false), 2000);
   };
