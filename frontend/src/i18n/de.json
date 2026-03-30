@@ -131,6 +131,8 @@
     "type_label": "Typ",
     "type_fantasy": "Fantasy",
     "type_scifi": "Sci-Fi",
+    "game_system_label": "Spiel-System",
+    "game_system_placeholder": "z. B. Warhammer 40.000",
     "table_count_label": "Anzahl Tische",
     "table_count_hint": "Kann nach der Erstellung nicht mehr geändert werden.",
     "description_label": "Beschreibung (Markdown unterstützt)",

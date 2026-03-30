@@ -531,6 +531,8 @@ export interface components {
             name: string;
             type: components["schemas"]["TournamentType"];
             status: components["schemas"]["TournamentStatus"];
+            /** @example Warhammer 40,000 */
+            game_system?: string | null;
             /** Format: date */
             event_date: string | null;
             location: string | null;
@@ -550,6 +552,7 @@ export interface components {
         CreateTournamentRequest: {
             name: string;
             type: components["schemas"]["TournamentType"];
+            game_system?: string | null;
             description?: string | null;
             /** @default [] */
             links: components["schemas"]["TournamentLink"][];
@@ -577,6 +580,7 @@ export interface components {
         UpdateTournamentRequest: {
             name?: string;
             type?: components["schemas"]["TournamentType"] | null;
+            game_system?: string | null;
             description?: string | null;
             links?: components["schemas"]["TournamentLink"][];
             location?: string | null;

@@ -197,6 +197,11 @@ components:
           $ref: "#/components/schemas/TournamentType"
         status:
           $ref: "#/components/schemas/TournamentStatus"
+        game_system:
+          type: string
+          maxLength: 100
+          nullable: true
+          example: "Warhammer 40,000"
         event_date:
           type: string
           format: date
@@ -248,6 +253,10 @@ components:
           maxLength: 200
         type:
           $ref: "#/components/schemas/TournamentType"
+        game_system:
+          type: string
+          maxLength: 100
+          nullable: true
         description:
           type: string
           nullable: true
@@ -298,6 +307,10 @@ components:
         type:
           allOf:
             - $ref: "#/components/schemas/TournamentType"
+          nullable: true
+        game_system:
+          type: string
+          maxLength: 100
           nullable: true
         description:
           type: string

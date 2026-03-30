@@ -77,8 +77,14 @@ export function TournamentPage() {
             </div>
 
             {/* Meta info */}
-            {(tournament.event_date || tournament.location) && (
+            {(tournament.event_date || tournament.location || tournament.game_system) && (
               <div className="flex flex-wrap gap-4 text-sm" style={{ color: 'color-mix(in srgb, var(--color-text) 70%, transparent)' }}>
+                {tournament.game_system && (
+                  <span>
+                    <span className="font-medium">{t('tournament_form.game_system_label')}:</span>{' '}
+                    {tournament.game_system}
+                  </span>
+                )}
                 {tournament.event_date && (
                   <span>
                     <span className="font-medium">{t('tournament.event_date')}:</span>{' '}

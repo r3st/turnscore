@@ -38,6 +38,7 @@ export function TournamentEditPage() {
 
   const [name, setName] = useState('');
   const [type, setType] = useState<'fantasy' | 'scifi'>('fantasy');
+  const [gameSystem, setGameSystem] = useState('');
   const [tableCount, setTableCount] = useState(10);
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
@@ -66,6 +67,7 @@ export function TournamentEditPage() {
     if (!tournament) return;
     setName(tournament.name);
     setType(tournament.type as 'fantasy' | 'scifi');
+    setGameSystem(tournament.game_system ?? '');
     setTableCount(tournament.table_count);
     setDescription(tournament.description ?? '');
     setLocation(tournament.location ?? '');
@@ -94,6 +96,7 @@ export function TournamentEditPage() {
         const created = await createTournament.mutateAsync({
           name,
           type,
+          game_system: gameSystem || null,
           table_count: tableCount,
           description: description || null,
           location: location || null,
@@ -108,6 +111,7 @@ export function TournamentEditPage() {
         await updateTournament.mutateAsync({
           name,
           type,
+          game_system: gameSystem || null,
           description: description || null,
           location: location || null,
           event_date: eventDate || null,
@@ -205,6 +209,20 @@ export function TournamentEditPage() {
                 </label>
               ))}
             </div>
+          </Field>
+
+          {/* Game System */}
+          <Field label={t('tournament_form.game_system_label')} htmlFor="t-game-system">
+            <input
+              id="t-game-system"
+              type="text"
+              maxLength={100}
+              value={gameSystem}
+              onChange={(e) => setGameSystem(e.target.value)}
+              placeholder={t('tournament_form.game_system_placeholder')}
+              className="w-full px-3 py-2 rounded border text-sm"
+              style={inputStyle}
+            />
           </Field>
 
           {/* Table Count — new only */}
