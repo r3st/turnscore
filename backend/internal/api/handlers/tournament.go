@@ -265,6 +265,7 @@ func buildCreateInput(body *generated.CreateTournamentRequest) service.CreateTou
 	input := service.CreateTournamentInput{
 		Name:        body.Name,
 		Type:        string(body.Type),
+		GameSystem:  body.GameSystem,
 		Description: body.Description,
 		Location:    body.Location,
 		TableCount:  body.TableCount,
@@ -295,6 +296,7 @@ func buildCreateInput(body *generated.CreateTournamentRequest) service.CreateTou
 func buildUpdateInput(body *generated.UpdateTournamentRequest) service.UpdateTournamentInput {
 	input := service.UpdateTournamentInput{
 		Name:        body.Name,
+		GameSystem:  body.GameSystem,
 		Description: body.Description,
 		Location:    body.Location,
 		VotingStart: body.VotingStart,
@@ -373,6 +375,7 @@ func (h *Handlers) mapTournamentDetail(ctx context.Context, t *domain.Tournament
 		Name:           t.Name,
 		Type:           generated.TournamentType(t.Type),
 		Status:         generated.TournamentStatus(t.Status),
+		GameSystem:     t.GameSystem,
 		Location:       t.Location,
 		Description:    t.Description,
 		TableCount:     t.TableCount,
@@ -402,6 +405,7 @@ func mapTournamentSummaries(ts []domain.Tournament) []generated.TournamentSummar
 			Name:       t.Name,
 			Type:       generated.TournamentType(t.Type),
 			Status:     generated.TournamentStatus(t.Status),
+			GameSystem: t.GameSystem,
 			Location:   t.Location,
 			TableCount: t.TableCount,
 		}

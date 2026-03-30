@@ -42,6 +42,7 @@ type TournamentLink struct {
 type CreateTournamentInput struct {
 	Name           string
 	Type           string
+	GameSystem     *string
 	Description    *string
 	Links          []TournamentLink
 	Location       *string
@@ -57,6 +58,7 @@ type CreateTournamentInput struct {
 type UpdateTournamentInput struct {
 	Name           *string
 	Type           *string
+	GameSystem     *string
 	TableCount     *int
 	Description    *string
 	Links          *[]TournamentLink
@@ -127,6 +129,7 @@ func (s *TournamentService) Create(ctx context.Context, userID uuid.UUID, input 
 		Slug:           slug,
 		Name:           input.Name,
 		Type:           input.Type,
+		GameSystem:     input.GameSystem,
 		Description:    input.Description,
 		Links:          string(linksJSON),
 		Location:       input.Location,
@@ -178,6 +181,9 @@ func (s *TournamentService) Update(ctx context.Context, userID uuid.UUID, slug s
 	}
 	if input.Type != nil {
 		t.Type = *input.Type
+	}
+	if input.GameSystem != nil {
+		t.GameSystem = input.GameSystem
 	}
 	if input.TableCount != nil && t.Status == "draft" {
 		t.TableCount = *input.TableCount

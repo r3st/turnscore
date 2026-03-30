@@ -12,7 +12,8 @@ type Tournament struct {
 	ID             uuid.UUID  `gorm:"type:uuid;primaryKey"`
 	Slug           string     `gorm:"uniqueIndex;not null"`
 	Name           string     `gorm:"not null"`
-	Type           string     `gorm:"not null"` // "fantasy" | "scifi"
+	Type           string  `gorm:"not null"` // "fantasy" | "scifi"
+	GameSystem     *string
 	Description    *string
 	Links          string    `gorm:"type:jsonb;not null;default:'[]'"`
 	Location       *string

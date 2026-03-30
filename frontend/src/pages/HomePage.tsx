@@ -43,9 +43,9 @@ function TournamentSection({
           {t('home.no_tournaments')}
         </p>
       ) : (
-        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 list-none p-0">
+        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 list-none p-0 items-stretch">
           {tournaments.map((tournament) => (
-            <li key={tournament.id}>
+            <li key={tournament.id} className="h-full">
               <TournamentCard tournament={tournament} />
             </li>
           ))}

@@ -281,6 +281,7 @@ type CreateTournamentRequest struct {
 	ActiveCriteria *[]CriteriaKey      `json:"active_criteria,omitempty"`
 	Description    *string             `json:"description,omitempty"`
 	EventDate      *openapi_types.Date `json:"event_date,omitempty"`
+	GameSystem     *string             `json:"game_system,omitempty"`
 	Links          *[]TournamentLink   `json:"links,omitempty"`
 	Location       *string             `json:"location,omitempty"`
 	Name           string              `json:"name"`
@@ -399,6 +400,7 @@ type TournamentDetail struct {
 	ActiveCriteria []CriteriaKey       `json:"active_criteria"`
 	Description    *string             `json:"description"`
 	EventDate      *openapi_types.Date `json:"event_date"`
+	GameSystem     *string             `json:"game_system,omitempty"`
 	Id             UUID                `json:"id"`
 
 	// Links Always displayed with disclaimer: "We are not responsible for the content of external links."
@@ -444,6 +446,7 @@ type TournamentStatus string
 // TournamentSummary defines model for TournamentSummary.
 type TournamentSummary struct {
 	EventDate  *openapi_types.Date `json:"event_date"`
+	GameSystem *string             `json:"game_system,omitempty"`
 	Id         UUID                `json:"id"`
 	Location   *string             `json:"location"`
 	Name       string              `json:"name"`
@@ -482,6 +485,7 @@ type UpdateTournamentRequest struct {
 	ActiveCriteria *[]CriteriaKey      `json:"active_criteria,omitempty"`
 	Description    *string             `json:"description,omitempty"`
 	EventDate      *openapi_types.Date `json:"event_date,omitempty"`
+	GameSystem     *string             `json:"game_system,omitempty"`
 	Links          *[]TournamentLink   `json:"links,omitempty"`
 	Location       *string             `json:"location,omitempty"`
 	Name           *string             `json:"name,omitempty"`
