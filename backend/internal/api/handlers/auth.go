@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/rs/zerolog/log"
+
 	"github.com/r3st/turnscore/internal/api/generated"
 	"github.com/r3st/turnscore/internal/domain"
 )
@@ -50,6 +52,7 @@ func (h *Handlers) GoogleOAuthRedirect(ctx context.Context, req generated.Google
 func (h *Handlers) GoogleOAuthCallback(ctx context.Context, req generated.GoogleOAuthCallbackRequestObject) (generated.GoogleOAuthCallbackResponseObject, error) {
 	tokenPair, err := h.authSvc.HandleCallback(ctx, req.Params.Code)
 	if err != nil {
+		log.Error().Err(err).Msg("oauth callback failed")
 		return callbackRedirectResponse{redirectURL: h.frontendURL + "/login?error=oauth_failed"}, nil
 	}
 	redirectURL := fmt.Sprintf("%s/auth/callback?token=%s&refresh=%s",
