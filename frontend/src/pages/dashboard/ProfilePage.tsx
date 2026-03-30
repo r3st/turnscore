@@ -33,7 +33,15 @@ export function ProfilePage() {
   };
 
   const handleShareCode = async (code: string) => {
-    await navigator.share({ text: code });
+    if (typeof navigator.share === 'function') {
+      try {
+        await navigator.share({ title: t('dashboard.invite_code_label'), text: code });
+        return;
+      } catch {
+        // AbortError = user cancelled; other errors fall through to clipboard
+      }
+    }
+    handleCopyCode(code);
   };
 
   useEffect(() => {
@@ -90,16 +98,14 @@ export function ProfilePage() {
               >
                 {codeCopied ? <Check size={13} /> : <Copy size={13} />}
               </button>
-              {typeof navigator.share === 'function' && (
-                <button
-                  onClick={() => handleShareCode(profile.helper_invite_code!)}
-                  title={t('dashboard.invite_code_share')}
-                  className="p-0.5 rounded hover:opacity-70 transition-opacity"
-                  style={{ color: 'color-mix(in srgb, var(--color-text) 60%, transparent)' }}
-                >
-                  <Share2 size={13} />
-                </button>
-              )}
+              <button
+                onClick={() => handleShareCode(profile.helper_invite_code!)}
+                title={t('dashboard.invite_code_share')}
+                className="p-0.5 rounded hover:opacity-70 transition-opacity sm:hidden"
+                style={{ color: 'color-mix(in srgb, var(--color-text) 60%, transparent)' }}
+              >
+                <Share2 size={13} />
+              </button>
             </div>
           </div>
         </div>
