@@ -22,3 +22,9 @@ export function useUpdatePreferences() {
     },
   });
 }
+
+export function useDeleteAccount() {
+  return useMutation<void, Error, { confirm_email: string }>({
+    mutationFn: (body) => apiClient.delete('/me', { data: body }),
+  });
+}

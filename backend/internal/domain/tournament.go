@@ -49,6 +49,9 @@ type TournamentRepository interface {
 	Create(ctx context.Context, t *Tournament) error
 	Update(ctx context.Context, t *Tournament) error
 	Delete(ctx context.Context, id uuid.UUID) error
+
+	// ListByOrganizerID returns all tournaments owned by the given user.
+	ListByOrganizerID(ctx context.Context, organizerID uuid.UUID) ([]Tournament, error)
 }
 
 // MembershipWithTournament is a read-model joining membership with tournament info.

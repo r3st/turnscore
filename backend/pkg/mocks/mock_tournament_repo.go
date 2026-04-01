@@ -145,6 +145,21 @@ func (mr *MockTournamentRepositoryMockRecorder) ListUpcoming(ctx, limit any) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUpcoming", reflect.TypeOf((*MockTournamentRepository)(nil).ListUpcoming), ctx, limit)
 }
 
+// ListByOrganizerID mocks base method.
+func (m *MockTournamentRepository) ListByOrganizerID(ctx context.Context, organizerID uuid.UUID) ([]domain.Tournament, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListByOrganizerID", ctx, organizerID)
+	ret0, _ := ret[0].([]domain.Tournament)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListByOrganizerID indicates an expected call of ListByOrganizerID.
+func (mr *MockTournamentRepositoryMockRecorder) ListByOrganizerID(ctx, organizerID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByOrganizerID", reflect.TypeOf((*MockTournamentRepository)(nil).ListByOrganizerID), ctx, organizerID)
+}
+
 // Update mocks base method.
 func (m *MockTournamentRepository) Update(ctx context.Context, t *domain.Tournament) error {
 	m.ctrl.T.Helper()

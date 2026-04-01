@@ -125,7 +125,15 @@
     "color_mode_label": "Color Mode",
     "color_mode_dark": "Dark",
     "color_mode_light": "Light",
-    "save_success": "Saved!"
+    "save_success": "Saved!",
+    "danger_zone": "Danger Zone",
+    "delete_account": "Delete Account",
+    "delete_account_warning": "This action is permanent and cannot be undone. All your tournaments, tables, photos, and ratings will be deleted.",
+    "delete_account_confirm_label": "Enter your email address to confirm",
+    "delete_account_confirm_placeholder": "your@email.com",
+    "delete_account_confirm_button": "Permanently Delete Account",
+    "delete_account_email_mismatch": "The email address does not match.",
+    "delete_account_error": "Deletion failed. Please try again."
   },
   "tournament_form": {
     "create_title": "Create Tournament",

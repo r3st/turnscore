@@ -50,4 +50,8 @@ type UserRepository interface {
 
 	// UpdatePreferences persists theme and color_mode for the given user.
 	UpdatePreferences(ctx interface{}, userID uuid.UUID, input UpdatePreferencesInput) (*User, error)
+
+	// DeleteUser permanently removes a user record. Cascade in DB handles
+	// refresh_tokens and tournament_memberships (as helper).
+	DeleteUser(ctx interface{}, userID uuid.UUID) error
 }

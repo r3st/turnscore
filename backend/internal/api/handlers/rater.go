@@ -481,3 +481,28 @@ func (h *Handlers) PatchMe(ctx context.Context, req generated.PatchMeRequestObje
 		ColorMode:        generated.UserProfileColorMode(user.ColorMode),
 	}), nil
 }
+
+// DeleteMe permanently deletes the authenticated user's account and all owned data.
+func (h *Handlers) DeleteMe(ctx context.Context, req generated.DeleteMeRequestObject) (generated.DeleteMeResponseObject, error) {
+	userID, ok := getUserID(ctx)
+	if !ok {
+		return generated.DeleteMe401JSONResponse{
+			UnauthorizedJSONResponse: generated.UnauthorizedJSONResponse{Code: "unauthorized", Message: msgMissingUserID},
+		}, nil
+	}
+	if req.Body == nil {
+		return generated.DeleteMe400JSONResponse{
+			BadRequestJSONResponse: generated.BadRequestJSONResponse{Code: "bad_request", Message: msgBodyRequired},
+		}, nil
+	}
+
+	if err := h.userSvc.DeleteAccount(ctx, userID, string(req.Body.ConfirmEmail)); err != nil {
+		if errors.Is(err, domain.ErrForbidden) {
+			return generated.DeleteMe400JSONResponse{
+				BadRequestJSONResponse: generated.BadRequestJSONResponse{Code: "email_mismatch", Message: "email does not match"},
+			}, nil
+		}
+		return nil, err
+	}
+	return generated.DeleteMe204Response{}, nil
+}
