@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Swords } from 'lucide-react';
+import { Swords, Camera, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { useTranslation } from 'react-i18next';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -343,43 +343,231 @@ function TableCard({ slug, table, showRateButton, rateLabel, tableLabel }: {
   rateLabel: string;
   tableLabel: string;
 }) {
-  const firstPhoto = table.photos?.[0];
-  const thumbUrl = firstPhoto?.thumbnail_url ?? firstPhoto?.url;
+  const { t } = useTranslation();
+  const [galleryIndex, setGalleryIndex] = useState<number | null>(null);
+  const photos = table.photos ?? [];
+  const photoCount = photos.length;
+
+  const openGallery = (i: number) => setGalleryIndex(i);
+  const closeGallery = () => setGalleryIndex(null);
+
+  return (
+    <>
+      <div
+        className="rounded border overflow-hidden"
+        style={{
+          backgroundColor: 'var(--color-surface)',
+          borderColor: 'color-mix(in srgb, var(--color-primary) 20%, transparent)',
+        }}
+      >
+        {/* Photo gallery preview */}
+        {photoCount === 1 && (
+          <button type="button" className="w-full block" onClick={() => openGallery(0)}>
+            <img
+              src={photos[0].thumbnail_url ?? photos[0].url}
+              alt=""
+              className="w-full h-36 object-cover cursor-zoom-in"
+            />
+          </button>
+        )}
+        {photoCount > 1 && (
+          <div className="flex gap-1 p-1">
+            {/* Main photo */}
+            <button
+              type="button"
+              className="relative flex-1 overflow-hidden rounded"
+              style={{ height: 128 }}
+              onClick={() => openGallery(0)}
+            >
+              <img
+                src={photos[0].thumbnail_url ?? photos[0].url}
+                alt=""
+                className="w-full h-full object-cover cursor-zoom-in"
+              />
+              <CategoryBadge category={photos[0].category} />
+            </button>
+            {/* Thumbnail column — max 2 visible */}
+            <div className="flex flex-col gap-1">
+              {photos.slice(1, 3).map((p, i) => {
+                const isLast = i === 1;
+                const remaining = photoCount - 3;
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    className="relative overflow-hidden rounded"
+                    style={{ width: 60, height: 62 }}
+                    onClick={() => openGallery(i + 1)}
+                  >
+                    <img
+                      src={p.thumbnail_url ?? p.url}
+                      alt=""
+                      className="w-full h-full object-cover cursor-zoom-in"
+                    />
+                    <CategoryBadge category={p.category} />
+                    {isLast && remaining > 0 && (
+                      <div
+                        className="absolute inset-0 flex items-center justify-center text-sm font-bold text-white"
+                        style={{ backgroundColor: 'rgba(0,0,0,0.55)' }}
+                      >
+                        +{remaining}
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <div className="p-3 flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <p className="font-medium text-sm truncate">{tableLabel}</p>
+            {table.name && (
+              <p className="text-xs truncate" style={{ color: 'color-mix(in srgb, var(--color-text) 60%, transparent)' }}>
+                {table.name}
+              </p>
+            )}
+            {photoCount > 0 && (
+              <p className="flex items-center gap-1 text-xs mt-0.5" style={{ color: 'color-mix(in srgb, var(--color-text) 55%, transparent)' }}>
+                <Camera className="h-3 w-3" aria-hidden />
+                {photoCount} {t('table.photos')}
+              </p>
+            )}
+          </div>
+          {showRateButton && (
+            <Link
+              to={`/rate/${slug}/${table.number}`}
+              className="shrink-0 inline-flex items-center justify-center text-xs px-3 py-1.5 rounded font-medium"
+              style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-background)' }}
+            >
+              {rateLabel}
+            </Link>
+          )}
+        </div>
+      </div>
+
+      {galleryIndex !== null && (
+        <GalleryLightbox photos={photos} initialIndex={galleryIndex} onClose={closeGallery} />
+      )}
+    </>
+  );
+}
+
+function CategoryBadge({ category }: { category?: string | null }) {
+  if (!category || category === 'general') return null;
+  return (
+    <span
+      className="absolute bottom-1 right-1 text-xs font-bold px-1.5 py-0.5 rounded leading-none"
+      style={{ backgroundColor: 'rgba(0,0,0,0.6)', color: 'white' }}
+    >
+      {category === 'zone_a' ? 'A' : 'B'}
+    </span>
+  );
+}
+
+// ── GalleryLightbox ───────────────────────────────────────────────────────────
+
+function GalleryLightbox({ photos, initialIndex, onClose }: {
+  photos: TableSummary['photos'];
+  initialIndex: number;
+  onClose: () => void;
+}) {
+  const [index, setIndex] = useState(initialIndex);
+  const total = photos.length;
+  const prev = () => setIndex((i) => (i - 1 + total) % total);
+  const next = () => setIndex((i) => (i + 1) % total);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowLeft') setIndex((i) => (i - 1 + total) % total);
+      if (e.key === 'ArrowRight') setIndex((i) => (i + 1) % total);
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [onClose, total]);
+
+  // Touch swipe
+  const touchStartX = useRef<number | null>(null);
+  const handleTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const delta = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(delta) > 50) { delta < 0 ? next() : prev(); }
+    touchStartX.current = null;
+  };
+
+  const current = photos[index];
 
   return (
     <div
-      className="rounded border overflow-hidden"
-      style={{
-        backgroundColor: 'var(--color-surface)',
-        borderColor: 'color-mix(in srgb, var(--color-primary) 20%, transparent)',
-      }}
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ backgroundColor: 'rgba(0,0,0,0.90)' }}
+      onClick={onClose}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      role="dialog"
+      aria-modal="true"
     >
-      {thumbUrl && (
-        <img
-          src={thumbUrl}
-          alt=""
-          className="w-full h-32 object-cover"
-        />
-      )}
-      <div className="p-3 flex items-center justify-between gap-2">
-        <div className="min-w-0">
-          <p className="font-medium text-sm truncate">{tableLabel}</p>
-          {table.name && (
-            <p className="text-xs truncate" style={{ color: 'color-mix(in srgb, var(--color-text) 60%, transparent)' }}>
-              {table.name}
-            </p>
-          )}
-        </div>
-        {showRateButton && (
-          <Link
-            to={`/rate/${slug}/${table.number}`}
-            className="shrink-0 inline-flex items-center justify-center text-xs px-3 py-1.5 rounded font-medium"
-            style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-background)' }}
+      {/* Close */}
+      <button
+        type="button"
+        className="absolute top-4 right-4 p-2 rounded-full"
+        style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'white' }}
+        onClick={onClose}
+        aria-label="Close"
+      >
+        <X className="h-5 w-5" />
+      </button>
+
+      {/* Counter + category */}
+      <div
+        className="absolute top-4 left-4 flex items-center gap-2 text-sm text-white"
+        style={{ textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}
+      >
+        <span>{index + 1} / {total}</span>
+        {current.category && current.category !== 'general' && (
+          <span
+            className="px-2 py-0.5 rounded text-xs font-bold"
+            style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
           >
-            {rateLabel}
-          </Link>
+            Zone {current.category === 'zone_a' ? 'A' : 'B'}
+          </span>
         )}
       </div>
+
+      {/* Image */}
+      <img
+        src={current.url}
+        alt=""
+        className="max-h-[85vh] max-w-[90vw] rounded object-contain"
+        onClick={(e) => e.stopPropagation()}
+      />
+
+      {/* Prev / Next */}
+      {total > 1 && (
+        <>
+          <button
+            type="button"
+            className="absolute left-3 top-1/2 -translate-y-1/2 p-3 rounded-full"
+            style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'white' }}
+            onClick={(e) => { e.stopPropagation(); prev(); }}
+            aria-label="Previous photo"
+          >
+            ‹
+          </button>
+          <button
+            type="button"
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-3 rounded-full"
+            style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'white' }}
+            onClick={(e) => { e.stopPropagation(); next(); }}
+            aria-label="Next photo"
+          >
+            ›
+          </button>
+        </>
+      )}
     </div>
   );
 }

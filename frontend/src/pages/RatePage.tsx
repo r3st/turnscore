@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useGetTable, useSubmitRating } from '@/api/hooks/useTables';
@@ -42,6 +43,7 @@ export function RatePage() {
   const [submitted, setSubmitted] = useState(false);
   const [alreadyRated, setAlreadyRated] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [galleryIndex, setGalleryIndex] = useState<number | null>(null);
 
   // Redirect unauthenticated raters to login
   if (!isAuthenticated() || !hasRole('rater')) {
@@ -87,10 +89,15 @@ export function RatePage() {
 
   const activeCriteria = table.active_criteria as CriteriaKey[];
   const tableCriteria = activeCriteria.filter((c) => !OPTIONAL_CRITERIA.includes(c));
+  const allPhotos = table.photos;
   const zonePhotos = {
-    zone_a: table.photos.filter((p) => p.category === 'zone_a'),
-    zone_b: table.photos.filter((p) => p.category === 'zone_b'),
-    general: table.photos.filter((p) => p.category === 'general'),
+    zone_a: allPhotos.filter((p) => p.category === 'zone_a'),
+    zone_b: allPhotos.filter((p) => p.category === 'zone_b'),
+    general: allPhotos.filter((p) => p.category === 'general'),
+  };
+  const openGallery = (photo: Photo) => {
+    const idx = allPhotos.findIndex((p) => p.id === photo.id);
+    setGalleryIndex(idx >= 0 ? idx : 0);
   };
 
   const allScored = tableCriteria.every((c) => scores[c] !== undefined);
@@ -165,12 +172,19 @@ export function RatePage() {
         {zonePhotos.general.length > 0 && (
           <div className="flex flex-wrap gap-2">
             {zonePhotos.general.map((p) => (
-              <img
+              <button
                 key={p.id}
-                src={p.url}
-                alt=""
-                className="h-28 w-28 object-cover rounded"
-              />
+                type="button"
+                onClick={() => openGallery(p)}
+                className="rounded overflow-hidden"
+                aria-label="View photo"
+              >
+                <img
+                  src={p.thumbnail_url ?? p.url}
+                  alt=""
+                  className="h-28 w-28 object-cover cursor-zoom-in"
+                />
+              </button>
             ))}
           </div>
         )}
@@ -190,6 +204,7 @@ export function RatePage() {
                     ? zonePhotos.zone_b
                     : []
                 }
+                onPhotoClick={(p) => openGallery(p)}
               />
             ))}
           </div>
@@ -269,7 +284,117 @@ export function RatePage() {
           </button>
         </form>
       </main>
+
+      {galleryIndex !== null && (
+        <GalleryLightbox photos={allPhotos} initialIndex={galleryIndex} onClose={() => setGalleryIndex(null)} />
+      )}
     </AppLayout>
+  );
+}
+
+// ── GalleryLightbox ───────────────────────────────────────────────────────────
+
+function GalleryLightbox({ photos, initialIndex, onClose }: {
+  photos: Photo[];
+  initialIndex: number;
+  onClose: () => void;
+}) {
+  const [index, setIndex] = useState(initialIndex);
+  const total = photos.length;
+  const prev = () => setIndex((i) => (i - 1 + total) % total);
+  const next = () => setIndex((i) => (i + 1) % total);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowLeft') setIndex((i) => (i - 1 + total) % total);
+      if (e.key === 'ArrowRight') setIndex((i) => (i + 1) % total);
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [onClose, total]);
+
+  // Touch swipe
+  const touchStartX = useRef<number | null>(null);
+  const handleTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const delta = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(delta) > 50) { delta < 0 ? next() : prev(); }
+    touchStartX.current = null;
+  };
+
+  const current = photos[index];
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ backgroundColor: 'rgba(0,0,0,0.90)' }}
+      onClick={onClose}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      role="dialog"
+      aria-modal="true"
+    >
+      {/* Close */}
+      <button
+        type="button"
+        className="absolute top-4 right-4 p-2 rounded-full"
+        style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'white' }}
+        onClick={onClose}
+        aria-label="Close"
+      >
+        <X className="h-5 w-5" />
+      </button>
+
+      {/* Counter + category */}
+      <div
+        className="absolute top-4 left-4 flex items-center gap-2 text-sm text-white"
+        style={{ textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}
+      >
+        <span>{index + 1} / {total}</span>
+        {current.category && current.category !== 'general' && (
+          <span
+            className="px-2 py-0.5 rounded text-xs font-bold"
+            style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
+          >
+            Zone {current.category === 'zone_a' ? 'A' : 'B'}
+          </span>
+        )}
+      </div>
+
+      {/* Image */}
+      <img
+        src={current.url}
+        alt=""
+        className="max-h-[85vh] max-w-[90vw] rounded object-contain"
+        onClick={(e) => e.stopPropagation()}
+      />
+
+      {/* Prev / Next */}
+      {total > 1 && (
+        <>
+          <button
+            type="button"
+            className="absolute left-3 top-1/2 -translate-y-1/2 p-3 rounded-full text-xl font-bold"
+            style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'white' }}
+            onClick={(e) => { e.stopPropagation(); prev(); }}
+            aria-label="Previous photo"
+          >
+            ‹
+          </button>
+          <button
+            type="button"
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-3 rounded-full text-xl font-bold"
+            style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'white' }}
+            onClick={(e) => { e.stopPropagation(); next(); }}
+            aria-label="Next photo"
+          >
+            ›
+          </button>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -280,11 +405,13 @@ function CriterionRow({
   value,
   onChange,
   photos,
+  onPhotoClick,
 }: {
   criterion: CriteriaKey;
   value: number | undefined;
   onChange: (v: number) => void;
   photos: Photo[];
+  onPhotoClick: (photo: Photo) => void;
 }) {
   const { t } = useTranslation();
   const label = t(`criteria.${criterion}`);
@@ -307,12 +434,19 @@ function CriterionRow({
       {photos.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {photos.map((p) => (
-            <img
+            <button
               key={p.id}
-              src={p.thumbnail_url ?? p.url}
-              alt=""
-              className="h-20 w-20 object-cover rounded"
-            />
+              type="button"
+              onClick={() => onPhotoClick(p)}
+              className="rounded overflow-hidden"
+              aria-label="View photo"
+            >
+              <img
+                src={p.thumbnail_url ?? p.url}
+                alt=""
+                className="h-20 w-20 object-cover cursor-zoom-in"
+              />
+            </button>
           ))}
         </div>
       )}
