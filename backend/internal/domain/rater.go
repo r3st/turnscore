@@ -59,6 +59,10 @@ type EventRatingRepository interface {
 
 	// ExistsByTournamentAndRater returns true if the rater already submitted an event rating.
 	ExistsByTournamentAndRater(ctx context.Context, tournamentID, raterID uuid.UUID) (bool, error)
+
+	// GetAveragesForTournament returns the average score per criterion across all event ratings.
+	// Returns nil map when no event ratings exist.
+	GetAveragesForTournament(ctx context.Context, tournamentID uuid.UUID) (map[string]float64, error)
 }
 
 // RaterRepository defines data access for raters.
