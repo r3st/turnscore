@@ -543,6 +543,12 @@ type GoogleOAuthCallbackParams struct {
 	State string `form:"state" json:"state"`
 }
 
+// DeleteMeJSONBody defines parameters for DeleteMe.
+type DeleteMeJSONBody struct {
+	// ConfirmEmail Must match the stored email address as confirmation
+	ConfirmEmail openapi_types.Email `json:"confirm_email"`
+}
+
 // UploadPhotoMultipartBody defines parameters for UploadPhoto.
 type UploadPhotoMultipartBody struct {
 	Category PhotoCategory      `json:"category"`
@@ -554,6 +560,9 @@ type RaterLoginJSONRequestBody = RaterAuthRequest
 
 // RefreshTokenJSONRequestBody defines body for RefreshToken for application/json ContentType.
 type RefreshTokenJSONRequestBody = RefreshRequest
+
+// DeleteMeJSONRequestBody defines body for DeleteMe for application/json ContentType.
+type DeleteMeJSONRequestBody DeleteMeJSONBody
 
 // PatchMeJSONRequestBody defines body for PatchMe for application/json ContentType.
 type PatchMeJSONRequestBody = UpdatePreferencesRequest
@@ -599,6 +608,9 @@ type ServerInterface interface {
 	// Refresh access token
 	// (POST /auth/refresh)
 	RefreshToken(c *gin.Context)
+	// Delete own account with all data (cascade)
+	// (DELETE /me)
+	DeleteMe(c *gin.Context)
 	// Get own profile including helper invite code and tournament memberships
 	// (GET /me)
 	GetMe(c *gin.Context)
@@ -782,6 +794,21 @@ func (siw *ServerInterfaceWrapper) RefreshToken(c *gin.Context) {
 	}
 
 	siw.Handler.RefreshToken(c)
+}
+
+// DeleteMe operation middleware
+func (siw *ServerInterfaceWrapper) DeleteMe(c *gin.Context) {
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.DeleteMe(c)
 }
 
 // GetMe operation middleware
@@ -1582,6 +1609,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/auth/google/callback", wrapper.GoogleOAuthCallback)
 	router.POST(options.BaseURL+"/auth/rater", wrapper.RaterLogin)
 	router.POST(options.BaseURL+"/auth/refresh", wrapper.RefreshToken)
+	router.DELETE(options.BaseURL+"/me", wrapper.DeleteMe)
 	router.GET(options.BaseURL+"/me", wrapper.GetMe)
 	router.PATCH(options.BaseURL+"/me", wrapper.PatchMe)
 	router.DELETE(options.BaseURL+"/photos/:photoId", wrapper.DeletePhoto)
@@ -1730,6 +1758,40 @@ func (response RefreshToken200JSONResponse) VisitRefreshTokenResponse(w http.Res
 type RefreshToken401JSONResponse struct{ UnauthorizedJSONResponse }
 
 func (response RefreshToken401JSONResponse) VisitRefreshTokenResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteMeRequestObject struct {
+	Body *DeleteMeJSONRequestBody
+}
+
+type DeleteMeResponseObject interface {
+	VisitDeleteMeResponse(w http.ResponseWriter) error
+}
+
+type DeleteMe204Response struct {
+}
+
+func (response DeleteMe204Response) VisitDeleteMeResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteMe400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response DeleteMe400JSONResponse) VisitDeleteMeResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteMe401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response DeleteMe401JSONResponse) VisitDeleteMeResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(401)
 
@@ -3038,6 +3100,9 @@ type StrictServerInterface interface {
 	// Refresh access token
 	// (POST /auth/refresh)
 	RefreshToken(ctx context.Context, request RefreshTokenRequestObject) (RefreshTokenResponseObject, error)
+	// Delete own account with all data (cascade)
+	// (DELETE /me)
+	DeleteMe(ctx context.Context, request DeleteMeRequestObject) (DeleteMeResponseObject, error)
 	// Get own profile including helper invite code and tournament memberships
 	// (GET /me)
 	GetMe(ctx context.Context, request GetMeRequestObject) (GetMeResponseObject, error)
@@ -3250,6 +3315,39 @@ func (sh *strictHandler) RefreshToken(ctx *gin.Context) {
 		ctx.Status(http.StatusInternalServerError)
 	} else if validResponse, ok := response.(RefreshTokenResponseObject); ok {
 		if err := validResponse.VisitRefreshTokenResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteMe operation middleware
+func (sh *strictHandler) DeleteMe(ctx *gin.Context) {
+	var request DeleteMeRequestObject
+
+	var body DeleteMeJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		ctx.Status(http.StatusBadRequest)
+		ctx.Error(err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteMe(ctx, request.(DeleteMeRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteMe")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(DeleteMeResponseObject); ok {
+		if err := validResponse.VisitDeleteMeResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
 		}
 	} else if response != nil {

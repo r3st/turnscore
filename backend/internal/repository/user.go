@@ -191,3 +191,13 @@ func (r *UserRepository) DeleteRefreshToken(ctx interface{}, hashedToken string)
 	}
 	return nil
 }
+
+// DeleteUser permanently removes the user record from the database.
+// DB CASCADE handles refresh_tokens and tournament_members (helper role).
+func (r *UserRepository) DeleteUser(ctx interface{}, userID uuid.UUID) error {
+	c := toContext(ctx)
+	if err := r.db.WithContext(c).Delete(&domain.User{}, "id = ?", userID).Error; err != nil {
+		return fmt.Errorf("DeleteUser: %w", err)
+	}
+	return nil
+}

@@ -113,3 +113,12 @@ func (r *TournamentRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	}
 	return nil
 }
+
+// ListByOrganizerID returns all tournaments owned by the given user.
+func (r *TournamentRepository) ListByOrganizerID(ctx context.Context, organizerID uuid.UUID) ([]domain.Tournament, error) {
+	var tournaments []domain.Tournament
+	if err := r.db.WithContext(ctx).Where("organizer_id = ?", organizerID).Find(&tournaments).Error; err != nil {
+		return nil, fmt.Errorf("ListByOrganizerID: %w", err)
+	}
+	return tournaments, nil
+}

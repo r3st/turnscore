@@ -83,7 +83,8 @@ export interface paths {
         get: operations["getMe"];
         put?: never;
         post?: never;
-        delete?: never;
+        /** Delete own account with all data (cascade) */
+        delete: operations["deleteMe"];
         options?: never;
         head?: never;
         /** Update own theme and color mode preferences */
@@ -896,6 +897,36 @@ export interface operations {
                     "application/json": components["schemas"]["UserProfile"];
                 };
             };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    deleteMe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /**
+                     * Format: email
+                     * @description Must match the stored email address as confirmation
+                     */
+                    confirm_email: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Account deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
         };
     };

@@ -125,7 +125,15 @@
     "color_mode_label": "Farbmodus",
     "color_mode_dark": "Dunkel",
     "color_mode_light": "Hell",
-    "save_success": "Gespeichert!"
+    "save_success": "Gespeichert!",
+    "danger_zone": "Gefahrenbereich",
+    "delete_account": "Konto löschen",
+    "delete_account_warning": "Diese Aktion ist dauerhaft und kann nicht rückgängig gemacht werden. Alle deine Turniere, Tische, Fotos und Bewertungen werden gelöscht.",
+    "delete_account_confirm_label": "E-Mail-Adresse zur Bestätigung eingeben",
+    "delete_account_confirm_placeholder": "deine@email.de",
+    "delete_account_confirm_button": "Konto dauerhaft löschen",
+    "delete_account_email_mismatch": "Die E-Mail-Adresse stimmt nicht überein.",
+    "delete_account_error": "Löschen fehlgeschlagen. Bitte versuche es erneut."
   },
   "tournament_form": {
     "create_title": "Turnier erstellen",

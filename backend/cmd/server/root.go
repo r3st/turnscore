@@ -153,7 +153,7 @@ func runServer(cmd *cobra.Command, args []string) error {
 	tableSvc := service.NewTableService(tableRepo, memberRepo, tourneyRepo, photoRepo, stor)
 	qrSvc := service.NewQRCodeService(tableRepo, memberRepo, tourneyRepo, stor, cfg.Server.FrontendURL)
 	raterSvc := service.NewRaterService(raterRepo, ratingRepo, eventRatingRepo, tableRepo, memberRepo, tourneyRepo, userRepo)
-	userSvc := service.NewUserService(userRepo, memberRepo, tourneyRepo)
+	userSvc := service.NewUserService(userRepo, memberRepo, tourneyRepo, tableRepo, photoRepo, stor)
 
 	// --- Handlers & Router ---
 	h := handlers.New(tournamentSvc, tableSvc, qrSvc, raterSvc, userSvc, authSvc, cfg.Server.FrontendURL)

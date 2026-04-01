@@ -1,18 +1,28 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { Copy, Check, Share2 } from 'lucide-react';
-import { useMe, useUpdatePreferences } from '@/api/hooks/useUser';
+import { useMe, useUpdatePreferences, useDeleteAccount } from '@/api/hooks/useUser';
+import { useAuthStore } from '@/stores/authStore';
 
 export function ProfilePage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { data: profile, isLoading } = useMe();
   const updatePreferences = useUpdatePreferences();
+  const deleteAccount = useDeleteAccount();
+  const logout = useAuthStore((s) => s.logout);
 
   const [theme, setTheme] = useState<'scifi' | 'fantasy'>('scifi');
   const [colorMode, setColorMode] = useState<'dark' | 'light'>('dark');
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [codeCopied, setCodeCopied] = useState(false);
+
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [confirmEmail, setConfirmEmail] = useState('');
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const confirmInputRef = useRef<HTMLInputElement>(null);
 
   const handleCopyCode = async (code: string) => {
     try {
@@ -50,6 +60,29 @@ export function ProfilePage() {
       setColorMode(profile.color_mode as 'dark' | 'light');
     }
   }, [profile?.theme, profile?.color_mode]);
+
+  const handleDeleteAccount = async () => {
+    setDeleteError(null);
+    try {
+      await deleteAccount.mutateAsync({ confirm_email: confirmEmail });
+      logout();
+      navigate('/');
+    } catch (err: unknown) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      if (status === 400) {
+        setDeleteError(t('profile.delete_account_email_mismatch'));
+      } else {
+        setDeleteError(t('profile.delete_account_error'));
+      }
+    }
+  };
+
+  const openDeleteDialog = () => {
+    setConfirmEmail('');
+    setDeleteError(null);
+    setShowDeleteDialog(true);
+    setTimeout(() => confirmInputRef.current?.focus(), 50);
+  };
 
   const handleSave = async () => {
     setSaveError(null);
@@ -180,6 +213,61 @@ export function ProfilePage() {
           </button>
           {saveError && <p className="text-sm" style={{ color: '#dc2626' }}>{saveError}</p>}
         </div>
+      </div>
+      {/* Danger Zone */}
+      <div className="space-y-4 pt-4" style={{ borderTop: '1px solid color-mix(in srgb, #dc2626 30%, transparent)' }}>
+        <h2 className="font-heading text-lg font-semibold" style={{ color: '#dc2626' }}>
+          {t('profile.danger_zone')}
+        </h2>
+        <p className="text-sm" style={{ color: 'color-mix(in srgb, var(--color-text) 70%, transparent)' }}>
+          {t('profile.delete_account_warning')}
+        </p>
+        {!showDeleteDialog ? (
+          <button
+            onClick={openDeleteDialog}
+            className="px-4 py-2 rounded text-sm font-medium border"
+            style={{ borderColor: '#dc2626', color: '#dc2626' }}
+          >
+            {t('profile.delete_account')}
+          </button>
+        ) : (
+          <div className="space-y-3 p-4 rounded" style={{ backgroundColor: 'color-mix(in srgb, #dc2626 8%, transparent)', border: '1px solid color-mix(in srgb, #dc2626 30%, transparent)' }}>
+            <label htmlFor="confirm-email" className="block text-sm font-medium">
+              {t('profile.delete_account_confirm_label')}
+            </label>
+            <input
+              ref={confirmInputRef}
+              id="confirm-email"
+              type="email"
+              value={confirmEmail}
+              onChange={(e) => setConfirmEmail(e.target.value)}
+              placeholder={t('profile.delete_account_confirm_placeholder')}
+              className="w-full px-3 py-2 rounded text-sm border"
+              style={{ backgroundColor: 'var(--color-background)', color: 'var(--color-text)', borderColor: 'color-mix(in srgb, var(--color-text) 30%, transparent)' }}
+              onKeyDown={(e) => e.key === 'Enter' && confirmEmail && handleDeleteAccount()}
+            />
+            {deleteError && (
+              <p role="alert" className="text-sm" style={{ color: '#dc2626' }}>{deleteError}</p>
+            )}
+            <div className="flex gap-3">
+              <button
+                onClick={handleDeleteAccount}
+                disabled={!confirmEmail || deleteAccount.isPending}
+                className="px-4 py-2 rounded text-sm font-medium"
+                style={{ backgroundColor: '#dc2626', color: '#fff', opacity: (!confirmEmail || deleteAccount.isPending) ? 0.5 : 1 }}
+              >
+                {deleteAccount.isPending ? t('common.loading') : t('profile.delete_account_confirm_button')}
+              </button>
+              <button
+                onClick={() => setShowDeleteDialog(false)}
+                className="px-4 py-2 rounded text-sm"
+                style={{ color: 'color-mix(in srgb, var(--color-text) 70%, transparent)' }}
+              >
+                {t('common.cancel')}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );
