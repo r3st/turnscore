@@ -705,6 +705,10 @@ export interface components {
         };
         TournamentResults: {
             tournament_name: string;
+            /** @description Criteria keys active for this tournament (determines which columns to show) */
+            active_criteria: components["schemas"]["CriteriaKey"][];
+            /** @description Whether comments are visible in results */
+            show_comments: boolean;
             /** @description Sorted ascending by overall average score (1 = best grade) */
             ranking: components["schemas"]["TableResult"][];
         };

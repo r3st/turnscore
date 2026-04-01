@@ -435,9 +435,15 @@ type TournamentMembershipRole string
 
 // TournamentResults defines model for TournamentResults.
 type TournamentResults struct {
+	// ActiveCriteria Criteria keys active for this tournament (determines which columns to show)
+	ActiveCriteria []CriteriaKey `json:"active_criteria"`
+
 	// Ranking Sorted ascending by overall average score (1 = best grade)
-	Ranking        []TableResult `json:"ranking"`
-	TournamentName string        `json:"tournament_name"`
+	Ranking []TableResult `json:"ranking"`
+
+	// ShowComments Whether comments are visible in results
+	ShowComments   bool   `json:"show_comments"`
+	TournamentName string `json:"tournament_name"`
 }
 
 // TournamentStatus defines model for TournamentStatus.

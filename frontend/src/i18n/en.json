@@ -239,7 +239,16 @@
     "table": "Table",
     "average": "Average",
     "ratings_count": "{{count}} ratings",
-    "no_results": "No ratings submitted yet."
+    "no_results": "No ratings submitted yet.",
+    "criteria_breakdown": "Criteria breakdown",
+    "zone_distribution": "Zone distribution",
+    "zone_none": "Not played",
+    "zone_a": "Zone A",
+    "zone_b": "Zone B",
+    "comments": "Comments",
+    "overall_ranking": "Overall Ranking",
+    "show_criteria": "Show criteria",
+    "hide_criteria": "Hide criteria"
   },
   "errors": {
     "generic": "An error occurred. Please try again.",
