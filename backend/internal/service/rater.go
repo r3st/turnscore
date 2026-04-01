@@ -192,21 +192,21 @@ func (s *RaterService) SubmitRating(ctx context.Context, input SubmitRatingInput
 }
 
 // GetResults returns tournament results for organizer/helper.
-// Also returns a map of comments per table when show_comments is enabled in result config.
-func (s *RaterService) GetResults(ctx context.Context, userID uuid.UUID, slug string) (*domain.Tournament, []domain.RatingResult, map[uuid.UUID][]string, error) {
+// Returns: tournament, table results, comments map (when show_comments enabled), event averages.
+func (s *RaterService) GetResults(ctx context.Context, userID uuid.UUID, slug string) (*domain.Tournament, []domain.RatingResult, map[uuid.UUID][]string, map[string]float64, error) {
 	t, err := s.tourneyRepo.FindBySlug(ctx, slug)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("GetResults find tournament: %w", err)
+		return nil, nil, nil, nil, fmt.Errorf("GetResults find tournament: %w", err)
 	}
 
 	role, err := s.memberRepo.GetRole(ctx, t.ID, userID)
 	if err != nil || (role != roleOrganizer && role != roleHelper) {
-		return nil, nil, nil, domain.ErrForbidden
+		return nil, nil, nil, nil, domain.ErrForbidden
 	}
 
 	results, err := s.ratingRepo.GetResultsForTournament(ctx, t.ID)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("GetResults fetch results: %w", err)
+		return nil, nil, nil, nil, fmt.Errorf("GetResults fetch results: %w", err)
 	}
 
 	// Fetch comments if show_comments is enabled in result config.
@@ -217,11 +217,17 @@ func (s *RaterService) GetResults(ctx context.Context, userID uuid.UUID, slug st
 	if jsonErr := json.Unmarshal([]byte(t.ResultConfig), &resultCfg); jsonErr == nil && resultCfg.ShowComments {
 		commentsMap, err = s.ratingRepo.GetCommentsForTournament(ctx, t.ID)
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("GetResults fetch comments: %w", err)
+			return nil, nil, nil, nil, fmt.Errorf("GetResults fetch comments: %w", err)
 		}
 	}
 
-	return t, results, commentsMap, nil
+	// Fetch event-level rating averages (catering, venue, organization).
+	eventAverages, err := s.eventRatingRepo.GetAveragesForTournament(ctx, t.ID)
+	if err != nil {
+		return nil, nil, nil, nil, fmt.Errorf("GetResults fetch event averages: %w", err)
+	}
+
+	return t, results, commentsMap, eventAverages, nil
 }
 
 // UpdateResultConfig updates the result visibility config for a tournament.

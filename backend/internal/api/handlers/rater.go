@@ -281,7 +281,7 @@ func (h *Handlers) GetTournamentResults(ctx context.Context, req generated.GetTo
 		}, nil
 	}
 
-	tournament, results, commentsMap, err := h.raterSvc.GetResults(ctx, userID, req.Slug)
+	tournament, results, commentsMap, eventAverages, err := h.raterSvc.GetResults(ctx, userID, req.Slug)
 	if err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
 			return generated.GetTournamentResults404JSONResponse{
@@ -314,10 +314,21 @@ func (h *Handlers) GetTournamentResults(ctx context.Context, req generated.GetTo
 	}
 	_ = json.Unmarshal([]byte(tournament.ResultConfig), &resultCfg)
 
+	// Convert event averages to float32 map for API response.
+	var apiEventAverages *map[string]float32
+	if eventAverages != nil {
+		m := make(map[string]float32, len(eventAverages))
+		for k, v := range eventAverages {
+			m[k] = float32(v)
+		}
+		apiEventAverages = &m
+	}
+
 	return generated.GetTournamentResults200JSONResponse(generated.TournamentResults{
 		TournamentName: tournament.Name,
 		ActiveCriteria: apiCriteria,
 		ShowComments:   resultCfg.ShowComments,
+		EventAverages:  apiEventAverages,
 		Ranking:        ranking,
 	}), nil
 }

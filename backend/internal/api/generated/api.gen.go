@@ -438,6 +438,10 @@ type TournamentResults struct {
 	// ActiveCriteria Criteria keys active for this tournament (determines which columns to show)
 	ActiveCriteria []CriteriaKey `json:"active_criteria"`
 
+	// EventAverages Average score per event-level criterion (catering, venue, organization).
+	// Null when no event ratings have been submitted.
+	EventAverages *map[string]float32 `json:"event_averages,omitempty"`
+
 	// Ranking Sorted ascending by overall average score (1 = best grade)
 	Ranking []TableResult `json:"ranking"`
 

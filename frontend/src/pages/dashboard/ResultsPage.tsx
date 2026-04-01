@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useTournamentResults, type TableResult } from '@/api/hooks/useResults';
 
+const EVENT_CRITERIA = new Set(['catering', 'venue', 'organization']);
+
 export function ResultsPage() {
   const { slug } = useParams<{ slug: string }>();
   const { t } = useTranslation();
@@ -28,24 +30,64 @@ export function ResultsPage() {
     );
   }
 
-  return (
-    <div className="space-y-6 max-w-4xl">
-      <h1 className="font-heading text-2xl font-bold">{t('results.title')}</h1>
-      <p className="text-sm font-medium" style={{ color: 'color-mix(in srgb, var(--color-text) 60%, transparent)' }}>
-        {data.tournament_name}
-      </p>
+  const tableCriteria = data.active_criteria.filter((k) => !EVENT_CRITERIA.has(k));
 
-      <div className="space-y-3">
-        {data.ranking.map((row, index) => (
-          <TableResultRow
-            key={row.table_number}
-            rank={index + 1}
-            result={row}
-            activeCriteria={data.active_criteria}
-            showComments={data.show_comments}
-          />
-        ))}
+  return (
+    <div className="space-y-8 max-w-4xl">
+      <div>
+        <h1 className="font-heading text-2xl font-bold">{t('results.title')}</h1>
+        <p className="text-sm font-medium mt-1" style={{ color: 'color-mix(in srgb, var(--color-text) 60%, transparent)' }}>
+          {data.tournament_name}
+        </p>
       </div>
+
+      {/* Table Results */}
+      <section aria-labelledby="table-results-heading">
+        <h2 id="table-results-heading" className="font-heading text-lg font-semibold mb-3">
+          {t('results.table_results')}
+        </h2>
+        <div className="space-y-3">
+          {data.ranking.map((row, index) => (
+            <TableResultRow
+              key={row.table_number}
+              rank={index + 1}
+              result={row}
+              activeCriteria={tableCriteria}
+              showComments={data.show_comments}
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* Event Rating — only when event averages exist */}
+      {data.event_averages && Object.keys(data.event_averages).length > 0 && (
+        <section aria-labelledby="event-rating-heading">
+          <h2 id="event-rating-heading" className="font-heading text-lg font-semibold mb-1">
+            {t('results.event_rating')}
+          </h2>
+          <p className="text-sm mb-3" style={{ color: 'color-mix(in srgb, var(--color-text) 60%, transparent)' }}>
+            {t('results.event_rating_subtitle')}
+          </p>
+          <div
+            className="rounded p-4 space-y-2"
+            style={{
+              backgroundColor: 'var(--color-surface)',
+              border: '1px solid color-mix(in srgb, var(--color-text) 15%, transparent)',
+            }}
+          >
+            {Object.entries(data.event_averages).map(([key, avg]) => (
+              <div key={key} className="flex items-center justify-between gap-4">
+                <span className="text-sm" style={{ color: 'color-mix(in srgb, var(--color-text) 80%, transparent)' }}>
+                  {t(`criteria.${key}`, { defaultValue: key })}
+                </span>
+                <span className="font-heading text-lg font-bold tabular-nums" style={{ color: 'var(--color-primary)' }}>
+                  {(avg as number).toFixed(2)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

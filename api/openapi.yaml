@@ -555,6 +555,15 @@ components:
         show_comments:
           type: boolean
           description: Whether comments are visible in results
+        event_averages:
+          type: object
+          nullable: true
+          description: |
+            Average score per event-level criterion (catering, venue, organization).
+            Null when no event ratings have been submitted.
+          additionalProperties:
+            type: number
+            format: float
         ranking:
           type: array
           description: Sorted ascending by overall average score (1 = best grade)

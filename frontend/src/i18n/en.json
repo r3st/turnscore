@@ -248,7 +248,10 @@
     "comments": "Comments",
     "overall_ranking": "Overall Ranking",
     "show_criteria": "Show criteria",
-    "hide_criteria": "Hide criteria"
+    "hide_criteria": "Hide criteria",
+    "table_results": "Table Results",
+    "event_rating": "Tournament Rating",
+    "event_rating_subtitle": "Overall assessment of the event by participants"
   },
   "errors": {
     "generic": "An error occurred. Please try again.",

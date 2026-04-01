@@ -248,7 +248,10 @@
     "comments": "Kommentare",
     "overall_ranking": "Gesamtranking",
     "show_criteria": "Kriterien anzeigen",
-    "hide_criteria": "Kriterien ausblenden"
+    "hide_criteria": "Kriterien ausblenden",
+    "table_results": "Tischbewertungen",
+    "event_rating": "Turnierbewertung",
+    "event_rating_subtitle": "Gesamtbeurteilung des Turniers durch die Teilnehmer"
   },
   "errors": {
     "generic": "Ein Fehler ist aufgetreten. Bitte versuche es erneut.",

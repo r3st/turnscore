@@ -709,6 +709,13 @@ export interface components {
             active_criteria: components["schemas"]["CriteriaKey"][];
             /** @description Whether comments are visible in results */
             show_comments: boolean;
+            /**
+             * @description Average score per event-level criterion (catering, venue, organization).
+             *     Null when no event ratings have been submitted.
+             */
+            event_averages?: {
+                [key: string]: number;
+            } | null;
             /** @description Sorted ascending by overall average score (1 = best grade) */
             ranking: components["schemas"]["TableResult"][];
         };

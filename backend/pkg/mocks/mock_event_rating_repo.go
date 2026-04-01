@@ -56,6 +56,21 @@ func (mr *MockEventRatingRepositoryMockRecorder) Create(ctx, r any) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockEventRatingRepository)(nil).Create), ctx, r)
 }
 
+// GetAveragesForTournament mocks base method.
+func (m *MockEventRatingRepository) GetAveragesForTournament(ctx context.Context, tournamentID uuid.UUID) (map[string]float64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAveragesForTournament", ctx, tournamentID)
+	ret0, _ := ret[0].(map[string]float64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAveragesForTournament indicates an expected call of GetAveragesForTournament.
+func (mr *MockEventRatingRepositoryMockRecorder) GetAveragesForTournament(ctx, tournamentID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAveragesForTournament", reflect.TypeOf((*MockEventRatingRepository)(nil).GetAveragesForTournament), ctx, tournamentID)
+}
+
 // ExistsByTournamentAndRater mocks base method.
 func (m *MockEventRatingRepository) ExistsByTournamentAndRater(ctx context.Context, tournamentID, raterID uuid.UUID) (bool, error) {
 	m.ctrl.T.Helper()
