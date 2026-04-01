@@ -8,7 +8,6 @@ import type { TournamentMembership } from '@/api/hooks/useUser';
 
 export function DashboardPage() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { data: profile, isLoading } = useMe();
   const deleteTournament = useDeleteTournament();
   const [copiedCode, setCopiedCode] = useState(false);
@@ -106,31 +105,11 @@ export function DashboardPage() {
               >
                 <span className="font-medium text-sm">{m.tournament_name}</span>
                 <div className="flex gap-2 flex-wrap">
-                  <button
-                    onClick={() => navigate(`/dashboard/tournaments/${m.tournament_slug}`)}
-                    className="text-xs px-3 py-1 rounded border"
-                    style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
-                  >
-                    {t('dashboard.manage')}
-                  </button>
-                  <Link
-                    to={`/dashboard/tournaments/${m.tournament_slug}/tables`}
-                    className="text-xs px-3 py-1 rounded border"
-                    style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
-                  >
-                    {t('dashboard.tables')}
-                  </Link>
-                  <Link
-                    to={`/dashboard/tournaments/${m.tournament_slug}/results`}
-                    className="text-xs px-3 py-1 rounded border"
-                    style={{ borderColor: 'var(--color-accent)', color: 'var(--color-accent)' }}
-                  >
-                    {t('results.title')}
-                  </Link>
+                  <TournamentActionLinks slug={m.tournament_slug} />
                   <button
                     onClick={() => handleDelete(m)}
                     disabled={deleteTournament.isPending}
-                    className="text-xs px-3 py-1 rounded border"
+                    className="inline-flex items-center justify-center text-xs px-3 py-1 rounded border"
                     style={{ borderColor: '#dc2626', color: '#dc2626' }}
                     aria-label={`${t('dashboard.delete_tournament')} ${m.tournament_name}`}
                   >
@@ -168,7 +147,6 @@ export function DashboardPage() {
 
 function HelperRow({ membership: m }: { membership: TournamentMembership }) {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const leave = useLeaveTournament(m.tournament_slug);
 
   const handleLeave = async () => {
@@ -182,18 +160,12 @@ function HelperRow({ membership: m }: { membership: TournamentMembership }) {
       style={{ backgroundColor: 'var(--color-surface)' }}
     >
       <span className="font-medium text-sm">{m.tournament_name}</span>
-      <div className="flex gap-2">
-        <button
-          onClick={() => navigate(`/dashboard/tournaments/${m.tournament_slug}`)}
-          className="text-xs px-3 py-1 rounded border"
-          style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
-        >
-          {t('dashboard.manage')}
-        </button>
+      <div className="flex gap-2 flex-wrap">
+        <TournamentActionLinks slug={m.tournament_slug} />
         <button
           onClick={handleLeave}
           disabled={leave.isPending}
-          className="text-xs px-3 py-1 rounded border"
+          className="inline-flex items-center justify-center text-xs px-3 py-1 rounded border"
           style={{ borderColor: '#dc2626', color: '#dc2626' }}
           aria-label={`${t('dashboard.leave_tournament')} ${m.tournament_name}`}
         >
@@ -201,5 +173,41 @@ function HelperRow({ membership: m }: { membership: TournamentMembership }) {
         </button>
       </div>
     </li>
+  );
+}
+
+function TournamentActionLinks({ slug }: { slug: string }) {
+  const { t } = useTranslation();
+  return (
+    <>
+      <Link
+        to={`/dashboard/tournaments/${slug}`}
+        className="inline-flex items-center justify-center text-xs px-3 py-1 rounded border"
+        style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
+      >
+        {t('dashboard.manage')}
+      </Link>
+      <Link
+        to={`/dashboard/tournaments/${slug}/tables`}
+        className="inline-flex items-center justify-center text-xs px-3 py-1 rounded border"
+        style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
+      >
+        {t('dashboard.tables')}
+      </Link>
+      <Link
+        to={`/dashboard/tournaments/${slug}/raters`}
+        className="inline-flex items-center justify-center text-xs px-3 py-1 rounded border"
+        style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
+      >
+        {t('rater.section_title')}
+      </Link>
+      <Link
+        to={`/dashboard/tournaments/${slug}/results`}
+        className="inline-flex items-center justify-center text-xs px-3 py-1 rounded border"
+        style={{ borderColor: 'var(--color-accent)', color: 'var(--color-accent)' }}
+      >
+        {t('results.title')}
+      </Link>
+    </>
   );
 }

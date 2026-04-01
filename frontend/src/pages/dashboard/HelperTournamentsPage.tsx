@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useMe } from '@/api/hooks/useUser';
 import { useLeaveTournament } from '@/api/hooks/useMembers';
@@ -37,7 +37,6 @@ export function HelperTournamentsPage() {
 
 function HelperRow({ membership: m }: { membership: TournamentMembership }) {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const leave = useLeaveTournament(m.tournament_slug);
 
   const handleLeave = async () => {
@@ -51,18 +50,39 @@ function HelperRow({ membership: m }: { membership: TournamentMembership }) {
       style={{ backgroundColor: 'var(--color-surface)' }}
     >
       <span className="font-medium">{m.tournament_name}</span>
-      <div className="flex gap-2">
-        <button
-          onClick={() => navigate(`/dashboard/tournaments/${m.tournament_slug}`)}
-          className="text-xs px-3 py-1 rounded border"
+      <div className="flex gap-2 flex-wrap">
+        <Link
+          to={`/dashboard/tournaments/${m.tournament_slug}`}
+          className="inline-flex items-center justify-center text-xs px-3 py-1 rounded border"
           style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
         >
           {t('dashboard.manage')}
-        </button>
+        </Link>
+        <Link
+          to={`/dashboard/tournaments/${m.tournament_slug}/tables`}
+          className="inline-flex items-center justify-center text-xs px-3 py-1 rounded border"
+          style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
+        >
+          {t('dashboard.tables')}
+        </Link>
+        <Link
+          to={`/dashboard/tournaments/${m.tournament_slug}/raters`}
+          className="inline-flex items-center justify-center text-xs px-3 py-1 rounded border"
+          style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
+        >
+          {t('rater.section_title')}
+        </Link>
+        <Link
+          to={`/dashboard/tournaments/${m.tournament_slug}/results`}
+          className="inline-flex items-center justify-center text-xs px-3 py-1 rounded border"
+          style={{ borderColor: 'var(--color-accent)', color: 'var(--color-accent)' }}
+        >
+          {t('results.title')}
+        </Link>
         <button
           onClick={handleLeave}
           disabled={leave.isPending}
-          className="text-xs px-3 py-1 rounded border"
+          className="inline-flex items-center justify-center text-xs px-3 py-1 rounded border"
           style={{ borderColor: '#dc2626', color: '#dc2626' }}
           aria-label={`${t('dashboard.leave_tournament')} ${m.tournament_name}`}
         >
