@@ -338,6 +338,18 @@ func (s *RaterService) HasEventRating(ctx context.Context, raterID, tournamentID
 	return s.eventRatingRepo.ExistsByTournamentAndRater(ctx, t.ID, raterID)
 }
 
+// GetRatedTableNumbers returns the table numbers within a tournament that the rater has already rated.
+func (s *RaterService) GetRatedTableNumbers(ctx context.Context, raterID, tournamentID uuid.UUID, slug string) ([]int, error) {
+	t, err := s.tourneyRepo.FindBySlug(ctx, slug)
+	if err != nil {
+		return nil, fmt.Errorf("GetRatedTableNumbers find tournament: %w", err)
+	}
+	if t.ID != tournamentID {
+		return nil, domain.ErrForbidden
+	}
+	return s.ratingRepo.GetRatedTableNumbers(ctx, t.ID, raterID)
+}
+
 // isVotingOpen returns true when rating submissions should be accepted.
 // Tournament must be "active" and the current time must be within the voting window
 // (if start/end are set).

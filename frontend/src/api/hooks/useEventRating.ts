@@ -13,6 +13,15 @@ export function useEventRatingStatus(slug: string, enabled: boolean) {
   });
 }
 
+export function useMyRatings(slug: string, enabled: boolean) {
+  return useQuery<{ rated_table_numbers: number[] }>({
+    queryKey: ['my-ratings', slug],
+    queryFn: () =>
+      apiClient.get(`/tournaments/${slug}/my-ratings`).then((r) => r.data),
+    enabled: enabled && !!slug,
+  });
+}
+
 export function useSubmitEventRating(slug: string) {
   const queryClient = useQueryClient();
   return useMutation<void, Error, CreateEventRatingRequest>({

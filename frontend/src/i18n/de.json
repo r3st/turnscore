@@ -46,7 +46,11 @@
     "location": "Ort",
     "links_disclaimer": "Wir übernehmen keine Verantwortung für externe Inhalte.",
     "no_tables": "Es wurden noch keine Tische angelegt.",
-    "rate_table": "Bewerten"
+    "rate_table": "Bewerten",
+    "table_rated": "Bewertet",
+    "voting_open_cta_title": "Abstimmung läuft!",
+    "voting_open_cta_text": "Melde dich als Teilnehmer an, um die Tische zu bewerten.",
+    "voting_open_cta_button": "Jetzt bewerten"
   },
   "table": {
     "number": "Tisch {{number}}",

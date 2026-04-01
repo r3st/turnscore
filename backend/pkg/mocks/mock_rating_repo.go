@@ -86,6 +86,21 @@ func (mr *MockRatingRepositoryMockRecorder) GetCommentsForTournament(ctx, tourna
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCommentsForTournament", reflect.TypeOf((*MockRatingRepository)(nil).GetCommentsForTournament), ctx, tournamentID)
 }
 
+// GetRatedTableNumbers mocks base method.
+func (m *MockRatingRepository) GetRatedTableNumbers(ctx context.Context, tournamentID, raterID uuid.UUID) ([]int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRatedTableNumbers", ctx, tournamentID, raterID)
+	ret0, _ := ret[0].([]int)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRatedTableNumbers indicates an expected call of GetRatedTableNumbers.
+func (mr *MockRatingRepositoryMockRecorder) GetRatedTableNumbers(ctx, tournamentID, raterID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRatedTableNumbers", reflect.TypeOf((*MockRatingRepository)(nil).GetRatedTableNumbers), ctx, tournamentID, raterID)
+}
+
 // GetResultsForTournament mocks base method.
 func (m *MockRatingRepository) GetResultsForTournament(ctx context.Context, tournamentID uuid.UUID) ([]domain.RatingResult, error) {
 	m.ctrl.T.Helper()

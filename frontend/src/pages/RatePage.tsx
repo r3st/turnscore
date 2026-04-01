@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { X } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useGetTable, useSubmitRating } from '@/api/hooks/useTables';
@@ -26,6 +27,7 @@ export function RatePage() {
   const { data: table, isLoading } = useGetTable(slug, tableNum);
   const submitRating = useSubmitRating(slug, tableNum);
   const { applyTheme, clearTheme } = useTheme();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!table?.tournament_type) return;
@@ -112,6 +114,7 @@ export function RatePage() {
         played_zone: playedZone,
         comment: comment.trim() || null,
       });
+      queryClient.invalidateQueries({ queryKey: ['my-ratings', slug] });
       setSubmitted(true);
     } catch (err: unknown) {
       const status = (err as { response?: { status?: number } })?.response?.status;
@@ -490,3 +493,4 @@ function CriterionRow({
     </div>
   );
 }
+
