@@ -1492,6 +1492,36 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
+  /tournaments/{slug}/my-ratings:
+    parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+
+    get:
+      summary: Get table numbers already rated by the current rater
+      operationId: getMyRatings
+      tags: [Ratings]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of rated table numbers
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [rated_table_numbers]
+                properties:
+                  rated_table_numbers:
+                    type: array
+                    items:
+                      type: integer
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
   # =========================================================================
   # Results
   # =========================================================================

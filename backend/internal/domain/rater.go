@@ -97,4 +97,7 @@ type RatingRepository interface {
 	// GetCommentsForTournament returns all non-empty comments per table for a tournament.
 	// Returns map[tableID][]string of comments — fully anonymized, no rater identity.
 	GetCommentsForTournament(ctx context.Context, tournamentID uuid.UUID) (map[uuid.UUID][]string, error)
+
+	// GetRatedTableNumbers returns the table numbers (within a tournament) already rated by the given rater.
+	GetRatedTableNumbers(ctx context.Context, tournamentID, raterID uuid.UUID) ([]int, error)
 }

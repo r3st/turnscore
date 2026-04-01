@@ -641,6 +641,9 @@ type ServerInterface interface {
 	// Remove helper from tournament (organizer only)
 	// (DELETE /tournaments/{slug}/members/{userId})
 	RemoveTournamentMember(c *gin.Context, slug string, userId UUID)
+	// Get table numbers already rated by the current rater
+	// (GET /tournaments/{slug}/my-ratings)
+	GetMyRatings(c *gin.Context, slug string)
 	// Export all QR codes as print-ready PDF (organizer or helper)
 	// (POST /tournaments/{slug}/qrcodes)
 	ExportQRCodesPDF(c *gin.Context, slug string)
@@ -1106,6 +1109,32 @@ func (siw *ServerInterfaceWrapper) RemoveTournamentMember(c *gin.Context) {
 	siw.Handler.RemoveTournamentMember(c, slug, userId)
 }
 
+// GetMyRatings operation middleware
+func (siw *ServerInterfaceWrapper) GetMyRatings(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "slug" -------------
+	var slug string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "slug", c.Param("slug"), &slug, runtime.BindStyledParameterOptions{Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter slug: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetMyRatings(c, slug)
+}
+
 // ExportQRCodesPDF operation middleware
 func (siw *ServerInterfaceWrapper) ExportQRCodesPDF(c *gin.Context) {
 
@@ -1567,6 +1596,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.POST(options.BaseURL+"/tournaments/:slug/members", wrapper.AddTournamentMember)
 	router.DELETE(options.BaseURL+"/tournaments/:slug/members/me", wrapper.LeaveTournament)
 	router.DELETE(options.BaseURL+"/tournaments/:slug/members/:userId", wrapper.RemoveTournamentMember)
+	router.GET(options.BaseURL+"/tournaments/:slug/my-ratings", wrapper.GetMyRatings)
 	router.POST(options.BaseURL+"/tournaments/:slug/qrcodes", wrapper.ExportQRCodesPDF)
 	router.GET(options.BaseURL+"/tournaments/:slug/raters", wrapper.ListRaters)
 	router.POST(options.BaseURL+"/tournaments/:slug/raters", wrapper.CreateRater)
@@ -2257,6 +2287,34 @@ type RemoveTournamentMember404JSONResponse struct{ NotFoundJSONResponse }
 func (response RemoveTournamentMember404JSONResponse) VisitRemoveTournamentMemberResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetMyRatingsRequestObject struct {
+	Slug string `json:"slug"`
+}
+
+type GetMyRatingsResponseObject interface {
+	VisitGetMyRatingsResponse(w http.ResponseWriter) error
+}
+
+type GetMyRatings200JSONResponse struct {
+	RatedTableNumbers []int `json:"rated_table_numbers"`
+}
+
+func (response GetMyRatings200JSONResponse) VisitGetMyRatingsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetMyRatings401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response GetMyRatings401JSONResponse) VisitGetMyRatingsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
 
 	return json.NewEncoder(w).Encode(response)
 }
@@ -3022,6 +3080,9 @@ type StrictServerInterface interface {
 	// Remove helper from tournament (organizer only)
 	// (DELETE /tournaments/{slug}/members/{userId})
 	RemoveTournamentMember(ctx context.Context, request RemoveTournamentMemberRequestObject) (RemoveTournamentMemberResponseObject, error)
+	// Get table numbers already rated by the current rater
+	// (GET /tournaments/{slug}/my-ratings)
+	GetMyRatings(ctx context.Context, request GetMyRatingsRequestObject) (GetMyRatingsResponseObject, error)
 	// Export all QR codes as print-ready PDF (organizer or helper)
 	// (POST /tournaments/{slug}/qrcodes)
 	ExportQRCodesPDF(ctx context.Context, request ExportQRCodesPDFRequestObject) (ExportQRCodesPDFResponseObject, error)
@@ -3600,6 +3661,33 @@ func (sh *strictHandler) RemoveTournamentMember(ctx *gin.Context, slug string, u
 		ctx.Status(http.StatusInternalServerError)
 	} else if validResponse, ok := response.(RemoveTournamentMemberResponseObject); ok {
 		if err := validResponse.VisitRemoveTournamentMemberResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetMyRatings operation middleware
+func (sh *strictHandler) GetMyRatings(ctx *gin.Context, slug string) {
+	var request GetMyRatingsRequestObject
+
+	request.Slug = slug
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetMyRatings(ctx, request.(GetMyRatingsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetMyRatings")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(GetMyRatingsResponseObject); ok {
+		if err := validResponse.VisitGetMyRatingsResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
 		}
 	} else if response != nil {

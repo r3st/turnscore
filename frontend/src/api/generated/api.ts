@@ -396,6 +396,25 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tournaments/{slug}/my-ratings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        /** Get table numbers already rated by the current rater */
+        get: operations["getMyRatings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tournaments/{slug}/results": {
         parameters: {
             query?: never;
@@ -1590,6 +1609,31 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
+        };
+    };
+    getMyRatings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of rated table numbers */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        rated_table_numbers: number[];
+                    };
+                };
+            };
+            401: components["responses"]["Unauthorized"];
         };
     };
     getTournamentResults: {

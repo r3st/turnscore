@@ -46,7 +46,11 @@
     "location": "Location",
     "links_disclaimer": "We are not responsible for the content of external links.",
     "no_tables": "No tables have been set up yet.",
-    "rate_table": "Rate"
+    "rate_table": "Rate",
+    "table_rated": "Rated",
+    "voting_open_cta_title": "Rating is open!",
+    "voting_open_cta_text": "Log in as a participant to rate the tables.",
+    "voting_open_cta_button": "Rate now"
   },
   "table": {
     "number": "Table {{number}}",

@@ -49,6 +49,22 @@ func (r *RatingRepository) ExistsByTableAndRater(ctx context.Context, tableID, r
 	return count > 0, nil
 }
 
+// GetRatedTableNumbers returns the table numbers (within a tournament) that the given rater has already rated.
+func (r *RatingRepository) GetRatedTableNumbers(ctx context.Context, tournamentID, raterID uuid.UUID) ([]int, error) {
+	var numbers []int
+	err := r.db.WithContext(ctx).Raw(`
+		SELECT t.number
+		FROM ratings rt
+		JOIN tables t ON rt.table_id = t.id
+		WHERE t.tournament_id = ? AND rt.rater_id = ?
+		ORDER BY t.number ASC
+	`, tournamentID, raterID).Scan(&numbers).Error
+	if err != nil {
+		return nil, fmt.Errorf("GetRatedTableNumbers: %w", err)
+	}
+	return numbers, nil
+}
+
 // tableRow holds the raw SQL result from the aggregation query.
 type tableRow struct {
 	TableID     uuid.UUID `gorm:"column:table_id"`

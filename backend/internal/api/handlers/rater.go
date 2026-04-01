@@ -244,6 +244,33 @@ func (h *Handlers) GetEventRatingStatus(ctx context.Context, req generated.GetEv
 	return generated.GetEventRatingStatus200JSONResponse{Submitted: submitted}, nil
 }
 
+// GetMyRatings returns the table numbers already rated by the current rater in this tournament.
+func (h *Handlers) GetMyRatings(ctx context.Context, req generated.GetMyRatingsRequestObject) (generated.GetMyRatingsResponseObject, error) {
+	raterID, ok := getUserID(ctx)
+	if !ok {
+		return generated.GetMyRatings401JSONResponse{
+			UnauthorizedJSONResponse: generated.UnauthorizedJSONResponse{Code: "unauthorized", Message: msgMissingRaterID},
+		}, nil
+	}
+	tournamentID, ok := getTournamentID(ctx)
+	if !ok {
+		return generated.GetMyRatings401JSONResponse{
+			UnauthorizedJSONResponse: generated.UnauthorizedJSONResponse{Code: "unauthorized", Message: msgMissingTournamentID},
+		}, nil
+	}
+
+	numbers, err := h.raterSvc.GetRatedTableNumbers(ctx, raterID, tournamentID, req.Slug)
+	if err != nil {
+		if errors.Is(err, domain.ErrForbidden) {
+			return generated.GetMyRatings401JSONResponse{
+				UnauthorizedJSONResponse: generated.UnauthorizedJSONResponse{Code: "unauthorized", Message: msgMissingTournamentID},
+			}, nil
+		}
+		return nil, err
+	}
+	return generated.GetMyRatings200JSONResponse{RatedTableNumbers: numbers}, nil
+}
+
 // GetTournamentResults returns tournament results (organizer or helper only).
 func (h *Handlers) GetTournamentResults(ctx context.Context, req generated.GetTournamentResultsRequestObject) (generated.GetTournamentResultsResponseObject, error) {
 	userID, ok := getUserID(ctx)

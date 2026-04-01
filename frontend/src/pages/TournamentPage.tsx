@@ -7,7 +7,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { useTournament } from '@/api/hooks/useTournaments';
 import { useTheme } from '@/hooks/useTheme';
 import { useAuthStore } from '@/stores/authStore';
-import { useEventRatingStatus, useSubmitEventRating } from '@/api/hooks/useEventRating';
+import { useEventRatingStatus, useSubmitEventRating, useMyRatings } from '@/api/hooks/useEventRating';
 import type { TableSummary } from '@/api/hooks/useTables';
 import type { components } from '@/api/generated/api';
 
@@ -23,6 +23,9 @@ export function TournamentPage() {
   const { applyTheme, clearTheme } = useTheme();
   const { isAuthenticated, role } = useAuthStore();
   const isRater = isAuthenticated() && role === 'rater';
+  const isGuest = !isAuthenticated() || role !== 'rater';
+  const { data: myRatingsData } = useMyRatings(slug, isRater);
+  const ratedTables = myRatingsData?.rated_table_numbers ?? [];
 
   const isVotingActive = (() => {
     if (!tournament || tournament.status !== 'active') return false;
@@ -179,6 +182,33 @@ export function TournamentPage() {
               </div>
             )}
 
+            {/* CTA for guests when voting is active */}
+            {isVotingActive && isGuest && (
+              <div
+                className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded border"
+                style={{
+                  backgroundColor: 'color-mix(in srgb, var(--color-primary) 8%, transparent)',
+                  borderColor: 'color-mix(in srgb, var(--color-primary) 30%, transparent)',
+                }}
+              >
+                <div>
+                  <p className="font-medium text-sm" style={{ color: 'var(--color-primary)' }}>
+                    {t('tournament.voting_open_cta_title')}
+                  </p>
+                  <p className="text-xs mt-0.5" style={{ color: 'color-mix(in srgb, var(--color-text) 65%, transparent)' }}>
+                    {t('tournament.voting_open_cta_text')}
+                  </p>
+                </div>
+                <Link
+                  to={`/rate-login/${slug}`}
+                  className="shrink-0 inline-flex items-center justify-center px-4 py-2 rounded font-medium text-sm"
+                  style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-background)' }}
+                >
+                  {t('tournament.voting_open_cta_button')}
+                </Link>
+              </div>
+            )}
+
             {/* Event Rating — shown above tables when optional criteria exist, rater is logged in, and voting is open */}
             {isRater && isVotingActive && tournament.active_criteria?.some((c) => OPTIONAL_CRITERIA.includes(c as CriteriaKey)) && (
               <EventRatingSection slug={slug} activeCriteria={(tournament.active_criteria as CriteriaKey[]).filter((c) => OPTIONAL_CRITERIA.includes(c))} />
@@ -197,7 +227,16 @@ export function TournamentPage() {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {tournament.tables.map((table) => (
-                    <TableCard key={table.id} slug={slug} table={table} showRateButton={isRater && isVotingActive} rateLabel={t('tournament.rate_table')} tableLabel={t('table.number', { number: table.number })} />
+                    <TableCard
+                      key={table.id}
+                      slug={slug}
+                      table={table}
+                      showRateButton={isRater && isVotingActive}
+                      isRated={ratedTables.includes(table.number)}
+                      rateLabel={t('tournament.rate_table')}
+                      ratedLabel={t('tournament.table_rated')}
+                      tableLabel={t('table.number', { number: table.number })}
+                    />
                   ))}
                 </div>
               )}
@@ -336,11 +375,13 @@ function EventRatingSection({ slug, activeCriteria }: { slug: string; activeCrit
   );
 }
 
-function TableCard({ slug, table, showRateButton, rateLabel, tableLabel }: {
+function TableCard({ slug, table, showRateButton, isRated, rateLabel, ratedLabel, tableLabel }: {
   slug: string;
   table: TableSummary;
   showRateButton: boolean;
+  isRated: boolean;
   rateLabel: string;
+  ratedLabel: string;
   tableLabel: string;
 }) {
   const { t } = useTranslation();
@@ -435,7 +476,7 @@ function TableCard({ slug, table, showRateButton, rateLabel, tableLabel }: {
               </p>
             )}
           </div>
-          {showRateButton && (
+          {showRateButton && !isRated && (
             <Link
               to={`/rate/${slug}/${table.number}`}
               className="shrink-0 inline-flex items-center justify-center text-xs px-3 py-1.5 rounded font-medium"
@@ -443,6 +484,17 @@ function TableCard({ slug, table, showRateButton, rateLabel, tableLabel }: {
             >
               {rateLabel}
             </Link>
+          )}
+          {showRateButton && isRated && (
+            <span
+              className="shrink-0 inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded font-medium"
+              style={{
+                backgroundColor: 'color-mix(in srgb, var(--color-primary) 15%, transparent)',
+                color: 'var(--color-primary)',
+              }}
+            >
+              ✓ {ratedLabel}
+            </span>
           )}
         </div>
       </div>
