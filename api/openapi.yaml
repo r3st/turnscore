@@ -543,10 +543,18 @@ components:
 
     TournamentResults:
       type: object
-      required: [tournament_name, ranking]
+      required: [tournament_name, ranking, active_criteria, show_comments]
       properties:
         tournament_name:
           type: string
+        active_criteria:
+          type: array
+          description: Criteria keys active for this tournament (determines which columns to show)
+          items:
+            $ref: "#/components/schemas/CriteriaKey"
+        show_comments:
+          type: boolean
+          description: Whether comments are visible in results
         ranking:
           type: array
           description: Sorted ascending by overall average score (1 = best grade)

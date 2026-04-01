@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 
 	"github.com/google/uuid"
@@ -297,8 +298,26 @@ func (h *Handlers) GetTournamentResults(ctx context.Context, req generated.GetTo
 
 	ranking := buildRanking(results, commentsMap)
 
+	// Parse active_criteria from tournament JSON field.
+	var activeCriteria []string
+	if err := json.Unmarshal([]byte(tournament.ActiveCriteria), &activeCriteria); err != nil {
+		activeCriteria = []string{}
+	}
+	apiCriteria := make([]generated.CriteriaKey, 0, len(activeCriteria))
+	for _, k := range activeCriteria {
+		apiCriteria = append(apiCriteria, generated.CriteriaKey(k))
+	}
+
+	// Parse show_comments from result config.
+	var resultCfg struct {
+		ShowComments bool `json:"show_comments"`
+	}
+	_ = json.Unmarshal([]byte(tournament.ResultConfig), &resultCfg)
+
 	return generated.GetTournamentResults200JSONResponse(generated.TournamentResults{
 		TournamentName: tournament.Name,
+		ActiveCriteria: apiCriteria,
+		ShowComments:   resultCfg.ShowComments,
 		Ranking:        ranking,
 	}), nil
 }

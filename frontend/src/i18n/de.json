@@ -239,7 +239,16 @@
     "table": "Tisch",
     "average": "Durchschnitt",
     "ratings_count": "{{count}} Bewertungen",
-    "no_results": "Noch keine Bewertungen abgegeben."
+    "no_results": "Noch keine Bewertungen abgegeben.",
+    "criteria_breakdown": "Kriterienaufschlüsselung",
+    "zone_distribution": "Zonenverteilung",
+    "zone_none": "Nicht gespielt",
+    "zone_a": "Zone A",
+    "zone_b": "Zone B",
+    "comments": "Kommentare",
+    "overall_ranking": "Gesamtranking",
+    "show_criteria": "Kriterien anzeigen",
+    "hide_criteria": "Kriterien ausblenden"
   },
   "errors": {
     "generic": "Ein Fehler ist aufgetreten. Bitte versuche es erneut.",
