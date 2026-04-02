@@ -353,6 +353,8 @@ func applyExifOrientation(img image.Image, data []byte) image.Image {
 	if err != nil {
 		return img
 	}
+	// imaging.Rotate90  = 90° CCW
+	// imaging.Rotate270 = 270° CCW = 90° CW
 	switch orientation {
 	case 2:
 		return imaging.FlipH(img)
@@ -361,13 +363,13 @@ func applyExifOrientation(img image.Image, data []byte) image.Image {
 	case 4:
 		return imaging.FlipV(img)
 	case 5:
-		return imaging.Transpose(imaging.Rotate90(img))
+		return imaging.FlipH(imaging.Rotate270(img))
 	case 6:
-		return imaging.Rotate90(img)
+		return imaging.Rotate270(img) // 90° CW
 	case 7:
-		return imaging.Transpose(imaging.Rotate270(img))
+		return imaging.FlipH(imaging.Rotate90(img))
 	case 8:
-		return imaging.Rotate270(img)
+		return imaging.Rotate90(img) // 90° CCW
 	default:
 		return img // orientation 1 = normal, no change needed
 	}
