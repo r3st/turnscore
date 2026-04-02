@@ -1,4 +1,4 @@
-.PHONY: dev dev-down generate test test-be test-fe test-e2e migrate-up migrate-down lint licenses
+.PHONY: dev dev-down build generate test test-be test-fe test-e2e migrate-up migrate-down lint licenses
 
 # ---------------------------------------------------------------------------
 # Development
@@ -9,6 +9,16 @@ dev:
 
 dev-down:
 	docker compose -f docker-compose.dev.yml down
+
+# ---------------------------------------------------------------------------
+# Production Build — single binary with embedded frontend
+# ---------------------------------------------------------------------------
+
+build:
+	cd frontend && npm ci && npm run build
+	cp -r frontend/dist backend/internal/static/dist
+	cd backend && CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o ../turnscore ./cmd/server
+	@echo "✅ Binary written to ./turnscore"
 
 # ---------------------------------------------------------------------------
 # Code Generation (OpenAPI → Go + TypeScript)

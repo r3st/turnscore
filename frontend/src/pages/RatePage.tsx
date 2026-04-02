@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -21,7 +21,6 @@ const OPTIONAL_CRITERIA: CriteriaKey[] = ['catering', 'venue', 'organization'];
 export function RatePage() {
   const { slug = '', tableNum = '' } = useParams<{ slug: string; tableNum: string }>();
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { isAuthenticated, hasRole } = useAuthStore();
 
   const { data: table, isLoading } = useGetTable(slug, tableNum);

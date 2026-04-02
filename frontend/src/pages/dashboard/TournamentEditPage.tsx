@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useAuthStore } from '@/stores/authStore';
+import { useMe } from '@/api/hooks/useUser';
 import {
   useTournament,
   useCreateTournament,
@@ -25,9 +25,11 @@ export function TournamentEditPage() {
   const { slug } = useParams<{ slug?: string }>();
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { role } = useAuthStore();
+  const { data: me } = useMe();
   const isNew = !slug;
-  const isOrganizer = role === 'organizer';
+  const isOrganizer = me?.memberships.some(
+    (m) => m.tournament_slug === slug && m.role === 'organizer'
+  ) ?? false;
 
   const { data: tournament, isLoading } = useTournament(slug ?? '');
   const createTournament = useCreateTournament();

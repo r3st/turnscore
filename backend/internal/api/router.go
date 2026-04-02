@@ -2,6 +2,7 @@
 package api
 
 import (
+	"io/fs"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -12,6 +13,7 @@ import (
 	"github.com/r3st/turnscore/internal/api/middleware"
 	"github.com/r3st/turnscore/internal/devusers"
 	"github.com/r3st/turnscore/internal/service"
+	"github.com/r3st/turnscore/internal/static"
 )
 
 // NewRouter builds and returns a configured Gin engine.
@@ -40,7 +42,34 @@ func NewRouter(cfg *config.Config, jwtSvc *service.JWTService, h *handlers.Handl
 		r.POST("/api/v1/auth/dev-login", devLoginHandler(jwtSvc))
 	}
 
+	// Serve the embedded React SPA for all non-API routes.
+	// Static assets (JS/CSS/images) are served directly; everything else falls back to index.html.
+	distFS, err := fs.Sub(static.FS, "dist")
+	if err == nil {
+		r.Use(spaHandler(distFS))
+	}
+
 	return r
+}
+
+// spaHandler returns a Gin middleware that serves static files from the embedded dist FS.
+// Unknown paths return index.html so the React router handles client-side navigation.
+func spaHandler(distFS fs.FS) gin.HandlerFunc {
+	fileServer := http.FileServer(http.FS(distFS))
+	return func(c *gin.Context) {
+		path := c.Request.URL.Path
+		// Check whether the file exists in the embedded FS.
+		f, err := distFS.Open(path[1:]) // strip leading "/"
+		if err == nil {
+			f.Close()
+			fileServer.ServeHTTP(c.Writer, c.Request)
+			c.Abort()
+			return
+		}
+		// Unknown path → serve index.html and let the React router take over.
+		c.FileFromFS("index.html", http.FS(distFS))
+		c.Abort()
+	}
 }
 
 // devLoginHandler returns a Gin handler for the dev-only login endpoint.
