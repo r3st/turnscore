@@ -9,7 +9,9 @@ import (
 	_ "image/png" // PNG decoder
 	"io"
 
+	"github.com/disintegration/imaging"
 	"github.com/google/uuid"
+	"github.com/rwcarlsen/goexif/exif"
 	_ "golang.org/x/image/webp" // WebP decoder
 
 	"golang.org/x/image/draw"
@@ -253,11 +255,12 @@ func (s *TableService) UploadPhoto(
 		return nil, domain.ErrFileTooLarge
 	}
 
-	// Decode image for thumbnail generation.
+	// Decode image, then apply EXIF orientation so portrait photos are stored upright.
 	src, _, err := image.Decode(bytes.NewReader(data))
 	if err != nil {
 		return nil, fmt.Errorf("UploadPhoto decode image: %w", err)
 	}
+	src = applyExifOrientation(src, data)
 
 	// Generate storage keys.
 	photoID := uuid.New()
@@ -332,6 +335,44 @@ func (s *TableService) DeletePhoto(ctx context.Context, userID uuid.UUID, photoI
 	}
 
 	return nil
+}
+
+// applyExifOrientation reads the EXIF orientation tag from raw JPEG bytes and
+// rotates/flips the decoded image so it is stored upright. Non-JPEG files or
+// images without an orientation tag are returned unchanged.
+func applyExifOrientation(img image.Image, data []byte) image.Image {
+	x, err := exif.Decode(bytes.NewReader(data))
+	if err != nil {
+		return img
+	}
+	tag, err := x.Get(exif.Orientation)
+	if err != nil {
+		return img
+	}
+	orientation, err := tag.Int(0)
+	if err != nil {
+		return img
+	}
+	// imaging.Rotate90  = 90° CCW
+	// imaging.Rotate270 = 270° CCW = 90° CW
+	switch orientation {
+	case 2:
+		return imaging.FlipH(img)
+	case 3:
+		return imaging.Rotate180(img)
+	case 4:
+		return imaging.FlipV(img)
+	case 5:
+		return imaging.FlipH(imaging.Rotate270(img))
+	case 6:
+		return imaging.Rotate270(img) // 90° CW
+	case 7:
+		return imaging.FlipH(imaging.Rotate90(img))
+	case 8:
+		return imaging.Rotate90(img) // 90° CCW
+	default:
+		return img // orientation 1 = normal, no change needed
+	}
 }
 
 // generateThumbnail scales src so that the longest side is at most maxDim.

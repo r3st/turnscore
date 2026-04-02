@@ -25,6 +25,7 @@ require (
 )
 
 require (
+	github.com/disintegration/imaging v1.6.2
 	github.com/gin-gonic/gin v1.12.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/golang-migrate/migrate/v4 v4.19.1
@@ -32,6 +33,7 @@ require (
 	github.com/jackc/pgx/v5 v5.5.5
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/oapi-codegen/runtime v1.3.0
+	github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	github.com/testcontainers/testcontainers-go v0.41.0
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.41.0
