@@ -191,7 +191,8 @@ func (s *RaterService) SubmitRating(ctx context.Context, input SubmitRatingInput
 	return nil
 }
 
-// GetResults returns tournament results for organizer/helper.
+// GetResults returns tournament results.
+// Public access allowed when results_published = true; otherwise organizer/helper only.
 // Returns: tournament, table results, comments map (when show_comments enabled), event averages.
 func (s *RaterService) GetResults(ctx context.Context, userID uuid.UUID, slug string) (*domain.Tournament, []domain.RatingResult, map[uuid.UUID][]string, map[string]float64, error) {
 	t, err := s.tourneyRepo.FindBySlug(ctx, slug)
@@ -199,9 +200,11 @@ func (s *RaterService) GetResults(ctx context.Context, userID uuid.UUID, slug st
 		return nil, nil, nil, nil, fmt.Errorf("GetResults find tournament: %w", err)
 	}
 
-	role, err := s.memberRepo.GetRole(ctx, t.ID, userID)
-	if err != nil || (role != roleOrganizer && role != roleHelper) {
-		return nil, nil, nil, nil, domain.ErrForbidden
+	if !t.ResultsPublished {
+		role, err := s.memberRepo.GetRole(ctx, t.ID, userID)
+		if err != nil || (role != roleOrganizer && role != roleHelper) {
+			return nil, nil, nil, nil, domain.ErrForbidden
+		}
 	}
 
 	results, err := s.ratingRepo.GetResultsForTournament(ctx, t.ID)

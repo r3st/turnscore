@@ -122,3 +122,13 @@ func (r *TournamentRepository) ListByOrganizerID(ctx context.Context, organizerI
 	}
 	return tournaments, nil
 }
+
+// SetResultsPublished updates the results_published flag for a tournament.
+func (r *TournamentRepository) SetResultsPublished(ctx context.Context, id uuid.UUID, published bool) error {
+	if err := r.db.WithContext(ctx).Model(&domain.Tournament{}).
+		Where("id = ?", id).
+		Update("results_published", published).Error; err != nil {
+		return fmt.Errorf("SetResultsPublished: %w", err)
+	}
+	return nil
+}

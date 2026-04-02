@@ -61,6 +61,21 @@ export function TournamentPage() {
         {tournament && (
           <div className="space-y-8">
 
+            {/* Results published banner */}
+            {tournament.results_published && (
+              <Link
+                to={`/t/${tournament.slug}/results`}
+                className="flex items-center justify-between gap-3 px-4 py-3 rounded text-sm font-medium"
+                style={{ backgroundColor: 'color-mix(in srgb, var(--color-primary) 15%, transparent)', color: 'var(--color-primary)' }}
+              >
+                <span className="flex items-center gap-2">
+                  <span>🏆</span>
+                  {t('results.published_badge')}
+                </span>
+                <span className="underline">{t('results.view_results')} →</span>
+              </Link>
+            )}
+
             {/* Header */}
             <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-2">

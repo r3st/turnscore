@@ -272,14 +272,11 @@ func (h *Handlers) GetMyRatings(ctx context.Context, req generated.GetMyRatingsR
 	return generated.GetMyRatings200JSONResponse{RatedTableNumbers: numbers}, nil
 }
 
-// GetTournamentResults returns tournament results (organizer or helper only).
+// GetTournamentResults returns tournament results.
+// Publicly accessible when results_published = true; otherwise requires organizer/helper JWT.
 func (h *Handlers) GetTournamentResults(ctx context.Context, req generated.GetTournamentResultsRequestObject) (generated.GetTournamentResultsResponseObject, error) {
-	userID, ok := getUserID(ctx)
-	if !ok {
-		return generated.GetTournamentResults401JSONResponse{
-			UnauthorizedJSONResponse: generated.UnauthorizedJSONResponse{Code: "unauthorized", Message: msgMissingUserID},
-		}, nil
-	}
+	// userID may be nil — service handles public access when results_published = true.
+	userID, _ := getUserID(ctx)
 
 	tournament, results, commentsMap, eventAverages, err := h.raterSvc.GetResults(ctx, userID, req.Slug)
 	if err != nil {
@@ -416,6 +413,30 @@ func (h *Handlers) UpdateResultConfig(ctx context.Context, req generated.UpdateR
 		ShowComments:           req.Body.ShowComments,
 		VisibleCommentCriteria: req.Body.VisibleCommentCriteria,
 	}), nil
+}
+
+// PublishResults sets or clears the results_published flag (organizer only).
+func (h *Handlers) PublishResults(ctx context.Context, req generated.PublishResultsRequestObject) (generated.PublishResultsResponseObject, error) {
+	userID, ok := getUserID(ctx)
+	if !ok {
+		return generated.PublishResults401JSONResponse{
+			UnauthorizedJSONResponse: generated.UnauthorizedJSONResponse{Code: "unauthorized", Message: msgMissingUserID},
+		}, nil
+	}
+	if err := h.tournamentSvc.PublishResults(ctx, userID, req.Slug, req.Body.Published); err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			return generated.PublishResults404JSONResponse{
+				NotFoundJSONResponse: generated.NotFoundJSONResponse{Code: "not_found", Message: msgTournamentNotFound},
+			}, nil
+		}
+		if errors.Is(err, domain.ErrForbidden) {
+			return generated.PublishResults403JSONResponse{
+				ForbiddenJSONResponse: generated.ForbiddenJSONResponse{Code: "forbidden", Message: msgForbiddenResults},
+			}, nil
+		}
+		return nil, err
+	}
+	return generated.PublishResults204Response{}, nil
 }
 
 // GetMe returns the authenticated user's profile with tournament memberships.

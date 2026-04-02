@@ -211,6 +211,9 @@ components:
           nullable: true
         table_count:
           type: integer
+        results_published:
+          type: boolean
+          description: Whether results have been published publicly
 
     TournamentDetail:
       allOf:
@@ -1577,10 +1580,11 @@ paths:
           type: string
 
     get:
-      summary: Get tournament results — ranking sorted ascending (organizer or helper)
+      summary: Get tournament results — public when published, otherwise organizer/helper only
       operationId: getTournamentResults
       tags: [Results]
       security:
+        - {}
         - bearerAuth: []
       responses:
         "200":
@@ -1589,6 +1593,40 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TournamentResults"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /tournaments/{slug}/publish-results:
+    parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+
+    post:
+      summary: Publish or unpublish results (organizer or helper)
+      operationId: publishResults
+      tags: [Results]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [published]
+              properties:
+                published:
+                  type: boolean
+      responses:
+        "204":
+          description: Results publication status updated
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":

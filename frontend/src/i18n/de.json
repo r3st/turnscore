@@ -251,7 +251,12 @@
     "hide_criteria": "Kriterien ausblenden",
     "table_results": "Tischbewertungen",
     "event_rating": "Turnierbewertung",
-    "event_rating_subtitle": "Gesamtbeurteilung des Turniers durch die Teilnehmer"
+    "event_rating_subtitle": "Gesamtbeurteilung des Turniers durch die Teilnehmer",
+    "publish": "Ergebnisse veröffentlichen",
+    "unpublish": "Veröffentlichung zurückziehen",
+    "publish_confirm": "Veröffentlichte Ergebnisse sind für alle ohne Anmeldung sichtbar.",
+    "published_badge": "Ergebnisse veröffentlicht",
+    "view_results": "Ergebnisse anzeigen"
   },
   "errors": {
     "generic": "Ein Fehler ist aufgetreten. Bitte versuche es erneut.",

@@ -404,16 +404,19 @@ type TournamentDetail struct {
 	Id             UUID                `json:"id"`
 
 	// Links Always displayed with disclaimer: "We are not responsible for the content of external links."
-	Links       []TournamentLink `json:"links"`
-	Location    *string          `json:"location"`
-	Name        string           `json:"name"`
-	Slug        string           `json:"slug"`
-	Status      TournamentStatus `json:"status"`
-	TableCount  int              `json:"table_count"`
-	Tables      []TableSummary   `json:"tables"`
-	Type        TournamentType   `json:"type"`
-	VotingEnd   *time.Time       `json:"voting_end"`
-	VotingStart *time.Time       `json:"voting_start"`
+	Links    []TournamentLink `json:"links"`
+	Location *string          `json:"location"`
+	Name     string           `json:"name"`
+
+	// ResultsPublished Whether results have been published publicly
+	ResultsPublished *bool            `json:"results_published,omitempty"`
+	Slug             string           `json:"slug"`
+	Status           TournamentStatus `json:"status"`
+	TableCount       int              `json:"table_count"`
+	Tables           []TableSummary   `json:"tables"`
+	Type             TournamentType   `json:"type"`
+	VotingEnd        *time.Time       `json:"voting_end"`
+	VotingStart      *time.Time       `json:"voting_start"`
 }
 
 // TournamentLink defines model for TournamentLink.
@@ -460,10 +463,13 @@ type TournamentSummary struct {
 	Id         UUID                `json:"id"`
 	Location   *string             `json:"location"`
 	Name       string              `json:"name"`
-	Slug       string              `json:"slug"`
-	Status     TournamentStatus    `json:"status"`
-	TableCount int                 `json:"table_count"`
-	Type       TournamentType      `json:"type"`
+
+	// ResultsPublished Whether results have been published publicly
+	ResultsPublished *bool            `json:"results_published,omitempty"`
+	Slug             string           `json:"slug"`
+	Status           TournamentStatus `json:"status"`
+	TableCount       int              `json:"table_count"`
+	Type             TournamentType   `json:"type"`
 }
 
 // TournamentType defines model for TournamentType.
@@ -559,6 +565,11 @@ type DeleteMeJSONBody struct {
 	ConfirmEmail openapi_types.Email `json:"confirm_email"`
 }
 
+// PublishResultsJSONBody defines parameters for PublishResults.
+type PublishResultsJSONBody struct {
+	Published bool `json:"published"`
+}
+
 // UploadPhotoMultipartBody defines parameters for UploadPhoto.
 type UploadPhotoMultipartBody struct {
 	Category PhotoCategory      `json:"category"`
@@ -588,6 +599,9 @@ type SubmitEventRatingJSONRequestBody = CreateEventRatingRequest
 
 // AddTournamentMemberJSONRequestBody defines body for AddTournamentMember for application/json ContentType.
 type AddTournamentMemberJSONRequestBody = AddMemberRequest
+
+// PublishResultsJSONRequestBody defines body for PublishResults for application/json ContentType.
+type PublishResultsJSONRequestBody PublishResultsJSONBody
 
 // CreateRaterJSONRequestBody defines body for CreateRater for application/json ContentType.
 type CreateRaterJSONRequestBody = CreateRaterRequest
@@ -666,6 +680,9 @@ type ServerInterface interface {
 	// Get table numbers already rated by the current rater
 	// (GET /tournaments/{slug}/my-ratings)
 	GetMyRatings(c *gin.Context, slug string)
+	// Publish or unpublish results (organizer only)
+	// (POST /tournaments/{slug}/publish-results)
+	PublishResults(c *gin.Context, slug string)
 	// Export all QR codes as print-ready PDF (organizer or helper)
 	// (POST /tournaments/{slug}/qrcodes)
 	ExportQRCodesPDF(c *gin.Context, slug string)
@@ -681,7 +698,7 @@ type ServerInterface interface {
 	// Update result visibility config (organizer only)
 	// (PUT /tournaments/{slug}/result-config)
 	UpdateResultConfig(c *gin.Context, slug string)
-	// Get tournament results — ranking sorted ascending (organizer or helper)
+	// Get tournament results — public when published, otherwise organizer/helper only
 	// (GET /tournaments/{slug}/results)
 	GetTournamentResults(c *gin.Context, slug string)
 	// List all tables of a tournament
@@ -1172,6 +1189,32 @@ func (siw *ServerInterfaceWrapper) GetMyRatings(c *gin.Context) {
 	siw.Handler.GetMyRatings(c, slug)
 }
 
+// PublishResults operation middleware
+func (siw *ServerInterfaceWrapper) PublishResults(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "slug" -------------
+	var slug string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "slug", c.Param("slug"), &slug, runtime.BindStyledParameterOptions{Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter slug: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.PublishResults(c, slug)
+}
+
 // ExportQRCodesPDF operation middleware
 func (siw *ServerInterfaceWrapper) ExportQRCodesPDF(c *gin.Context) {
 
@@ -1635,6 +1678,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.DELETE(options.BaseURL+"/tournaments/:slug/members/me", wrapper.LeaveTournament)
 	router.DELETE(options.BaseURL+"/tournaments/:slug/members/:userId", wrapper.RemoveTournamentMember)
 	router.GET(options.BaseURL+"/tournaments/:slug/my-ratings", wrapper.GetMyRatings)
+	router.POST(options.BaseURL+"/tournaments/:slug/publish-results", wrapper.PublishResults)
 	router.POST(options.BaseURL+"/tournaments/:slug/qrcodes", wrapper.ExportQRCodesPDF)
 	router.GET(options.BaseURL+"/tournaments/:slug/raters", wrapper.ListRaters)
 	router.POST(options.BaseURL+"/tournaments/:slug/raters", wrapper.CreateRater)
@@ -2387,6 +2431,50 @@ type GetMyRatings401JSONResponse struct{ UnauthorizedJSONResponse }
 func (response GetMyRatings401JSONResponse) VisitGetMyRatingsResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PublishResultsRequestObject struct {
+	Slug string `json:"slug"`
+	Body *PublishResultsJSONRequestBody
+}
+
+type PublishResultsResponseObject interface {
+	VisitPublishResultsResponse(w http.ResponseWriter) error
+}
+
+type PublishResults204Response struct {
+}
+
+func (response PublishResults204Response) VisitPublishResultsResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type PublishResults401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response PublishResults401JSONResponse) VisitPublishResultsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PublishResults403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response PublishResults403JSONResponse) VisitPublishResultsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PublishResults404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response PublishResults404JSONResponse) VisitPublishResultsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
 
 	return json.NewEncoder(w).Encode(response)
 }
@@ -3158,6 +3246,9 @@ type StrictServerInterface interface {
 	// Get table numbers already rated by the current rater
 	// (GET /tournaments/{slug}/my-ratings)
 	GetMyRatings(ctx context.Context, request GetMyRatingsRequestObject) (GetMyRatingsResponseObject, error)
+	// Publish or unpublish results (organizer only)
+	// (POST /tournaments/{slug}/publish-results)
+	PublishResults(ctx context.Context, request PublishResultsRequestObject) (PublishResultsResponseObject, error)
 	// Export all QR codes as print-ready PDF (organizer or helper)
 	// (POST /tournaments/{slug}/qrcodes)
 	ExportQRCodesPDF(ctx context.Context, request ExportQRCodesPDFRequestObject) (ExportQRCodesPDFResponseObject, error)
@@ -3173,7 +3264,7 @@ type StrictServerInterface interface {
 	// Update result visibility config (organizer only)
 	// (PUT /tournaments/{slug}/result-config)
 	UpdateResultConfig(ctx context.Context, request UpdateResultConfigRequestObject) (UpdateResultConfigResponseObject, error)
-	// Get tournament results — ranking sorted ascending (organizer or helper)
+	// Get tournament results — public when published, otherwise organizer/helper only
 	// (GET /tournaments/{slug}/results)
 	GetTournamentResults(ctx context.Context, request GetTournamentResultsRequestObject) (GetTournamentResultsResponseObject, error)
 	// List all tables of a tournament
@@ -3796,6 +3887,41 @@ func (sh *strictHandler) GetMyRatings(ctx *gin.Context, slug string) {
 		ctx.Status(http.StatusInternalServerError)
 	} else if validResponse, ok := response.(GetMyRatingsResponseObject); ok {
 		if err := validResponse.VisitGetMyRatingsResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PublishResults operation middleware
+func (sh *strictHandler) PublishResults(ctx *gin.Context, slug string) {
+	var request PublishResultsRequestObject
+
+	request.Slug = slug
+
+	var body PublishResultsJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		ctx.Status(http.StatusBadRequest)
+		ctx.Error(err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.PublishResults(ctx, request.(PublishResultsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PublishResults")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(PublishResultsResponseObject); ok {
+		if err := validResponse.VisitPublishResultsResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
 		}
 	} else if response != nil {
