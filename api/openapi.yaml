@@ -1609,7 +1609,7 @@ paths:
           type: string
 
     post:
-      summary: Publish or unpublish results (organizer only)
+      summary: Publish or unpublish results (organizer or helper)
       operationId: publishResults
       tags: [Results]
       security:

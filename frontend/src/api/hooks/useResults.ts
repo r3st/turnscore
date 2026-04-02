@@ -18,7 +18,7 @@ export function usePublishResults(slug: string) {
   return useMutation<void, Error, { published: boolean }>({
     mutationFn: (body) => apiClient.post(`/tournaments/${slug}/publish-results`, body),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['tournament', slug] });
+      qc.invalidateQueries({ queryKey: ['tournaments', slug] });
       qc.invalidateQueries({ queryKey: ['results', slug] });
     },
   });

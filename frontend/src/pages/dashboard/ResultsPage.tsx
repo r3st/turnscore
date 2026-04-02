@@ -13,7 +13,7 @@ export function ResultsPage() {
   const { data: tournament } = useTournament(slug ?? '');
   const publishResults = usePublishResults(slug ?? '');
   const { data: me } = useMe();
-  const isOrganizer = me?.memberships.some((m) => m.tournament_slug === slug && m.role === 'organizer') ?? false;
+  const isMember = me?.memberships.some((m) => m.tournament_slug === slug) ?? false;
 
   if (isLoading) {
     return <p className="text-sm" style={{ color: 'color-mix(in srgb, var(--color-text) 60%, transparent)' }}>{t('common.loading')}</p>;
@@ -34,7 +34,7 @@ export function ResultsPage() {
             {data.tournament_name}
           </p>
         </div>
-        {isOrganizer && (
+        {isMember && (
           <div className="flex items-center gap-3">
             {isPublished && (
               <span

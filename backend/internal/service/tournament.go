@@ -235,7 +235,7 @@ func (s *TournamentService) PublishResults(ctx context.Context, userID uuid.UUID
 	}
 
 	role, err := s.memberRepo.GetRole(ctx, t.ID, userID)
-	if err != nil || role != roleOrganizer {
+	if err != nil || (role != roleOrganizer && role != roleHelper) {
 		return domain.ErrForbidden
 	}
 
