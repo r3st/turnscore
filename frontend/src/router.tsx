@@ -19,10 +19,12 @@ import { TableManagementPage } from '@/pages/dashboard/TableManagementPage';
 import { RaterManagementPage } from '@/pages/dashboard/RaterManagementPage';
 import { HelperManagementPage } from '@/pages/dashboard/HelperManagementPage';
 import { ResultsPage } from '@/pages/dashboard/ResultsPage';
+import { PublicResultsPage } from '@/pages/PublicResultsPage';
 
 export const router = createBrowserRouter([
   { path: '/', element: <HomePage /> },
   { path: '/t/:slug', element: <TournamentPage /> },
+  { path: '/t/:slug/results', element: <PublicResultsPage /> },
   { path: '/rate/:slug/:tableNum', element: <RatePage /> },
   { path: '/login', element: <LoginPage /> },
   { path: '/auth/callback', element: <OAuthCallbackPage /> },

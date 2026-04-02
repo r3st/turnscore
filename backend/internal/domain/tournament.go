@@ -23,10 +23,11 @@ type Tournament struct {
 	Status         string    `gorm:"not null;default:draft"`
 	VotingStart    *time.Time
 	VotingEnd      *time.Time
-	ActiveCriteria string `gorm:"type:jsonb;not null"`
-	ResultConfig   string `gorm:"type:jsonb;not null"`
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
+	ActiveCriteria   string `gorm:"type:jsonb;not null"`
+	ResultConfig     string `gorm:"type:jsonb;not null"`
+	ResultsPublished bool   `gorm:"not null;default:false"`
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
 }
 
 // TournamentMembership is the GORM model for tournament_members.
@@ -52,6 +53,9 @@ type TournamentRepository interface {
 
 	// ListByOrganizerID returns all tournaments owned by the given user.
 	ListByOrganizerID(ctx context.Context, organizerID uuid.UUID) ([]Tournament, error)
+
+	// SetResultsPublished updates the results_published flag for a tournament.
+	SetResultsPublished(ctx context.Context, id uuid.UUID, published bool) error
 }
 
 // MembershipWithTournament is a read-model joining membership with tournament info.

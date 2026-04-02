@@ -251,7 +251,12 @@
     "hide_criteria": "Hide criteria",
     "table_results": "Table Results",
     "event_rating": "Tournament Rating",
-    "event_rating_subtitle": "Overall assessment of the event by participants"
+    "event_rating_subtitle": "Overall assessment of the event by participants",
+    "publish": "Publish Results",
+    "unpublish": "Unpublish Results",
+    "publish_confirm": "Published results are visible to everyone without login.",
+    "published_badge": "Results published",
+    "view_results": "View Results"
   },
   "errors": {
     "generic": "An error occurred. Please try again.",

@@ -425,10 +425,29 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** Get tournament results — ranking sorted ascending (organizer or helper) */
+        /** Get tournament results — public when published, otherwise organizer/helper only */
         get: operations["getTournamentResults"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tournaments/{slug}/publish-results": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Publish or unpublish results (organizer only) */
+        post: operations["publishResults"];
         delete?: never;
         options?: never;
         head?: never;
@@ -557,6 +576,8 @@ export interface components {
             event_date: string | null;
             location: string | null;
             table_count: number;
+            /** @description Whether results have been published publicly */
+            results_published?: boolean;
         };
         TournamentDetail: components["schemas"]["TournamentSummary"] & {
             description: string | null;
@@ -1697,6 +1718,35 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["TournamentResults"];
                 };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    publishResults: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    published: boolean;
+                };
+            };
+        };
+        responses: {
+            /** @description Results publication status updated */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];

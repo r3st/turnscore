@@ -1,0 +1,2 @@
+ALTER TABLE tournaments
+    ADD COLUMN results_published BOOLEAN NOT NULL DEFAULT FALSE;

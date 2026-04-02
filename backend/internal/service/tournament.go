@@ -227,6 +227,24 @@ func (s *TournamentService) Update(ctx context.Context, userID uuid.UUID, slug s
 	return t, nil
 }
 
+// PublishResults sets the results_published flag. Only the organizer may publish/unpublish.
+func (s *TournamentService) PublishResults(ctx context.Context, userID uuid.UUID, slug string, published bool) error {
+	t, err := s.tourneyRepo.FindBySlug(ctx, slug)
+	if err != nil {
+		return fmt.Errorf("PublishResults: %w", err)
+	}
+
+	role, err := s.memberRepo.GetRole(ctx, t.ID, userID)
+	if err != nil || role != roleOrganizer {
+		return domain.ErrForbidden
+	}
+
+	if err := s.tourneyRepo.SetResultsPublished(ctx, t.ID, published); err != nil {
+		return fmt.Errorf("PublishResults set flag: %w", err)
+	}
+	return nil
+}
+
 // Delete removes a tournament. Only the organizer may delete.
 func (s *TournamentService) Delete(ctx context.Context, userID uuid.UUID, slug string) error {
 	t, err := s.tourneyRepo.FindBySlug(ctx, slug)

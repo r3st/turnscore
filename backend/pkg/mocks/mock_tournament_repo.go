@@ -145,6 +145,20 @@ func (mr *MockTournamentRepositoryMockRecorder) ListUpcoming(ctx, limit any) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUpcoming", reflect.TypeOf((*MockTournamentRepository)(nil).ListUpcoming), ctx, limit)
 }
 
+// SetResultsPublished mocks base method.
+func (m *MockTournamentRepository) SetResultsPublished(ctx context.Context, id uuid.UUID, published bool) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetResultsPublished", ctx, id, published)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetResultsPublished indicates an expected call of SetResultsPublished.
+func (mr *MockTournamentRepositoryMockRecorder) SetResultsPublished(ctx, id, published any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetResultsPublished", reflect.TypeOf((*MockTournamentRepository)(nil).SetResultsPublished), ctx, id, published)
+}
+
 // ListByOrganizerID mocks base method.
 func (m *MockTournamentRepository) ListByOrganizerID(ctx context.Context, organizerID uuid.UUID) ([]domain.Tournament, error) {
 	m.ctrl.T.Helper()

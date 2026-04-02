@@ -370,20 +370,21 @@ func (h *Handlers) mapTournamentDetail(ctx context.Context, t *domain.Tournament
 	}
 
 	detail := generated.TournamentDetail{
-		Id:             t.ID,
-		Slug:           t.Slug,
-		Name:           t.Name,
-		Type:           generated.TournamentType(t.Type),
-		Status:         generated.TournamentStatus(t.Status),
-		GameSystem:     t.GameSystem,
-		Location:       t.Location,
-		Description:    t.Description,
-		TableCount:     t.TableCount,
-		Links:          links,
-		ActiveCriteria: criteria,
-		VotingStart:    t.VotingStart,
-		VotingEnd:      t.VotingEnd,
-		Tables:         mapTableSummaries(tables, h.tableSvc.Storage()),
+		Id:               t.ID,
+		Slug:             t.Slug,
+		Name:             t.Name,
+		Type:             generated.TournamentType(t.Type),
+		Status:           generated.TournamentStatus(t.Status),
+		GameSystem:       t.GameSystem,
+		Location:         t.Location,
+		Description:      t.Description,
+		TableCount:       t.TableCount,
+		ResultsPublished: &t.ResultsPublished,
+		Links:            links,
+		ActiveCriteria:   criteria,
+		VotingStart:      t.VotingStart,
+		VotingEnd:        t.VotingEnd,
+		Tables:           mapTableSummaries(tables, h.tableSvc.Storage()),
 	}
 
 	if t.EventDate != nil {
@@ -400,14 +401,15 @@ func mapTournamentSummaries(ts []domain.Tournament) []generated.TournamentSummar
 	for i := range ts {
 		t := &ts[i]
 		summary := generated.TournamentSummary{
-			Id:         t.ID,
-			Slug:       t.Slug,
-			Name:       t.Name,
-			Type:       generated.TournamentType(t.Type),
-			Status:     generated.TournamentStatus(t.Status),
-			GameSystem: t.GameSystem,
-			Location:   t.Location,
-			TableCount: t.TableCount,
+			Id:               t.ID,
+			Slug:             t.Slug,
+			Name:             t.Name,
+			Type:             generated.TournamentType(t.Type),
+			Status:           generated.TournamentStatus(t.Status),
+			GameSystem:       t.GameSystem,
+			Location:         t.Location,
+			TableCount:       t.TableCount,
+			ResultsPublished: &t.ResultsPublished,
 		}
 		if t.EventDate != nil {
 			d := openapi_types.Date{Time: *t.EventDate}

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -157,6 +158,24 @@ func (r *RatingRepository) GetResultsForTournament(ctx context.Context, tourname
 			ZoneB:            row.ZoneB,
 		})
 	}
+
+	// 5. Sort ascending by overall average (1 = best school grade).
+	// Tables without any ratings (no "overall" key) sort last.
+	sort.Slice(results, func(i, j int) bool {
+		oi, hasI := results[i].CriteriaAverages["overall"]
+		oj, hasJ := results[j].CriteriaAverages["overall"]
+		if !hasI && !hasJ {
+			return results[i].TableNumber < results[j].TableNumber
+		}
+		if !hasI {
+			return false
+		}
+		if !hasJ {
+			return true
+		}
+		return oi < oj
+	})
+
 	return results, nil
 }
 
