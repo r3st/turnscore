@@ -26,7 +26,6 @@ export function ArchivedTournamentsPage() {
 
 function ArchivedList({ memberships }: { memberships: TournamentMembership[] }) {
   const { t } = useTranslation();
-  const navigate = useNavigate();
 
   // Render each membership and filter to archived ones
   const rows = memberships.map((m) => (

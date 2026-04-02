@@ -108,7 +108,7 @@ export function TableManagementPage() {
       {/* Table list */}
       {hasTables && (
         <div className="space-y-4">
-          {tables.map((table) => (
+          {(tables ?? []).map((table) => (
             <TableCard key={table.id} slug={slug} table={table} isDraft={isDraft} />
           ))}
         </div>

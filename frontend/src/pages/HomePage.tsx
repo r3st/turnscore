@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { TournamentCard } from '@/components/tournament/TournamentCard';
-import { useTournaments } from '@/api/hooks/useTournaments';
+import { useTournaments, type TournamentSummary } from '@/api/hooks/useTournaments';
 
 function TournamentSection({
   titleKey,
@@ -9,7 +9,7 @@ function TournamentSection({
   isLoading,
 }: {
   titleKey: string;
-  tournaments: ReturnType<typeof useTournaments>['data'] extends { upcoming: infer U } ? U : never;
+  tournaments: TournamentSummary[];
   isLoading: boolean;
 }) {
   const { t } = useTranslation();
