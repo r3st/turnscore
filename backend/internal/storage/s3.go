@@ -2,14 +2,18 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	smithyendpoints "github.com/aws/smithy-go/endpoints"
 
 	"github.com/r3st/turnscore/config"
 )
@@ -21,31 +25,64 @@ type S3Storage struct {
 	endpoint string
 }
 
-func newS3Storage(cfg config.S3StorageConfig) (*S3Storage, error) {
+// staticEndpointResolver directs all S3 API calls to a fixed endpoint URL (e.g. MinIO).
+type staticEndpointResolver struct {
+	url string
+}
+
+func (r staticEndpointResolver) ResolveEndpoint(_ context.Context, _ s3.EndpointParameters) (smithyendpoints.Endpoint, error) {
+	u, err := url.Parse(r.url)
+	if err != nil {
+		return smithyendpoints.Endpoint{}, fmt.Errorf("parse endpoint URL: %w", err)
+	}
+	return smithyendpoints.Endpoint{URI: *u}, nil
+}
+
+func newS3Client(cfg config.S3StorageConfig) *s3.Client {
 	opts := []func(*awsconfig.LoadOptions) error{
 		awsconfig.WithRegion(cfg.Region),
 		awsconfig.WithCredentialsProvider(
 			credentials.NewStaticCredentialsProvider(cfg.AccessKey, cfg.SecretKey, ""),
 		),
 	}
+	awsCfg, _ := awsconfig.LoadDefaultConfig(context.Background(), opts...)
+
+	s3Opts := []func(*s3.Options){
+		func(o *s3.Options) { o.UsePathStyle = true },
+	}
 	if cfg.Endpoint != "" {
-		opts = append(opts, awsconfig.WithEndpointResolverWithOptions(
-			aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
-				return aws.Endpoint{URL: cfg.Endpoint, HostnameImmutable: true}, nil
-			}),
-		))
+		resolver := staticEndpointResolver{url: strings.TrimRight(cfg.Endpoint, "/")}
+		s3Opts = append(s3Opts, func(o *s3.Options) {
+			o.EndpointResolverV2 = resolver
+		})
 	}
+	return s3.NewFromConfig(awsCfg, s3Opts...)
+}
 
-	awsCfg, err := awsconfig.LoadDefaultConfig(context.Background(), opts...)
-	if err != nil {
-		return nil, fmt.Errorf("loading S3 config: %w", err)
-	}
-
+func newS3Storage(cfg config.S3StorageConfig) (*S3Storage, error) {
 	return &S3Storage{
-		client:   s3.NewFromConfig(awsCfg),
+		client:   newS3Client(cfg),
 		bucket:   cfg.Bucket,
 		endpoint: strings.TrimRight(cfg.Endpoint, "/"),
 	}, nil
+}
+
+// EnsureBucketExists creates the bucket if it does not already exist.
+// Used for test setup and the MinIO init container equivalent in tests.
+func EnsureBucketExists(ctx context.Context, cfg config.S3StorageConfig) error {
+	client := newS3Client(cfg)
+	_, err := client.CreateBucket(ctx, &s3.CreateBucketInput{
+		Bucket: aws.String(cfg.Bucket),
+	})
+	if err != nil {
+		var bae *types.BucketAlreadyExists
+		var bao *types.BucketAlreadyOwnedByYou
+		if errors.As(err, &bae) || errors.As(err, &bao) {
+			return nil
+		}
+		return fmt.Errorf("create bucket: %w", err)
+	}
+	return nil
 }
 
 // Put uploads r to S3 under the given key.
