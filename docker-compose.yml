@@ -22,11 +22,12 @@ services:
     read_only: true
     group_add:
       - "${DOCKER_GID:-999}"
-    environment:
-      LISTENADDRESS: "0.0.0.0:2375"
-      ALLOWFROM: "0.0.0.0/0"
-      ALLOW_GET: "^/v[0-9.]+/containers/json$,^/version$,^/_ping$"
-      LOGLEVEL: "warning"
+    command:
+      - '-listenip=0.0.0.0'
+      - '-allowfrom=traefik' 
+      - '-allowGET=/v1\..{1,2}/(version|containers/.*|events.*)'
+      - '-allowHEAD=/_ping'
+      - '-loglevel=WARN'
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:

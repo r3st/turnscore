@@ -18,8 +18,10 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /turnscore ./cmd/serve
 
 # ── Stage 3: Minimal runtime image ───────────────────────────────────────────
 FROM gcr.io/distroless/static-debian12:nonroot
-COPY --from=backend-builder /turnscore /turnscore
+# /usr/local/bin is on PATH and executable by all users in distroless:nonroot.
+# Copying to / causes "permission denied" because the nonroot user cannot exec from /.
+COPY --from=backend-builder /turnscore /usr/local/bin/turnscore
 # Copy default config — individual values are overridden via environment variables.
 COPY --from=backend-builder /app/backend/config/config.yaml /config/config.yaml
 EXPOSE 8080
-ENTRYPOINT ["/turnscore"]
+ENTRYPOINT ["/usr/local/bin/turnscore"]
