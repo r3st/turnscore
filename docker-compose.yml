@@ -20,9 +20,14 @@ services:
     image: ghcr.io/wollomatic/socket-proxy:1
     restart: unless-stopped
     read_only: true
-    user: "65534:${DOCKER_GID:-999}"  # nobody:docker
+    # group_add gives the container's default nonroot user (UID 65534) read access
+    # to docker.sock without overriding the UID.
+    # Find your docker group GID with: getent group docker | cut -d: -f3
+    group_add:
+      - "${DOCKER_GID:-999}"
     environment:
-      ALLOW_GET: "containers/json,version"
+      # Go regex patterns matched against the full Docker API path, e.g. /v1.43/containers/json
+      ALLOW_GET: "^/v[0-9.]+/containers/json$,^/version$,^/_ping$"
       LOG_LEVEL: "warning"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
