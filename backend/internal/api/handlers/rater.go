@@ -278,7 +278,7 @@ func (h *Handlers) GetTournamentResults(ctx context.Context, req generated.GetTo
 	// userID may be nil — service handles public access when results_published = true.
 	userID, _ := getUserID(ctx)
 
-	tournament, results, commentsMap, eventAverages, err := h.raterSvc.GetResults(ctx, userID, req.Slug)
+	tournament, results, commentsMap, eventAverages, _, err := h.raterSvc.GetResults(ctx, userID, req.Slug)
 	if err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
 			return generated.GetTournamentResults404JSONResponse{
@@ -332,7 +332,7 @@ func (h *Handlers) GetTournamentResults(ctx context.Context, req generated.GetTo
 
 // buildRanking converts domain results into generated TableResult slice.
 // commentsMap may be nil when show_comments is disabled.
-func buildRanking(results []domain.RatingResult, commentsMap map[uuid.UUID][]string) []generated.TableResult {
+func buildRanking(results []domain.RatingResult, commentsMap map[uuid.UUID][]domain.CommentResult) []generated.TableResult {
 	ranking := make([]generated.TableResult, 0, len(results))
 	for _, r := range results {
 		avgs := make(map[string]float32, len(r.CriteriaAverages))
@@ -359,12 +359,20 @@ func buildRanking(results []domain.RatingResult, commentsMap map[uuid.UUID][]str
 		if commentsMap != nil {
 			if comments, exists := commentsMap[r.TableID]; exists && len(comments) > 0 {
 				commentItems := make([]struct {
-					Comment string `json:"comment"`
+					Approved bool           `json:"approved"`
+					Comment  string         `json:"comment"`
+					Id       generated.UUID `json:"id"`
 				}, 0, len(comments))
 				for _, c := range comments {
 					commentItems = append(commentItems, struct {
-						Comment string `json:"comment"`
-					}{Comment: c})
+						Approved bool           `json:"approved"`
+						Comment  string         `json:"comment"`
+						Id       generated.UUID `json:"id"`
+					}{
+						Id:       c.ID,
+						Comment:  c.Comment,
+						Approved: c.Approved,
+					})
 				}
 				tr.Comments = &commentItems
 			}
@@ -556,4 +564,28 @@ func (h *Handlers) DeleteMe(ctx context.Context, req generated.DeleteMeRequestOb
 		return nil, err
 	}
 	return generated.DeleteMe204Response{}, nil
+}
+
+// PatchComment approves or revokes a single comment (organizer or helper only).
+func (h *Handlers) PatchComment(ctx context.Context, req generated.PatchCommentRequestObject) (generated.PatchCommentResponseObject, error) {
+	userID, ok := getUserID(ctx)
+	if !ok {
+		return generated.PatchComment401JSONResponse{
+			UnauthorizedJSONResponse: generated.UnauthorizedJSONResponse{Code: "unauthorized", Message: msgMissingUserID},
+		}, nil
+	}
+	if err := h.raterSvc.SetCommentApproved(ctx, userID, req.Slug, req.CommentId, req.Body.Approved); err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			return generated.PatchComment404JSONResponse{
+				NotFoundJSONResponse: generated.NotFoundJSONResponse{Code: "not_found", Message: "comment not found"},
+			}, nil
+		}
+		if errors.Is(err, domain.ErrForbidden) {
+			return generated.PatchComment403JSONResponse{
+				ForbiddenJSONResponse: generated.ForbiddenJSONResponse{Code: "forbidden", Message: msgForbiddenResults},
+			}, nil
+		}
+		return nil, err
+	}
+	return generated.PatchComment204Response{}, nil
 }

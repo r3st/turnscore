@@ -537,12 +537,18 @@ components:
           description: |
             Only present if result_config.show_comments = true.
             Comments are fully anonymized — no rater identity included.
+            Organizer/helper view includes all comments with approved flag.
+            Public view includes only approved comments.
           items:
             type: object
-            required: [comment]
+            required: [id, comment, approved]
             properties:
+              id:
+                $ref: "#/components/schemas/UUID"
               comment:
                 type: string
+              approved:
+                type: boolean
 
     TournamentResults:
       type: object
@@ -1663,6 +1669,45 @@ paths:
                 $ref: "#/components/schemas/ResultConfig"
         "400":
           $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /tournaments/{slug}/comments/{commentId}:
+    parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: commentId
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+
+    patch:
+      summary: Approve or revoke a comment (organizer or helper)
+      operationId: patchComment
+      tags: [Results]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [approved]
+              properties:
+                approved:
+                  type: boolean
+      responses:
+        "204":
+          description: Comment approval updated
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":

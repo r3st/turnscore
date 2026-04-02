@@ -180,15 +180,17 @@ func (r *RatingRepository) GetResultsForTournament(ctx context.Context, tourname
 }
 
 // GetCommentsForTournament returns all non-empty comments per table for a tournament.
-// Returns map[tableID][]string — fully anonymized, no rater identity.
-func (r *RatingRepository) GetCommentsForTournament(ctx context.Context, tournamentID uuid.UUID) (map[uuid.UUID][]string, error) {
+// Returns map[tableID][]CommentResult — fully anonymized, no rater identity.
+func (r *RatingRepository) GetCommentsForTournament(ctx context.Context, tournamentID uuid.UUID) (map[uuid.UUID][]domain.CommentResult, error) {
 	type commentRow struct {
-		TableID uuid.UUID `gorm:"column:table_id"`
-		Comment string    `gorm:"column:comment"`
+		ID       uuid.UUID `gorm:"column:id"`
+		TableID  uuid.UUID `gorm:"column:table_id"`
+		Comment  string    `gorm:"column:comment"`
+		Approved bool      `gorm:"column:approved"`
 	}
 	var rows []commentRow
 	err := r.db.WithContext(ctx).Raw(`
-		SELECT r.table_id, r.comment
+		SELECT r.id, r.table_id, r.comment, r.approved
 		FROM ratings r
 		JOIN tables t ON r.table_id = t.id
 		WHERE t.tournament_id = ? AND r.comment IS NOT NULL AND r.comment != ''
@@ -196,9 +198,25 @@ func (r *RatingRepository) GetCommentsForTournament(ctx context.Context, tournam
 	if err != nil {
 		return nil, fmt.Errorf("GetCommentsForTournament: %w", err)
 	}
-	result := make(map[uuid.UUID][]string)
+	result := make(map[uuid.UUID][]domain.CommentResult)
 	for _, row := range rows {
-		result[row.TableID] = append(result[row.TableID], row.Comment)
+		result[row.TableID] = append(result[row.TableID], domain.CommentResult{
+			ID:       row.ID,
+			Comment:  row.Comment,
+			Approved: row.Approved,
+		})
 	}
 	return result, nil
+}
+
+// SetCommentApproved updates the approved flag on a rating's comment.
+func (r *RatingRepository) SetCommentApproved(ctx context.Context, ratingID uuid.UUID, approved bool) error {
+	res := r.db.WithContext(ctx).Exec(`UPDATE ratings SET approved = ? WHERE id = ?`, approved, ratingID)
+	if res.Error != nil {
+		return fmt.Errorf("SetCommentApproved: %w", res.Error)
+	}
+	if res.RowsAffected == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
 }

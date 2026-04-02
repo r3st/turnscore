@@ -72,10 +72,10 @@ func (mr *MockRatingRepositoryMockRecorder) ExistsByTableAndRater(ctx, tableID, 
 }
 
 // GetCommentsForTournament mocks base method.
-func (m *MockRatingRepository) GetCommentsForTournament(ctx context.Context, tournamentID uuid.UUID) (map[uuid.UUID][]string, error) {
+func (m *MockRatingRepository) GetCommentsForTournament(ctx context.Context, tournamentID uuid.UUID) (map[uuid.UUID][]domain.CommentResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetCommentsForTournament", ctx, tournamentID)
-	ret0, _ := ret[0].(map[uuid.UUID][]string)
+	ret0, _ := ret[0].(map[uuid.UUID][]domain.CommentResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -84,6 +84,20 @@ func (m *MockRatingRepository) GetCommentsForTournament(ctx context.Context, tou
 func (mr *MockRatingRepositoryMockRecorder) GetCommentsForTournament(ctx, tournamentID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCommentsForTournament", reflect.TypeOf((*MockRatingRepository)(nil).GetCommentsForTournament), ctx, tournamentID)
+}
+
+// SetCommentApproved mocks base method.
+func (m *MockRatingRepository) SetCommentApproved(ctx context.Context, ratingID uuid.UUID, approved bool) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetCommentApproved", ctx, ratingID, approved)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetCommentApproved indicates an expected call of SetCommentApproved.
+func (mr *MockRatingRepositoryMockRecorder) SetCommentApproved(ctx, ratingID, approved any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetCommentApproved", reflect.TypeOf((*MockRatingRepository)(nil).SetCommentApproved), ctx, ratingID, approved)
 }
 
 // GetRatedTableNumbers mocks base method.
