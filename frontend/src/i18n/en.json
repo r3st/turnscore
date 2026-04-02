@@ -256,7 +256,13 @@
     "unpublish": "Unpublish Results",
     "publish_confirm": "Published results are visible to everyone without login.",
     "published_badge": "Results published",
-    "view_results": "View Results"
+    "view_results": "View Results",
+    "moderation_heading": "Comment Moderation",
+    "moderation_hint": "Only approved comments are shown in the public results.",
+    "approve": "Approve",
+    "revoke": "Revoke",
+    "approved_badge": "Approved",
+    "no_comments": "No comments submitted."
   },
   "errors": {
     "generic": "An error occurred. Please try again.",

@@ -26,7 +26,15 @@ type Rating struct {
 	CriteriaScores string    `gorm:"type:jsonb;not null"` // JSON: {"balance":2,...}
 	PlayedZone     string    `gorm:"not null;default:none"`
 	Comment        *string
+	Approved       bool      `gorm:"not null;default:false"`
 	CreatedAt      time.Time
+}
+
+// CommentResult is the read-model for a single anonymized comment with approval state.
+type CommentResult struct {
+	ID       uuid.UUID
+	Comment  string
+	Approved bool
 }
 
 // RatingResult is a read-model for results aggregation (not persisted).
@@ -99,8 +107,11 @@ type RatingRepository interface {
 	GetResultsForTournament(ctx context.Context, tournamentID uuid.UUID) ([]RatingResult, error)
 
 	// GetCommentsForTournament returns all non-empty comments per table for a tournament.
-	// Returns map[tableID][]string of comments — fully anonymized, no rater identity.
-	GetCommentsForTournament(ctx context.Context, tournamentID uuid.UUID) (map[uuid.UUID][]string, error)
+	// Returns map[tableID][]CommentResult — fully anonymized, no rater identity.
+	GetCommentsForTournament(ctx context.Context, tournamentID uuid.UUID) (map[uuid.UUID][]CommentResult, error)
+
+	// SetCommentApproved updates the approved flag on a single rating's comment.
+	SetCommentApproved(ctx context.Context, ratingID uuid.UUID, approved bool) error
 
 	// GetRatedTableNumbers returns the table numbers (within a tournament) already rated by the given rater.
 	GetRatedTableNumbers(ctx context.Context, tournamentID, raterID uuid.UUID) ([]int, error)

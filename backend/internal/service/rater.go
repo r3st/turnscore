@@ -193,44 +193,101 @@ func (s *RaterService) SubmitRating(ctx context.Context, input SubmitRatingInput
 
 // GetResults returns tournament results.
 // Public access allowed when results_published = true; otherwise organizer/helper only.
-// Returns: tournament, table results, comments map (when show_comments enabled), event averages.
-func (s *RaterService) GetResults(ctx context.Context, userID uuid.UUID, slug string) (*domain.Tournament, []domain.RatingResult, map[uuid.UUID][]string, map[string]float64, error) {
+// Returns: tournament, table results, comments map (when show_comments enabled), event averages, isManager.
+// isManager=true means all comments (including unapproved) are included; false means only approved.
+func (s *RaterService) GetResults(ctx context.Context, userID uuid.UUID, slug string) (*domain.Tournament, []domain.RatingResult, map[uuid.UUID][]domain.CommentResult, map[string]float64, bool, error) {
 	t, err := s.tourneyRepo.FindBySlug(ctx, slug)
 	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("GetResults find tournament: %w", err)
+		return nil, nil, nil, nil, false, fmt.Errorf("GetResults find tournament: %w", err)
 	}
 
-	if !t.ResultsPublished {
-		role, err := s.memberRepo.GetRole(ctx, t.ID, userID)
-		if err != nil || (role != roleOrganizer && role != roleHelper) {
-			return nil, nil, nil, nil, domain.ErrForbidden
-		}
+	isManager, err := s.resolveResultsAccess(ctx, t, userID)
+	if err != nil {
+		return nil, nil, nil, nil, false, err
 	}
 
 	results, err := s.ratingRepo.GetResultsForTournament(ctx, t.ID)
 	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("GetResults fetch results: %w", err)
+		return nil, nil, nil, nil, false, fmt.Errorf("GetResults fetch results: %w", err)
 	}
 
-	// Fetch comments if show_comments is enabled in result config.
-	var commentsMap map[uuid.UUID][]string
-	var resultCfg struct {
-		ShowComments bool `json:"show_comments"`
-	}
-	if jsonErr := json.Unmarshal([]byte(t.ResultConfig), &resultCfg); jsonErr == nil && resultCfg.ShowComments {
-		commentsMap, err = s.ratingRepo.GetCommentsForTournament(ctx, t.ID)
-		if err != nil {
-			return nil, nil, nil, nil, fmt.Errorf("GetResults fetch comments: %w", err)
-		}
+	commentsMap, err := s.fetchComments(ctx, t, isManager)
+	if err != nil {
+		return nil, nil, nil, nil, false, err
 	}
 
-	// Fetch event-level rating averages (catering, venue, organization).
 	eventAverages, err := s.eventRatingRepo.GetAveragesForTournament(ctx, t.ID)
 	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("GetResults fetch event averages: %w", err)
+		return nil, nil, nil, nil, false, fmt.Errorf("GetResults fetch event averages: %w", err)
 	}
 
-	return t, results, commentsMap, eventAverages, nil
+	return t, results, commentsMap, eventAverages, isManager, nil
+}
+
+// resolveResultsAccess checks access and returns whether the caller is a manager.
+// Returns ErrForbidden when results are not published and caller is not a member.
+func (s *RaterService) resolveResultsAccess(ctx context.Context, t *domain.Tournament, userID uuid.UUID) (bool, error) {
+	role, _ := s.memberRepo.GetRole(ctx, t.ID, userID)
+	isMember := role == roleOrganizer || role == roleHelper
+	if !t.ResultsPublished && !isMember {
+		return false, domain.ErrForbidden
+	}
+	return isMember, nil
+}
+
+// fetchComments returns comments for the tournament when show_comments is enabled.
+// Unapproved comments are stripped when isManager is false.
+func (s *RaterService) fetchComments(ctx context.Context, t *domain.Tournament, isManager bool) (map[uuid.UUID][]domain.CommentResult, error) {
+	var cfg struct {
+		ShowComments bool `json:"show_comments"`
+	}
+	_ = json.Unmarshal([]byte(t.ResultConfig), &cfg)
+	// Managers always receive all comments for moderation.
+	// Public callers always receive approved comments (no show_comments gate —
+	// approving a comment is sufficient to make it publicly visible).
+
+	commentsMap, err := s.ratingRepo.GetCommentsForTournament(ctx, t.ID)
+	if err != nil {
+		return nil, fmt.Errorf("GetResults fetch comments: %w", err)
+	}
+
+	if !isManager {
+		filterUnapprovedComments(commentsMap)
+	}
+	return commentsMap, nil
+}
+
+// filterUnapprovedComments removes unapproved comments from the map in place.
+func filterUnapprovedComments(commentsMap map[uuid.UUID][]domain.CommentResult) {
+	for tableID, comments := range commentsMap {
+		var approved []domain.CommentResult
+		for _, c := range comments {
+			if c.Approved {
+				approved = append(approved, c)
+			}
+		}
+		if len(approved) == 0 {
+			delete(commentsMap, tableID)
+		} else {
+			commentsMap[tableID] = approved
+		}
+	}
+}
+
+// SetCommentApproved approves or revokes a comment on a rating.
+// Caller must be organizer or helper of the tournament identified by slug.
+func (s *RaterService) SetCommentApproved(ctx context.Context, userID uuid.UUID, slug string, ratingID uuid.UUID, approved bool) error {
+	t, err := s.tourneyRepo.FindBySlug(ctx, slug)
+	if err != nil {
+		return fmt.Errorf("SetCommentApproved find tournament: %w", err)
+	}
+
+	role, err := s.memberRepo.GetRole(ctx, t.ID, userID)
+	if err != nil || (role != roleOrganizer && role != roleHelper) {
+		return domain.ErrForbidden
+	}
+
+	return s.ratingRepo.SetCommentApproved(ctx, ratingID, approved)
 }
 
 // UpdateResultConfig updates the result visibility config for a tournament.

@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Globe, EyeOff } from 'lucide-react';
-import { useTournamentResults, usePublishResults } from '@/api/hooks/useResults';
+import { useTournamentResults, usePublishResults, useSetCommentApproved } from '@/api/hooks/useResults';
 import { useTournament } from '@/api/hooks/useTournaments';
 import { useMe } from '@/api/hooks/useUser';
 import { ResultsView } from '@/components/results/ResultsView';
@@ -11,8 +11,10 @@ export function ResultsPage() {
   const { t } = useTranslation();
   const { data, isLoading, error } = useTournamentResults(slug ?? '');
   const { data: tournament } = useTournament(slug ?? '');
-  const publishResults = usePublishResults(slug ?? '');
   const { data: me } = useMe();
+  const publishResults = usePublishResults(slug ?? '');
+  const setCommentApproved = useSetCommentApproved(slug ?? '');
+
   const isMember = me?.memberships.some((m) => m.tournament_slug === slug) ?? false;
 
   if (isLoading) {
@@ -66,7 +68,13 @@ export function ResultsPage() {
         )}
       </div>
 
-      <ResultsView data={data} />
+      <ResultsView
+        data={data}
+        onToggleApproval={isMember
+          ? (commentId, approved) => setCommentApproved.mutate({ commentId, approved })
+          : undefined}
+        approvalPending={setCommentApproved.isPending}
+      />
     </div>
   );
 }

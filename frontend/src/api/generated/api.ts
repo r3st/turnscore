@@ -446,7 +446,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Publish or unpublish results (organizer only) */
+        /** Publish or unpublish results (organizer or helper) */
         post: operations["publishResults"];
         delete?: never;
         options?: never;
@@ -471,6 +471,26 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/tournaments/{slug}/comments/{commentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+                commentId: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Approve or revoke a comment (organizer or helper) */
+        patch: operations["patchComment"];
         trace?: never;
     };
 }
@@ -719,9 +739,13 @@ export interface components {
             /**
              * @description Only present if result_config.show_comments = true.
              *     Comments are fully anonymized — no rater identity included.
+             *     Organizer/helper view includes all comments with approved flag.
+             *     Public view includes only approved comments.
              */
             comments?: {
+                id: components["schemas"]["UUID"];
                 comment: string;
+                approved: boolean;
             }[] | null;
         };
         TournamentResults: {
@@ -1778,6 +1802,36 @@ export interface operations {
                 };
             };
             400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    patchComment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+                commentId: components["schemas"]["UUID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    approved: boolean;
+                };
+            };
+        };
+        responses: {
+            /** @description Comment approval updated */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];

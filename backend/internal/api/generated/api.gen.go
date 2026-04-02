@@ -372,8 +372,12 @@ type TableResult struct {
 
 	// Comments Only present if result_config.show_comments = true.
 	// Comments are fully anonymized — no rater identity included.
+	// Organizer/helper view includes all comments with approved flag.
+	// Public view includes only approved comments.
 	Comments *[]struct {
-		Comment string `json:"comment"`
+		Approved bool   `json:"approved"`
+		Comment  string `json:"comment"`
+		Id       UUID   `json:"id"`
 	} `json:"comments,omitempty"`
 	RatingCount      int     `json:"rating_count"`
 	TableName        *string `json:"table_name"`
@@ -565,6 +569,11 @@ type DeleteMeJSONBody struct {
 	ConfirmEmail openapi_types.Email `json:"confirm_email"`
 }
 
+// PatchCommentJSONBody defines parameters for PatchComment.
+type PatchCommentJSONBody struct {
+	Approved bool `json:"approved"`
+}
+
 // PublishResultsJSONBody defines parameters for PublishResults.
 type PublishResultsJSONBody struct {
 	Published bool `json:"published"`
@@ -593,6 +602,9 @@ type CreateTournamentJSONRequestBody = CreateTournamentRequest
 
 // UpdateTournamentJSONRequestBody defines body for UpdateTournament for application/json ContentType.
 type UpdateTournamentJSONRequestBody = UpdateTournamentRequest
+
+// PatchCommentJSONRequestBody defines body for PatchComment for application/json ContentType.
+type PatchCommentJSONRequestBody PatchCommentJSONBody
 
 // SubmitEventRatingJSONRequestBody defines body for SubmitEventRating for application/json ContentType.
 type SubmitEventRatingJSONRequestBody = CreateEventRatingRequest
@@ -659,6 +671,9 @@ type ServerInterface interface {
 	// Update tournament (organizer or helper)
 	// (PUT /tournaments/{slug})
 	UpdateTournament(c *gin.Context, slug string)
+	// Approve or revoke a comment (organizer or helper)
+	// (PATCH /tournaments/{slug}/comments/{commentId})
+	PatchComment(c *gin.Context, slug string, commentId UUID)
 	// Check if rater has already submitted an event rating
 	// (GET /tournaments/{slug}/event-rating)
 	GetEventRatingStatus(c *gin.Context, slug string)
@@ -680,7 +695,7 @@ type ServerInterface interface {
 	// Get table numbers already rated by the current rater
 	// (GET /tournaments/{slug}/my-ratings)
 	GetMyRatings(c *gin.Context, slug string)
-	// Publish or unpublish results (organizer only)
+	// Publish or unpublish results (organizer or helper)
 	// (POST /tournaments/{slug}/publish-results)
 	PublishResults(c *gin.Context, slug string)
 	// Export all QR codes as print-ready PDF (organizer or helper)
@@ -996,6 +1011,41 @@ func (siw *ServerInterfaceWrapper) UpdateTournament(c *gin.Context) {
 	}
 
 	siw.Handler.UpdateTournament(c, slug)
+}
+
+// PatchComment operation middleware
+func (siw *ServerInterfaceWrapper) PatchComment(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "slug" -------------
+	var slug string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "slug", c.Param("slug"), &slug, runtime.BindStyledParameterOptions{Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter slug: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Path parameter "commentId" -------------
+	var commentId UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "commentId", c.Param("commentId"), &commentId, runtime.BindStyledParameterOptions{Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter commentId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.PatchComment(c, slug, commentId)
 }
 
 // GetEventRatingStatus operation middleware
@@ -1671,6 +1721,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.DELETE(options.BaseURL+"/tournaments/:slug", wrapper.DeleteTournament)
 	router.GET(options.BaseURL+"/tournaments/:slug", wrapper.GetTournament)
 	router.PUT(options.BaseURL+"/tournaments/:slug", wrapper.UpdateTournament)
+	router.PATCH(options.BaseURL+"/tournaments/:slug/comments/:commentId", wrapper.PatchComment)
 	router.GET(options.BaseURL+"/tournaments/:slug/event-rating", wrapper.GetEventRatingStatus)
 	router.POST(options.BaseURL+"/tournaments/:slug/event-rating", wrapper.SubmitEventRating)
 	router.GET(options.BaseURL+"/tournaments/:slug/members", wrapper.ListTournamentMembers)
@@ -2135,6 +2186,51 @@ func (response UpdateTournament403JSONResponse) VisitUpdateTournamentResponse(w 
 type UpdateTournament404JSONResponse struct{ NotFoundJSONResponse }
 
 func (response UpdateTournament404JSONResponse) VisitUpdateTournamentResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PatchCommentRequestObject struct {
+	Slug      string `json:"slug"`
+	CommentId UUID   `json:"commentId"`
+	Body      *PatchCommentJSONRequestBody
+}
+
+type PatchCommentResponseObject interface {
+	VisitPatchCommentResponse(w http.ResponseWriter) error
+}
+
+type PatchComment204Response struct {
+}
+
+func (response PatchComment204Response) VisitPatchCommentResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type PatchComment401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response PatchComment401JSONResponse) VisitPatchCommentResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PatchComment403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response PatchComment403JSONResponse) VisitPatchCommentResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PatchComment404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response PatchComment404JSONResponse) VisitPatchCommentResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(404)
 
@@ -3225,6 +3321,9 @@ type StrictServerInterface interface {
 	// Update tournament (organizer or helper)
 	// (PUT /tournaments/{slug})
 	UpdateTournament(ctx context.Context, request UpdateTournamentRequestObject) (UpdateTournamentResponseObject, error)
+	// Approve or revoke a comment (organizer or helper)
+	// (PATCH /tournaments/{slug}/comments/{commentId})
+	PatchComment(ctx context.Context, request PatchCommentRequestObject) (PatchCommentResponseObject, error)
 	// Check if rater has already submitted an event rating
 	// (GET /tournaments/{slug}/event-rating)
 	GetEventRatingStatus(ctx context.Context, request GetEventRatingStatusRequestObject) (GetEventRatingStatusResponseObject, error)
@@ -3246,7 +3345,7 @@ type StrictServerInterface interface {
 	// Get table numbers already rated by the current rater
 	// (GET /tournaments/{slug}/my-ratings)
 	GetMyRatings(ctx context.Context, request GetMyRatingsRequestObject) (GetMyRatingsResponseObject, error)
-	// Publish or unpublish results (organizer only)
+	// Publish or unpublish results (organizer or helper)
 	// (POST /tournaments/{slug}/publish-results)
 	PublishResults(ctx context.Context, request PublishResultsRequestObject) (PublishResultsResponseObject, error)
 	// Export all QR codes as print-ready PDF (organizer or helper)
@@ -3681,6 +3780,42 @@ func (sh *strictHandler) UpdateTournament(ctx *gin.Context, slug string) {
 		ctx.Status(http.StatusInternalServerError)
 	} else if validResponse, ok := response.(UpdateTournamentResponseObject); ok {
 		if err := validResponse.VisitUpdateTournamentResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PatchComment operation middleware
+func (sh *strictHandler) PatchComment(ctx *gin.Context, slug string, commentId UUID) {
+	var request PatchCommentRequestObject
+
+	request.Slug = slug
+	request.CommentId = commentId
+
+	var body PatchCommentJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		ctx.Status(http.StatusBadRequest)
+		ctx.Error(err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.PatchComment(ctx, request.(PatchCommentRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PatchComment")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(PatchCommentResponseObject); ok {
+		if err := validResponse.VisitPatchCommentResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
 		}
 	} else if response != nil {

@@ -1,15 +1,17 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, Check, X } from 'lucide-react';
 import type { TournamentResults, TableResult } from '@/api/hooks/useResults';
 
 const EVENT_CRITERIA = new Set(['catering', 'venue', 'organization']);
 
 interface ResultsViewProps {
   data: TournamentResults;
+  onToggleApproval?: (commentId: string, approved: boolean) => void;
+  approvalPending?: boolean;
 }
 
-export function ResultsView({ data }: ResultsViewProps) {
+export function ResultsView({ data, onToggleApproval, approvalPending }: ResultsViewProps) {
   const { t } = useTranslation();
   const tableCriteria = data.active_criteria.filter((k) => !EVENT_CRITERIA.has(k));
 
@@ -35,7 +37,8 @@ export function ResultsView({ data }: ResultsViewProps) {
               rank={index + 1}
               result={row}
               activeCriteria={tableCriteria}
-              showComments={data.show_comments}
+              onToggleApproval={onToggleApproval}
+              approvalPending={approvalPending}
             />
           ))}
         </div>
@@ -78,19 +81,21 @@ interface TableResultRowProps {
   rank: number;
   result: TableResult;
   activeCriteria: string[];
-  showComments: boolean;
+  onToggleApproval?: (commentId: string, approved: boolean) => void;
+  approvalPending?: boolean;
 }
 
-function TableResultRow({ rank, result, activeCriteria, showComments }: TableResultRowProps) {
+function TableResultRow({ rank, result, activeCriteria, onToggleApproval, approvalPending }: TableResultRowProps) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
 
   const overallAvg = result.average_scores['overall'];
+  const hasComments = result.comments != null && result.comments.length > 0;
   const hasDetails =
     activeCriteria.filter((k) => k !== 'overall').length > 0 ||
     result.zone_distribution.zone_a > 0 ||
     result.zone_distribution.zone_b > 0 ||
-    (showComments && result.comments && result.comments.length > 0);
+    hasComments;
 
   return (
     <div
@@ -181,15 +186,39 @@ function TableResultRow({ rank, result, activeCriteria, showComments }: TableRes
             </div>
           </div>
 
-          {showComments && result.comments && result.comments.length > 0 && (
+          {hasComments && (
             <div className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'color-mix(in srgb, var(--color-text) 50%, transparent)' }}>
                 {t('results.comments')}
               </p>
-              <ul className="space-y-1.5">
-                {result.comments.map((c, i) => (
-                  <li key={i} className="text-sm px-3 py-2 rounded" style={{ backgroundColor: 'color-mix(in srgb, var(--color-text) 5%, transparent)' }}>
-                    {c.comment}
+              <ul className="space-y-2">
+                {result.comments!.map((c) => (
+                  <li
+                    key={c.id}
+                    className="flex items-start gap-3 px-3 py-2 rounded"
+                    style={{
+                      backgroundColor: 'color-mix(in srgb, var(--color-text) 5%, transparent)',
+                      opacity: onToggleApproval && !c.approved ? 0.5 : 1,
+                    }}
+                  >
+                    <span className="flex-1 text-sm">{c.comment}</span>
+                    {onToggleApproval && (
+                      <button
+                        onClick={() => onToggleApproval(c.id, !c.approved)}
+                        disabled={approvalPending}
+                        className="shrink-0 inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded font-medium"
+                        style={{
+                          backgroundColor: c.approved
+                            ? 'color-mix(in srgb, var(--color-text) 10%, transparent)'
+                            : 'var(--color-primary)',
+                          color: c.approved ? 'var(--color-text)' : 'var(--color-background)',
+                          opacity: approvalPending ? 0.6 : 1,
+                        }}
+                      >
+                        {c.approved ? <X size={11} /> : <Check size={11} />}
+                        {c.approved ? t('results.revoke') : t('results.approve')}
+                      </button>
+                    )}
                   </li>
                 ))}
               </ul>

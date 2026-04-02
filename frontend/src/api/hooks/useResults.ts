@@ -23,3 +23,14 @@ export function usePublishResults(slug: string) {
     },
   });
 }
+
+export function useSetCommentApproved(slug: string) {
+  const qc = useQueryClient();
+  return useMutation<void, Error, { commentId: string; approved: boolean }>({
+    mutationFn: ({ commentId, approved }) =>
+      apiClient.patch(`/tournaments/${slug}/comments/${commentId}`, { approved }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['results', slug] });
+    },
+  });
+}

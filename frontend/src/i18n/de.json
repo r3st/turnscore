@@ -256,7 +256,13 @@
     "unpublish": "Veröffentlichung zurückziehen",
     "publish_confirm": "Veröffentlichte Ergebnisse sind für alle ohne Anmeldung sichtbar.",
     "published_badge": "Ergebnisse veröffentlicht",
-    "view_results": "Ergebnisse anzeigen"
+    "view_results": "Ergebnisse anzeigen",
+    "moderation_heading": "Kommentarmoderation",
+    "moderation_hint": "Nur freigegebene Kommentare sind in den öffentlichen Ergebnissen sichtbar.",
+    "approve": "Freigeben",
+    "revoke": "Freigabe zurückziehen",
+    "approved_badge": "Freigegeben",
+    "no_comments": "Keine Kommentare eingereicht."
   },
   "errors": {
     "generic": "Ein Fehler ist aufgetreten. Bitte versuche es erneut.",
