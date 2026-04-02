@@ -241,7 +241,10 @@ func (s *RaterService) fetchComments(ctx context.Context, t *domain.Tournament, 
 	var cfg struct {
 		ShowComments bool `json:"show_comments"`
 	}
-	if err := json.Unmarshal([]byte(t.ResultConfig), &cfg); err != nil || !cfg.ShowComments {
+	_ = json.Unmarshal([]byte(t.ResultConfig), &cfg)
+	// Managers always receive all comments for moderation.
+	// Public callers only receive comments when show_comments is enabled.
+	if !isManager && !cfg.ShowComments {
 		return nil, nil
 	}
 

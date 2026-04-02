@@ -28,15 +28,14 @@ export function ResultsPage() {
   const isPublished = tournament?.results_published ?? false;
 
   // Collect all comments across all tables for moderation panel.
-  const allComments = data.show_comments
-    ? data.ranking.flatMap((row) =>
-        (row.comments ?? []).map((c) => ({
-          ...c,
-          table_number: row.table_number,
-          table_name: row.table_name,
-        }))
-      )
-    : [];
+  // Backend always returns comments for managers regardless of show_comments setting.
+  const allComments = data.ranking.flatMap((row) =>
+    (row.comments ?? []).map((c) => ({
+      ...c,
+      table_number: row.table_number,
+      table_name: row.table_name,
+    }))
+  );
 
   return (
     <div className="space-y-8 max-w-4xl">
@@ -83,8 +82,8 @@ export function ResultsPage() {
       {/* Ranking */}
       <ResultsView data={data} />
 
-      {/* Comment moderation — only when show_comments is enabled and user is a member */}
-      {isMember && data.show_comments && (
+      {/* Comment moderation — always visible for members, regardless of show_comments setting */}
+      {isMember && (
         <section aria-labelledby="moderation-heading">
           <h2 id="moderation-heading" className="font-heading text-lg font-semibold mb-1">
             {t('results.moderation_heading')}
