@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Globe, EyeOff } from 'lucide-react';
 import { useTournamentResults, usePublishResults } from '@/api/hooks/useResults';
 import { useTournament } from '@/api/hooks/useTournaments';
-import { useAuthStore } from '@/stores/authStore';
+import { useMe } from '@/api/hooks/useUser';
 import { ResultsView } from '@/components/results/ResultsView';
 
 export function ResultsPage() {
@@ -12,8 +12,8 @@ export function ResultsPage() {
   const { data, isLoading, error } = useTournamentResults(slug ?? '');
   const { data: tournament } = useTournament(slug ?? '');
   const publishResults = usePublishResults(slug ?? '');
-  const { role } = useAuthStore();
-  const isOrganizer = role === 'organizer';
+  const { data: me } = useMe();
+  const isOrganizer = me?.memberships.some((m) => m.tournament_slug === slug && m.role === 'organizer') ?? false;
 
   if (isLoading) {
     return <p className="text-sm" style={{ color: 'color-mix(in srgb, var(--color-text) 60%, transparent)' }}>{t('common.loading')}</p>;
