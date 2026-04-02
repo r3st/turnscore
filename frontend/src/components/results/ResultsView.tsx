@@ -35,7 +35,6 @@ export function ResultsView({ data }: ResultsViewProps) {
               rank={index + 1}
               result={row}
               activeCriteria={tableCriteria}
-              showComments={data.show_comments}
             />
           ))}
         </div>
@@ -78,19 +77,19 @@ interface TableResultRowProps {
   rank: number;
   result: TableResult;
   activeCriteria: string[];
-  showComments: boolean;
 }
 
-function TableResultRow({ rank, result, activeCriteria, showComments }: TableResultRowProps) {
+function TableResultRow({ rank, result, activeCriteria }: TableResultRowProps) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
 
   const overallAvg = result.average_scores['overall'];
+  const hasComments = result.comments != null && result.comments.length > 0;
   const hasDetails =
     activeCriteria.filter((k) => k !== 'overall').length > 0 ||
     result.zone_distribution.zone_a > 0 ||
     result.zone_distribution.zone_b > 0 ||
-    (showComments && result.comments && result.comments.length > 0);
+    hasComments;
 
   return (
     <div
@@ -181,7 +180,7 @@ function TableResultRow({ rank, result, activeCriteria, showComments }: TableRes
             </div>
           </div>
 
-          {showComments && result.comments && result.comments.length > 0 && (
+          {hasComments && (
             <div className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'color-mix(in srgb, var(--color-text) 50%, transparent)' }}>
                 {t('results.comments')}

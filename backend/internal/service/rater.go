@@ -243,10 +243,8 @@ func (s *RaterService) fetchComments(ctx context.Context, t *domain.Tournament, 
 	}
 	_ = json.Unmarshal([]byte(t.ResultConfig), &cfg)
 	// Managers always receive all comments for moderation.
-	// Public callers only receive comments when show_comments is enabled.
-	if !isManager && !cfg.ShowComments {
-		return nil, nil
-	}
+	// Public callers always receive approved comments (no show_comments gate —
+	// approving a comment is sufficient to make it publicly visible).
 
 	commentsMap, err := s.ratingRepo.GetCommentsForTournament(ctx, t.ID)
 	if err != nil {
