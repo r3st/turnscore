@@ -197,7 +197,10 @@
     "category_zone_b": "Zone-B-Fotos",
     "tap_to_upload": "Tippen oder klicken zum Hochladen",
     "uploading": "Wird hochgeladen...",
-    "delete_confirm": "Dieses Foto löschen?"
+    "delete_confirm": "Dieses Foto löschen?",
+    "take_photo": "Foto aufnehmen",
+    "choose_library": "Aus Bibliothek wählen",
+    "upload_error": "Upload fehlgeschlagen"
   },
   "table_mgmt": {
     "title": "Tische — {{name}}",

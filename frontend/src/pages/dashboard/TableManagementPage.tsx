@@ -132,6 +132,11 @@ export function TableManagementPage() {
 
 // ── TableCard ──────────────────────────────────────────────────────────────
 
+const isMobile = typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0;
+
+type Category = 'general' | 'zone_a' | 'zone_b';
+type UploadError = { filename: string; message: string };
+
 function TableCard({ slug, table, isDraft }: { slug: string; table: TableSummary; isDraft: boolean }) {
   const { t } = useTranslation();
   const updateTable = useUpdateTable(slug, table.number);
@@ -143,7 +148,15 @@ function TableCard({ slug, table, isDraft }: { slug: string; table: TableSummary
   const [name, setName] = useState(table.name ?? '');
   const [description, setDescription] = useState(table.description ?? '');
   const [dirty, setDirty] = useState(false);
-  const fileRefs = {
+  const [uploadingCategories, setUploadingCategories] = useState<Set<Category>>(new Set());
+  const [uploadErrors, setUploadErrors] = useState<UploadError[]>([]);
+
+  const cameraRefs = {
+    general: useRef<HTMLInputElement>(null),
+    zone_a:  useRef<HTMLInputElement>(null),
+    zone_b:  useRef<HTMLInputElement>(null),
+  };
+  const libraryRefs = {
     general: useRef<HTMLInputElement>(null),
     zone_a:  useRef<HTMLInputElement>(null),
     zone_b:  useRef<HTMLInputElement>(null),
@@ -154,11 +167,34 @@ function TableCard({ slug, table, isDraft }: { slug: string; table: TableSummary
     setDirty(false);
   };
 
-  const handleUpload = async (category: 'general' | 'zone_a' | 'zone_b', file: File) => {
-    const fd = new FormData();
-    fd.append('photo', file);
-    fd.append('category', category);
-    await uploadPhoto.mutateAsync(fd);
+  const handleUploadFiles = async (category: Category, files: FileList) => {
+    setUploadingCategories((prev) => new Set(prev).add(category));
+    setUploadErrors([]);
+
+    const fileArray = Array.from(files);
+    const results = await Promise.allSettled(
+      fileArray.map((file) => {
+        const fd = new FormData();
+        fd.append('photo', file);
+        fd.append('category', category);
+        return uploadPhoto.mutateAsync(fd);
+      })
+    );
+
+    const errors: UploadError[] = results
+      .map((r, i) => ({ result: r, file: fileArray[i] }))
+      .filter(({ result }) => result.status === 'rejected')
+      .map(({ result, file }) => ({
+        filename: file.name,
+        message: result.status === 'rejected' ? String((result as PromiseRejectedResult).reason) : '',
+      }));
+
+    setUploadErrors(errors);
+    setUploadingCategories((prev) => {
+      const next = new Set(prev);
+      next.delete(category);
+      return next;
+    });
   };
 
   const categories: Array<{ key: 'general' | 'zone_a' | 'zone_b'; label: string }> = [
@@ -270,6 +306,7 @@ function TableCard({ slug, table, isDraft }: { slug: string; table: TableSummary
       <div className="space-y-3">
         {categories.map(({ key, label }) => {
           const photos = table.photos.filter((p) => p.category === key);
+          const isUploading = uploadingCategories.has(key);
           return (
             <div key={key}>
               <p className="text-xs font-medium mb-1.5">{label}</p>
@@ -296,32 +333,94 @@ function TableCard({ slug, table, isDraft }: { slug: string; table: TableSummary
                   </div>
                 ))}
 
-                {/* Upload button */}
-                <button
-                  onClick={() => fileRefs[key].current?.click()}
-                  disabled={uploadPhoto.isPending}
-                  className="h-16 w-16 rounded border-2 border-dashed text-xs flex items-center justify-center"
-                  style={{ borderColor: 'color-mix(in srgb, var(--color-primary) 40%, transparent)', color: 'color-mix(in srgb, var(--color-text) 50%, transparent)' }}
-                  aria-label={t('photo.tap_to_upload')}
-                >
-                  {uploadPhoto.isPending ? '…' : '+'}
-                </button>
-                <input
-                  ref={fileRefs[key]}
-                  type="file"
-                  accept="image/*"
-                  className="sr-only"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleUpload(key, file);
-                    e.target.value = '';
-                  }}
-                />
+                {/* Upload buttons */}
+                {isMobile ? (
+                  <>
+                    {/* Camera capture */}
+                    <button
+                      onClick={() => cameraRefs[key].current?.click()}
+                      disabled={isUploading}
+                      className="h-16 w-16 rounded border-2 border-dashed text-lg flex items-center justify-center"
+                      style={{ borderColor: 'color-mix(in srgb, var(--color-primary) 40%, transparent)', color: 'color-mix(in srgb, var(--color-text) 50%, transparent)' }}
+                      aria-label={t('photo.take_photo')}
+                      title={t('photo.take_photo')}
+                    >
+                      {isUploading ? '…' : '📷'}
+                    </button>
+                    <input
+                      ref={cameraRefs[key]}
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      className="sr-only"
+                      onChange={(e) => {
+                        if (e.target.files?.length) handleUploadFiles(key, e.target.files);
+                        e.target.value = '';
+                      }}
+                    />
+                    {/* Library picker (multi-select) */}
+                    <button
+                      onClick={() => libraryRefs[key].current?.click()}
+                      disabled={isUploading}
+                      className="h-16 w-16 rounded border-2 border-dashed text-xs flex items-center justify-center"
+                      style={{ borderColor: 'color-mix(in srgb, var(--color-primary) 40%, transparent)', color: 'color-mix(in srgb, var(--color-text) 50%, transparent)' }}
+                      aria-label={t('photo.choose_library')}
+                      title={t('photo.choose_library')}
+                    >
+                      {isUploading ? '…' : '+'}
+                    </button>
+                    <input
+                      ref={libraryRefs[key]}
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="sr-only"
+                      onChange={(e) => {
+                        if (e.target.files?.length) handleUploadFiles(key, e.target.files);
+                        e.target.value = '';
+                      }}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => libraryRefs[key].current?.click()}
+                      disabled={isUploading}
+                      className="h-16 w-16 rounded border-2 border-dashed text-xs flex items-center justify-center"
+                      style={{ borderColor: 'color-mix(in srgb, var(--color-primary) 40%, transparent)', color: 'color-mix(in srgb, var(--color-text) 50%, transparent)' }}
+                      aria-label={t('photo.tap_to_upload')}
+                    >
+                      {isUploading ? '…' : '+'}
+                    </button>
+                    <input
+                      ref={libraryRefs[key]}
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="sr-only"
+                      onChange={(e) => {
+                        if (e.target.files?.length) handleUploadFiles(key, e.target.files);
+                        e.target.value = '';
+                      }}
+                    />
+                  </>
+                )}
               </div>
             </div>
           );
         })}
       </div>
+
+      {/* Per-file upload errors */}
+      {uploadErrors.length > 0 && (
+        <div className="space-y-1">
+          {uploadErrors.map((err, i) => (
+            <p key={i} className="text-xs" style={{ color: '#dc2626' }}>
+              {err.filename}: {t('photo.upload_error')}
+            </p>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

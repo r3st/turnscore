@@ -9,6 +9,7 @@ import (
 	_ "image/png" // PNG decoder
 	"io"
 
+	"github.com/disintegration/imaging"
 	"github.com/google/uuid"
 	_ "golang.org/x/image/webp" // WebP decoder
 
@@ -253,8 +254,9 @@ func (s *TableService) UploadPhoto(
 		return nil, domain.ErrFileTooLarge
 	}
 
-	// Decode image for thumbnail generation.
-	src, _, err := image.Decode(bytes.NewReader(data))
+	// Decode image and auto-rotate based on EXIF orientation tag.
+	// Without this, portrait photos taken on mobile are stored sideways.
+	src, err := imaging.Decode(bytes.NewReader(data), imaging.AutoOrientation(true))
 	if err != nil {
 		return nil, fmt.Errorf("UploadPhoto decode image: %w", err)
 	}

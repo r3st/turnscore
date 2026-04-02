@@ -197,7 +197,10 @@
     "category_zone_b": "Zone B Photos",
     "tap_to_upload": "Tap or click to upload",
     "uploading": "Uploading...",
-    "delete_confirm": "Delete this photo?"
+    "delete_confirm": "Delete this photo?",
+    "take_photo": "Take photo",
+    "choose_library": "Choose from library",
+    "upload_error": "Upload failed"
   },
   "table_mgmt": {
     "title": "Tables — {{name}}",
