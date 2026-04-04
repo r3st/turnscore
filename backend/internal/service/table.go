@@ -272,7 +272,7 @@ func (s *TableService) UploadPhoto(
 	if err := jpeg.Encode(&origBuf, src, &jpeg.Options{Quality: 90}); err != nil {
 		return nil, fmt.Errorf("UploadPhoto encode original: %w", err)
 	}
-	if err := s.storage.Put(ctx, origKey, &origBuf, int64(origBuf.Len()), mimeJPEG); err != nil {
+	if err := s.storage.Put(ctx, origKey, bytes.NewReader(origBuf.Bytes()), int64(origBuf.Len()), mimeJPEG); err != nil {
 		return nil, fmt.Errorf("UploadPhoto store original: %w", err)
 	}
 
@@ -282,7 +282,7 @@ func (s *TableService) UploadPhoto(
 	if err := jpeg.Encode(&thumbBuf, thumb, &jpeg.Options{Quality: 80}); err != nil {
 		return nil, fmt.Errorf("UploadPhoto encode thumbnail: %w", err)
 	}
-	if err := s.storage.Put(ctx, thumbKey, &thumbBuf, int64(thumbBuf.Len()), mimeJPEG); err != nil {
+	if err := s.storage.Put(ctx, thumbKey, bytes.NewReader(thumbBuf.Bytes()), int64(thumbBuf.Len()), mimeJPEG); err != nil {
 		return nil, fmt.Errorf("UploadPhoto store thumbnail: %w", err)
 	}
 
