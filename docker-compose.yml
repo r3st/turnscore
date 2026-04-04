@@ -95,7 +95,6 @@ services:
       APP_LOGGING_LEVEL: ${LOG_LEVEL:-info}
       APP_LEGAL_PATH: /legal
     volumes:
-      - ./turnscore-config.yaml:/config/config.yaml:ro
       - ./legal:/legal:ro
     networks:
       - proxy
