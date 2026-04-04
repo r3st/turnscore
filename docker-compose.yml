@@ -93,8 +93,10 @@ services:
       APP_STORAGE_S3_ACCESS_KEY: ${MINIO_ACCESS_KEY}
       APP_STORAGE_S3_SECRET_KEY: ${MINIO_SECRET_KEY}
       APP_LOGGING_LEVEL: ${LOG_LEVEL:-info}
+      APP_LEGAL_PATH: /legal
     volumes:
       - ./turnscore-config.yaml:/config/config.yaml:ro
+      - ./legal:/legal:ro
     networks:
       - proxy
       - backend

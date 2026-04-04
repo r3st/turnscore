@@ -14,6 +14,7 @@ type Config struct {
 	Database DatabaseConfig `mapstructure:"database"`
 	Auth     AuthConfig     `mapstructure:"auth"`
 	Storage  StorageConfig  `mapstructure:"storage"`
+	Legal    LegalConfig    `mapstructure:"legal"`
 	Logging  LoggingConfig  `mapstructure:"logging"`
 }
 
@@ -81,6 +82,11 @@ type S3StorageConfig struct {
 	Region    string `mapstructure:"region"`
 	AccessKey string `mapstructure:"access_key"`
 	SecretKey string `mapstructure:"secret_key"`
+}
+
+// LegalConfig holds paths to the mounted legal text files.
+type LegalConfig struct {
+	Path string `mapstructure:"path"` // directory containing imprint.{lang}.md and privacy.{lang}.md
 }
 
 // LoggingConfig holds zerolog settings.

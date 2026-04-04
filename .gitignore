@@ -6,6 +6,11 @@
 # Uploads (user-generated content)
 uploads/
 
+# Legal texts (contain personal data — operator provides their own files)
+# Copy legal/*.example.md → legal/*.md and fill in real content.
+legal/*.md
+!legal/*.example.md
+
 # Claude Code user-specific settings
 .claude/settings.json
 .claude/settings.local.json
