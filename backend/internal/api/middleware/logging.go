@@ -15,10 +15,15 @@ func RequestLogger() gin.HandlerFunc {
 
 		c.Next()
 
-		log.Info().
+		status := c.Writer.Status()
+		event := log.Info()
+		if status >= 500 && len(c.Errors) > 0 {
+			event = log.Error().Str("error", c.Errors.Last().Error())
+		}
+		event.
 			Str("method", c.Request.Method).
 			Str("path", c.Request.URL.Path). // no RawQuery — may contain codes
-			Int("status", c.Writer.Status()).
+			Int("status", status).
 			Dur("latency", time.Since(start)).
 			Msg("request")
 	}
