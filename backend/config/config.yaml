@@ -32,6 +32,10 @@ storage:
     access_key: ""              # Set via APP_STORAGE_S3_ACCESS_KEY
     secret_key: ""              # Set via APP_STORAGE_S3_SECRET_KEY
 
+legal:
+  path: "./legal"               # directory with imprint.{de,en}.md and privacy.{de,en}.md
+                                # Set via APP_LEGAL_PATH or mount via Docker Compose
+
 logging:
   level: "info"                 # debug | info | warn | error
   format: "json"                # json | pretty (use pretty for local dev only)

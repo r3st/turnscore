@@ -280,5 +280,8 @@
     "edit": "Bearbeiten",
     "back": "Zurück",
     "close": "Schließen"
+  },
+  "legal": {
+    "not_available": "Dieser Inhalt ist zurzeit nicht verfügbar."
   }
 }

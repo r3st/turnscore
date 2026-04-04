@@ -280,5 +280,8 @@
     "edit": "Edit",
     "back": "Back",
     "close": "Close"
+  },
+  "legal": {
+    "not_available": "This content is currently not available."
   }
 }

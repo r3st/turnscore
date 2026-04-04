@@ -34,6 +34,11 @@ func NewRouter(cfg *config.Config, jwtSvc *service.JWTService, h *handlers.Handl
 		r.Static("/uploads", cfg.Storage.Local.Path)
 	}
 
+	// Serve legal text files (imprint.{lang}.md, privacy.{lang}.md) from mounted directory.
+	if cfg.Legal.Path != "" {
+		r.Static("/legal", cfg.Legal.Path)
+	}
+
 	strictHandler := generated.NewStrictHandler(h, nil)
 	generated.RegisterHandlers(r.Group("/api/v1"), strictHandler)
 
