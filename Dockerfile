@@ -14,7 +14,7 @@ RUN go mod download
 COPY backend/ ./
 # Copy compiled frontend into the embed path before go build.
 COPY --from=frontend-builder /app/frontend/dist ./internal/static/dist
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /turnscore ./cmd/server
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o /turnscore .
 
 # ── Stage 3: Minimal runtime image ───────────────────────────────────────────
 FROM gcr.io/distroless/static-debian12:nonroot
