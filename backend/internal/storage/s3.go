@@ -60,11 +60,15 @@ func newS3Client(cfg config.S3StorageConfig) *s3.Client {
 }
 
 func newS3Storage(cfg config.S3StorageConfig) (*S3Storage, error) {
-	return &S3Storage{
+	stor := &S3Storage{
 		client:   newS3Client(cfg),
 		bucket:   cfg.Bucket,
 		endpoint: strings.TrimRight(cfg.Endpoint, "/"),
-	}, nil
+	}
+	if err := EnsureBucketExists(context.Background(), cfg); err != nil {
+		return nil, fmt.Errorf("s3 storage init: %w", err)
+	}
+	return stor, nil
 }
 
 // EnsureBucketExists creates the bucket if it does not already exist.
