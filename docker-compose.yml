@@ -73,6 +73,8 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
     environment:
       APP_SERVER_MODE: release
       APP_SERVER_FRONTEND_URL: "https://${DOMAIN}"
