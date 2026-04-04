@@ -41,9 +41,11 @@ services:
       APP_STORAGE_LOCAL_BASE_URL: http://192.168.1.122:8080
       APP_LOGGING_LEVEL: debug
       APP_LOGGING_FORMAT: pretty
+      APP_LEGAL_PATH: /legal
     volumes:
       - ./backend:/app
       - uploads_dev_data:/app/uploads
+      - ./legal:/legal:ro
     ports:
       - "8080:8080"
 
