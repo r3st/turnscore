@@ -53,21 +53,39 @@ func NewRouter(cfg *config.Config, jwtSvc *service.JWTService, h *handlers.Handl
 }
 
 // spaHandler returns a Gin middleware that serves static files from the embedded dist FS.
-// Unknown paths return index.html so the React router handles client-side navigation.
+// Unknown paths serve index.html directly so the React router handles client-side navigation.
+//
+// NOTE: the SPA fallback must NOT use c.FileFromFS("index.html", ...) or http.FileServer
+// with path "/index.html" — http.FileServer redirects /index.html → / (301), which causes
+// an infinite redirect loop because every redirect comes back here.
 func spaHandler(distFS fs.FS) gin.HandlerFunc {
 	fileServer := http.FileServer(http.FS(distFS))
 	return func(c *gin.Context) {
-		path := c.Request.URL.Path
-		// Check whether the file exists in the embedded FS.
-		f, err := distFS.Open(path[1:]) // strip leading "/"
-		if err == nil {
-			f.Close()
-			fileServer.ServeHTTP(c.Writer, c.Request)
+		reqPath := c.Request.URL.Path
+		// For real static assets (not "/" and not a directory) serve via fileServer
+		// so it can set correct Content-Type, cache headers, etc.
+		if reqPath != "/" {
+			name := reqPath[1:] // strip leading "/"
+			f, err := distFS.Open(name)
+			if err == nil {
+				fi, statErr := f.Stat()
+				f.Close()
+				if statErr == nil && !fi.IsDir() {
+					fileServer.ServeHTTP(c.Writer, c.Request)
+					c.Abort()
+					return
+				}
+			}
+		}
+		// SPA fallback: read and write index.html bytes directly.
+		// Bypasses http.FileServer to avoid the /index.html → / redirect loop.
+		data, err := fs.ReadFile(distFS, "index.html")
+		if err != nil {
+			c.Status(http.StatusNotFound)
 			c.Abort()
 			return
 		}
-		// Unknown path → serve index.html and let the React router take over.
-		c.FileFromFS("index.html", http.FS(distFS))
+		c.Data(http.StatusOK, "text/html; charset=utf-8", data)
 		c.Abort()
 	}
 }
