@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useMe } from '@/api/hooks/useUser';
 import {
   useTournament,
   useCreateTournament,
@@ -23,7 +22,6 @@ export function TournamentEditPage() {
   const { slug } = useParams<{ slug?: string }>();
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { data: me } = useMe();
   const isNew = !slug;
 
   const { data: tournament, isLoading } = useTournament(slug ?? '');
