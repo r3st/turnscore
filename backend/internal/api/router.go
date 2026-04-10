@@ -3,7 +3,10 @@ package api
 
 import (
 	"io/fs"
+	"mime"
 	"net/http"
+	"path/filepath"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 
@@ -14,11 +17,12 @@ import (
 	"github.com/r3st/turnscore/internal/devusers"
 	"github.com/r3st/turnscore/internal/service"
 	"github.com/r3st/turnscore/internal/static"
+	"github.com/r3st/turnscore/internal/storage"
 )
 
 // NewRouter builds and returns a configured Gin engine.
 // Authentication is enforced per-handler; OptionalAuth globally extracts the token when present.
-func NewRouter(cfg *config.Config, jwtSvc *service.JWTService, h *handlers.Handlers) *gin.Engine {
+func NewRouter(cfg *config.Config, jwtSvc *service.JWTService, h *handlers.Handlers, stor storage.Storage) *gin.Engine {
 	if cfg.Server.Mode == "release" {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -29,10 +33,8 @@ func NewRouter(cfg *config.Config, jwtSvc *service.JWTService, h *handlers.Handl
 	r.Use(middleware.RequestLogger())
 	r.Use(middleware.OptionalAuth(jwtSvc))
 
-	// Serve uploaded files for local storage backend.
-	if cfg.Storage.Backend == "local" {
-		r.Static("/uploads", cfg.Storage.Local.Path)
-	}
+	// Serve uploaded files via the storage backend (local filesystem or S3 proxy).
+	r.GET("/uploads/*key", uploadsHandler(stor))
 
 	// Serve legal text files (imprint.{lang}.md, privacy.{lang}.md) from mounted directory.
 	if cfg.Legal.Path != "" {
@@ -92,6 +94,26 @@ func spaHandler(distFS fs.FS) gin.HandlerFunc {
 		}
 		c.Data(http.StatusOK, "text/html; charset=utf-8", data)
 		c.Abort()
+	}
+}
+
+// uploadsHandler streams files from the storage backend under /uploads/*key.
+// For local storage this reads from the filesystem; for S3 it proxies via GetObject.
+func uploadsHandler(stor storage.Storage) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		key := strings.TrimPrefix(c.Param("key"), "/")
+		rc, err := stor.Open(c.Request.Context(), key)
+		if err != nil {
+			c.Status(http.StatusNotFound)
+			return
+		}
+		defer rc.Close()
+		contentType := mime.TypeByExtension(filepath.Ext(key))
+		if contentType == "" {
+			contentType = "application/octet-stream"
+		}
+		c.Header("Cache-Control", "public, max-age=31536000, immutable")
+		c.DataFromReader(http.StatusOK, -1, contentType, rc, nil)
 	}
 }
 

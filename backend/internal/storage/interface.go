@@ -13,6 +13,8 @@ import (
 type Storage interface {
 	// Put stores the content from r under the given key.
 	Put(ctx context.Context, key string, r io.Reader, size int64, contentType string) error
+	// Open returns a ReadCloser for the file identified by key. Caller must close it.
+	Open(ctx context.Context, key string) (io.ReadCloser, error)
 	// Delete removes the file identified by key.
 	Delete(ctx context.Context, key string) error
 	// PublicURL returns the publicly accessible URL for the given key.

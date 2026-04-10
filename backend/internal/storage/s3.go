@@ -18,9 +18,8 @@ import (
 
 // S3Storage stores files in an S3-compatible object store (AWS S3, Cloudflare R2, MinIO).
 type S3Storage struct {
-	client   *s3.Client
-	bucket   string
-	endpoint string
+	client *s3.Client
+	bucket string
 }
 
 func newS3Client(cfg config.S3StorageConfig) *s3.Client {
@@ -46,9 +45,8 @@ func newS3Client(cfg config.S3StorageConfig) *s3.Client {
 
 func newS3Storage(cfg config.S3StorageConfig) (*S3Storage, error) {
 	stor := &S3Storage{
-		client:   newS3Client(cfg),
-		bucket:   cfg.Bucket,
-		endpoint: strings.TrimRight(cfg.Endpoint, "/"),
+		client: newS3Client(cfg),
+		bucket: cfg.Bucket,
 	}
 	if err := EnsureBucketExists(context.Background(), cfg); err != nil {
 		return nil, fmt.Errorf("s3 storage init: %w", err)
@@ -101,10 +99,20 @@ func (s *S3Storage) Delete(ctx context.Context, key string) error {
 	return nil
 }
 
-// PublicURL returns the public URL for the given key.
-func (s *S3Storage) PublicURL(key string) string {
-	if s.endpoint != "" {
-		return fmt.Sprintf("%s/%s/%s", s.endpoint, s.bucket, key)
+// Open returns a ReadCloser streaming the S3 object for the given key. Caller must close it.
+func (s *S3Storage) Open(ctx context.Context, key string) (io.ReadCloser, error) {
+	out, err := s.client.GetObject(ctx, &s3.GetObjectInput{
+		Bucket: aws.String(s.bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("s3 get object: %w", err)
 	}
-	return fmt.Sprintf("https://%s.s3.amazonaws.com/%s", s.bucket, key)
+	return out.Body, nil
+}
+
+// PublicURL returns the app-relative URL for the given key.
+// Photos are served via the /uploads/* proxy handler, not directly from S3.
+func (s *S3Storage) PublicURL(key string) string {
+	return "/uploads/" + key
 }
