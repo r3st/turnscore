@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/url"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -13,7 +12,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
-	smithyendpoints "github.com/aws/smithy-go/endpoints"
 
 	"github.com/r3st/turnscore/config"
 )
@@ -23,19 +21,6 @@ type S3Storage struct {
 	client   *s3.Client
 	bucket   string
 	endpoint string
-}
-
-// staticEndpointResolver directs all S3 API calls to a fixed endpoint URL (e.g. MinIO).
-type staticEndpointResolver struct {
-	url string
-}
-
-func (r staticEndpointResolver) ResolveEndpoint(_ context.Context, _ s3.EndpointParameters) (smithyendpoints.Endpoint, error) {
-	u, err := url.Parse(r.url)
-	if err != nil {
-		return smithyendpoints.Endpoint{}, fmt.Errorf("parse endpoint URL: %w", err)
-	}
-	return smithyendpoints.Endpoint{URI: *u}, nil
 }
 
 func newS3Client(cfg config.S3StorageConfig) *s3.Client {
@@ -51,9 +36,9 @@ func newS3Client(cfg config.S3StorageConfig) *s3.Client {
 		func(o *s3.Options) { o.UsePathStyle = true },
 	}
 	if cfg.Endpoint != "" {
-		resolver := staticEndpointResolver{url: strings.TrimRight(cfg.Endpoint, "/")}
+		endpoint := strings.TrimRight(cfg.Endpoint, "/")
 		s3Opts = append(s3Opts, func(o *s3.Options) {
-			o.EndpointResolverV2 = resolver
+			o.BaseEndpoint = aws.String(endpoint)
 		})
 	}
 	return s3.NewFromConfig(awsCfg, s3Opts...)
