@@ -608,6 +608,8 @@ export interface components {
             /** Format: date-time */
             voting_end: string | null;
             active_criteria: components["schemas"]["CriteriaKey"][];
+            /** @description Present when the caller is a tournament member (organizer or helper). */
+            result_config?: components["schemas"]["ResultConfig"];
             tables: components["schemas"]["TableSummary"][];
         };
         CreateTournamentRequest: {

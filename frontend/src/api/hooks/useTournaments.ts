@@ -62,10 +62,8 @@ export function useDeleteTournament() {
 }
 
 export function useUpdateResultConfig(slug: string) {
-  const qc = useQueryClient();
   return useMutation<ResultConfig, Error, ResultConfig>({
     mutationFn: (body) =>
       apiClient.put(`/tournaments/${slug}/result-config`, body).then((r) => r.data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['tournaments', slug] }),
   });
 }

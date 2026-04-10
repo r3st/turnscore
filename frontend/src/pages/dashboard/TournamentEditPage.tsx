@@ -6,7 +6,6 @@ import {
   useTournament,
   useCreateTournament,
   useUpdateTournament,
-  useUpdateResultConfig,
   type CriteriaKey,
 } from '@/api/hooks/useTournaments';
 
@@ -34,7 +33,6 @@ export function TournamentEditPage() {
   const { data: tournament, isLoading } = useTournament(slug ?? '');
   const createTournament = useCreateTournament();
   const updateTournament = useUpdateTournament(slug ?? '');
-  const updateResultConfig = useUpdateResultConfig(slug ?? '');
 
   // ── Form state ────────────────────────────────────────────────────────────
 
@@ -52,13 +50,6 @@ export function TournamentEditPage() {
   const [activeCriteria, setActiveCriteria] = useState<CriteriaKey[]>(CORE_CRITERIA);
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
-
-  // ── Result config state ───────────────────────────────────────────────────
-
-  const [showComments, setShowComments] = useState(false);
-  const [visibleCriteria, setVisibleCriteria] = useState<CriteriaKey[]>([]);
-  const [rcSuccess, setRcSuccess] = useState('');
-  const [rcError, setRcError] = useState('');
 
   // ── Helper invite state ───────────────────────────────────────────────────
 
@@ -130,29 +121,8 @@ export function TournamentEditPage() {
     }
   };
 
-  const handleResultConfig = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setRcError('');
-    setRcSuccess('');
-    try {
-      await updateResultConfig.mutateAsync({
-        show_comments: showComments,
-        visible_comment_criteria: visibleCriteria,
-      });
-      setRcSuccess(t('result_config.save_success'));
-    } catch {
-      setRcError(t('result_config.error_save'));
-    }
-  };
-
   const toggleOptionalCriteria = (key: CriteriaKey) => {
     setActiveCriteria((prev) =>
-      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
-    );
-  };
-
-  const toggleVisibleCriteria = (key: CriteriaKey) => {
-    setVisibleCriteria((prev) =>
       prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
     );
   };
@@ -461,61 +431,6 @@ export function TournamentEditPage() {
         </form>
       </section>
 
-
-      {/* ── Result Config (edit + organizer only) ─────────────── */}
-      {!isNew && isOrganizer && (
-        <section aria-labelledby="rc-heading">
-          <h2 id="rc-heading" className="font-heading text-xl font-bold mb-4">
-            {t('result_config.section_title')}
-          </h2>
-          <form onSubmit={handleResultConfig} className="space-y-4">
-            <label className="flex items-center gap-2 text-sm cursor-pointer">
-              <input
-                type="checkbox"
-                checked={showComments}
-                onChange={(e) => setShowComments(e.target.checked)}
-              />
-              {t('result_config.show_comments_label')}
-            </label>
-
-            {showComments && (
-              <fieldset>
-                <legend className="block text-sm font-medium mb-2">
-                  {t('result_config.visible_criteria_label')}
-                </legend>
-                <div className="flex flex-wrap gap-3">
-                  {ALL_CRITERIA.map((key) => (
-                    <label key={key} className="flex items-center gap-1 text-sm cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={visibleCriteria.includes(key)}
-                        onChange={() => toggleVisibleCriteria(key)}
-                      />
-                      {t(`criteria.${key}`)}
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
-            )}
-
-            {rcError && (
-              <p role="alert" className="text-sm" style={{ color: '#dc2626' }}>{rcError}</p>
-            )}
-            {rcSuccess && (
-              <p role="status" className="text-sm" style={{ color: '#16a34a' }}>{rcSuccess}</p>
-            )}
-
-            <button
-              type="submit"
-              disabled={updateResultConfig.isPending}
-              className="px-5 py-2 rounded font-medium text-sm"
-              style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
-            >
-              {t('common.save')}
-            </button>
-          </form>
-        </section>
-      )}
 
     </div>
   );

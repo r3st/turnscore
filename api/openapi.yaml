@@ -242,6 +242,10 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/CriteriaKey"
+            result_config:
+              $ref: "#/components/schemas/ResultConfig"
+              nullable: true
+              description: Present when the caller is a tournament member (organizer or helper).
             tables:
               type: array
               items:
@@ -654,45 +658,10 @@ components:
 # ---------------------------------------------------------------------------
 paths:
 
-  # =========================================================================
-  # Static file serving
-  # =========================================================================
-
-  /uploads/{key}:
-    get:
-      summary: Serve an uploaded file (photo or thumbnail)
-      description: >
-        Streams a stored file (original photo or thumbnail) through the app server.
-        For local storage the file is read from the filesystem; for S3/MinIO it is
-        proxied via GetObject. The path segment `key` matches the storage key returned
-        in `photo.url` and `photo.thumbnailUrl` (with the `/uploads/` prefix stripped).
-      operationId: getUpload
-      tags: [Uploads]
-      parameters:
-        - name: key
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Storage key, e.g. `tables/{tableId}/general/{photoId}.jpg`
-      responses:
-        "200":
-          description: File contents
-          content:
-            image/jpeg:
-              schema:
-                type: string
-                format: binary
-            image/png:
-              schema:
-                type: string
-                format: binary
-            image/webp:
-              schema:
-                type: string
-                format: binary
-        "404":
-          description: File not found
+  # NOTE: GET /uploads/{key} is intentionally NOT declared here.
+  # It is served directly by the Gin router (uploadsHandler) and must not be
+  # code-generated — oapi-codegen would add GetUpload to StrictServerInterface
+  # which Handlers does not implement.
 
   # =========================================================================
   # Auth
