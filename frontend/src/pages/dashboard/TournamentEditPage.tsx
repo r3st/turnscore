@@ -15,7 +15,6 @@ const CORE_CRITERIA: CriteriaKey[] = [
   'balance', 'aesthetics', 'terrain_density', 'labeling', 'overall', 'zone_a', 'zone_b',
 ];
 const OPTIONAL_CRITERIA: CriteriaKey[] = ['catering', 'venue', 'organization'];
-const ALL_CRITERIA = [...CORE_CRITERIA, ...OPTIONAL_CRITERIA];
 const STATUSES = ['draft', 'active', 'archived'] as const;
 
 // ── Page ──────────────────────────────────────────────────────────────────────
@@ -26,9 +25,6 @@ export function TournamentEditPage() {
   const navigate = useNavigate();
   const { data: me } = useMe();
   const isNew = !slug;
-  const isOrganizer = me?.memberships.some(
-    (m) => m.tournament_slug === slug && m.role === 'organizer'
-  ) ?? false;
 
   const { data: tournament, isLoading } = useTournament(slug ?? '');
   const createTournament = useCreateTournament();
