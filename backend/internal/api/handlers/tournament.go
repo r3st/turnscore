@@ -369,6 +369,11 @@ func (h *Handlers) mapTournamentDetail(ctx context.Context, t *domain.Tournament
 		return generated.TournamentDetail{}, fmt.Errorf("fetching tables: %w", err)
 	}
 
+	rc, err := parseResultConfig(t.ResultConfig)
+	if err != nil {
+		return generated.TournamentDetail{}, fmt.Errorf("parsing result_config: %w", err)
+	}
+
 	detail := generated.TournamentDetail{
 		Id:               t.ID,
 		Slug:             t.Slug,
@@ -382,6 +387,7 @@ func (h *Handlers) mapTournamentDetail(ctx context.Context, t *domain.Tournament
 		ResultsPublished: &t.ResultsPublished,
 		Links:            links,
 		ActiveCriteria:   criteria,
+		ResultConfig:     rc,
 		VotingStart:      t.VotingStart,
 		VotingEnd:        t.VotingEnd,
 		Tables:           mapTableSummaries(tables, h.tableSvc.Storage()),
@@ -437,6 +443,18 @@ func parseLinks(raw string) ([]generated.TournamentLink, error) {
 		result = append(result, generated.TournamentLink{Url: l.URL, Label: l.Label})
 	}
 	return result, nil
+}
+
+// parseResultConfig deserializes the JSONB result_config string to *generated.ResultConfig.
+func parseResultConfig(raw string) (*generated.ResultConfig, error) {
+	if raw == "" || raw == "null" {
+		return nil, nil
+	}
+	var rc generated.ResultConfig
+	if err := json.Unmarshal([]byte(raw), &rc); err != nil {
+		return nil, err
+	}
+	return &rc, nil
 }
 
 // parseCriteria deserializes the JSONB active_criteria string to []generated.CriteriaKey.

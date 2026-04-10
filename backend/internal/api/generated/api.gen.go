@@ -408,9 +408,10 @@ type TournamentDetail struct {
 	Id             UUID                `json:"id"`
 
 	// Links Always displayed with disclaimer: "We are not responsible for the content of external links."
-	Links    []TournamentLink `json:"links"`
-	Location *string          `json:"location"`
-	Name     string           `json:"name"`
+	Links        []TournamentLink `json:"links"`
+	Location     *string          `json:"location"`
+	Name         string           `json:"name"`
+	ResultConfig *ResultConfig    `json:"result_config,omitempty"`
 
 	// ResultsPublished Whether results have been published publicly
 	ResultsPublished *bool            `json:"results_published,omitempty"`
