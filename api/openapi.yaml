@@ -655,6 +655,46 @@ components:
 paths:
 
   # =========================================================================
+  # Static file serving
+  # =========================================================================
+
+  /uploads/{key}:
+    get:
+      summary: Serve an uploaded file (photo or thumbnail)
+      description: >
+        Streams a stored file (original photo or thumbnail) through the app server.
+        For local storage the file is read from the filesystem; for S3/MinIO it is
+        proxied via GetObject. The path segment `key` matches the storage key returned
+        in `photo.url` and `photo.thumbnailUrl` (with the `/uploads/` prefix stripped).
+      operationId: getUpload
+      tags: [Uploads]
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Storage key, e.g. `tables/{tableId}/general/{photoId}.jpg`
+      responses:
+        "200":
+          description: File contents
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/webp:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: File not found
+
+  # =========================================================================
   # Auth
   # =========================================================================
 

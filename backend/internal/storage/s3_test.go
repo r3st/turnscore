@@ -3,6 +3,7 @@ package storage_test
 import (
 	"context"
 	"fmt"
+	"io"
 	"strings"
 	"testing"
 
@@ -81,8 +82,25 @@ func TestS3Storage_PutDeletePublicURL(t *testing.T) {
 		err := s.Put(ctx, key, strings.NewReader(content), int64(len(content)), "image/jpeg")
 		require.NoError(t, err)
 
+		// PublicURL must return an app-relative path, not a direct MinIO URL.
 		url := s.PublicURL(key)
-		assert.Equal(t, fmt.Sprintf("%s/%s/%s", endpoint, minioBucket, key), url)
+		assert.Equal(t, "/uploads/"+key, url)
+	})
+
+	t.Run("Open", func(t *testing.T) {
+		key := "tables/abc/general/readable.jpg"
+		content := "readable-content"
+
+		err := s.Put(ctx, key, strings.NewReader(content), int64(len(content)), "image/jpeg")
+		require.NoError(t, err)
+
+		rc, err := s.Open(ctx, key)
+		require.NoError(t, err)
+		defer rc.Close()
+
+		got, err := io.ReadAll(rc)
+		require.NoError(t, err)
+		assert.Equal(t, content, string(got))
 	})
 
 	t.Run("Delete", func(t *testing.T) {

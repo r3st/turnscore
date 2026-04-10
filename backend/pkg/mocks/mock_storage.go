@@ -21,7 +21,6 @@ import (
 type MockStorage struct {
 	ctrl     *gomock.Controller
 	recorder *MockStorageMockRecorder
-	isgomock struct{}
 }
 
 // MockStorageMockRecorder is the mock recorder for MockStorage.
@@ -42,43 +41,58 @@ func (m *MockStorage) EXPECT() *MockStorageMockRecorder {
 }
 
 // Delete mocks base method.
-func (m *MockStorage) Delete(ctx context.Context, key string) error {
+func (m *MockStorage) Delete(arg0 context.Context, arg1 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", ctx, key)
+	ret := m.ctrl.Call(m, "Delete", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Delete indicates an expected call of Delete.
-func (mr *MockStorageMockRecorder) Delete(ctx, key any) *gomock.Call {
+func (mr *MockStorageMockRecorder) Delete(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockStorage)(nil).Delete), ctx, key)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockStorage)(nil).Delete), arg0, arg1)
+}
+
+// Open mocks base method.
+func (m *MockStorage) Open(arg0 context.Context, arg1 string) (io.ReadCloser, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Open", arg0, arg1)
+	ret0, _ := ret[0].(io.ReadCloser)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Open indicates an expected call of Open.
+func (mr *MockStorageMockRecorder) Open(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Open", reflect.TypeOf((*MockStorage)(nil).Open), arg0, arg1)
 }
 
 // PublicURL mocks base method.
-func (m *MockStorage) PublicURL(key string) string {
+func (m *MockStorage) PublicURL(arg0 string) string {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PublicURL", key)
+	ret := m.ctrl.Call(m, "PublicURL", arg0)
 	ret0, _ := ret[0].(string)
 	return ret0
 }
 
 // PublicURL indicates an expected call of PublicURL.
-func (mr *MockStorageMockRecorder) PublicURL(key any) *gomock.Call {
+func (mr *MockStorageMockRecorder) PublicURL(arg0 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PublicURL", reflect.TypeOf((*MockStorage)(nil).PublicURL), key)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PublicURL", reflect.TypeOf((*MockStorage)(nil).PublicURL), arg0)
 }
 
 // Put mocks base method.
-func (m *MockStorage) Put(ctx context.Context, key string, r io.Reader, size int64, contentType string) error {
+func (m *MockStorage) Put(arg0 context.Context, arg1 string, arg2 io.Reader, arg3 int64, arg4 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Put", ctx, key, r, size, contentType)
+	ret := m.ctrl.Call(m, "Put", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Put indicates an expected call of Put.
-func (mr *MockStorageMockRecorder) Put(ctx, key, r, size, contentType any) *gomock.Call {
+func (mr *MockStorageMockRecorder) Put(arg0, arg1, arg2, arg3, arg4 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockStorage)(nil).Put), ctx, key, r, size, contentType)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockStorage)(nil).Put), arg0, arg1, arg2, arg3, arg4)
 }

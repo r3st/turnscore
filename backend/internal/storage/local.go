@@ -44,6 +44,16 @@ func (s *LocalStorage) Put(_ context.Context, key string, r io.Reader, _ int64, 
 	return nil
 }
 
+// Open returns a ReadCloser for the file at basePath/key. Caller must close it.
+func (s *LocalStorage) Open(_ context.Context, key string) (io.ReadCloser, error) {
+	fullPath := filepath.Join(s.basePath, filepath.FromSlash(key))
+	f, err := os.Open(fullPath)
+	if err != nil {
+		return nil, fmt.Errorf("opening file: %w", err)
+	}
+	return f, nil
+}
+
 // Delete removes the file at basePath/key.
 func (s *LocalStorage) Delete(_ context.Context, key string) error {
 	fullPath := filepath.Join(s.basePath, filepath.FromSlash(key))
